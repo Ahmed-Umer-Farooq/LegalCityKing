@@ -169,36 +169,36 @@ const HeroSection = React.memo(function HeroSection({ currentLanguage, translati
   const navigate = useNavigate();
 
   return (
-    <section className="relative w-full h-[500px] sm:h-[600px] bg-gray-900">
+    <section className="relative w-full h-[500px] sm:h-[600px] bg-gradient-to-br from-blue-50 via-white to-gray-50">
       <img
-        src="https://api.builder.io/api/v1/image/assets/TEMP/d12735386b9fab735739b6b5424336fcff2f69c9?width=1440"
-        srcSet="https://api.builder.io/api/v1/image/assets/TEMP/d12735386b9fab735739b6b5424336fcff2f69c9?width=768 768w, https://api.builder.io/api/v1/image/assets/TEMP/d12735386b9fab735739b6b5424336fcff2f69c9?width=1440 1440w, https://api.builder.io/api/v1/image/assets/TEMP/d12735386b9fab735739b6b5424336fcff2f69c9?width=2880 2880w"
+        src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1440&h=600&fit=crop&auto=format&q=80"
+        srcSet="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=768&h=400&fit=crop&auto=format&q=80 768w, https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1440&h=600&fit=crop&auto=format&q=80 1440w, https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=2880&h=1200&fit=crop&auto=format&q=80 2880w"
         sizes="(max-width: 768px) 768px, (max-width: 1440px) 1440px, 2880px"
-        alt="Lawyer and client shaking hands"
-        className="absolute inset-0 w-full h-full object-cover"
+        alt="Professional legal consultation - Modern law office with natural lighting"
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
         loading="eager"
         fetchpriority="high"
       />
-      <div className="absolute inset-0 bg-[rgba(90,90,90,0.20)]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-blue-50/60 to-white/80" />
 
       <div className="relative h-full flex items-center justify-center px-4 sm:px-6">
-        <div className="w-full max-w-[600px] text-center">
-          <h1 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-            Welcome to LegalCity
+        <div className="w-full max-w-[700px] text-center">
+          <h1 className="text-gray-900 text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            Welcome to <span className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] bg-clip-text text-transparent">LegalCity</span>
           </h1>
-          <p className="text-white/90 text-lg sm:text-xl mb-8 leading-relaxed">
+          <p className="text-gray-700 text-xl sm:text-2xl mb-8 leading-relaxed font-medium">
             Premier Legal Network Connecting You with Top-Tier Attorneys. Experience Excellence in Legal Representation with Proven Results and Personalized Service.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/lawyers')}
-              className="px-8 py-4 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="px-10 py-4 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
             >
               Find Lawyers
             </button>
             <button
               onClick={() => navigate('/legal-blog')}
-              className="px-8 py-4 bg-white/20 backdrop-blur-md text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30"
+              className="px-10 py-4 bg-white/90 backdrop-blur-md text-gray-800 font-bold rounded-xl hover:bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 text-lg"
             >
               Legal Resources
             </button>
