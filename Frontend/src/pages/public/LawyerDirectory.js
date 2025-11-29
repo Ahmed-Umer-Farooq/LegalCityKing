@@ -111,125 +111,85 @@ function LawyerCard({
     }
   };
 
-  const handleChatWithLawyer = () => {
-    if (!user) {
-      // Only allow chat from dashboard context
-      if (fromDashboard) {
-        localStorage.setItem('pendingChat', JSON.stringify({
-          partner_id: id,
-          partner_type: 'lawyer',
-          partner_name: name
-        }));
-        toast.error('Please login to chat with lawyers');
-        navigate('/login');
-      } else {
-        toast.error('Please login to access chat features');
-        navigate('/login');
-      }
-    } else {
-      // User is logged in, start chat
-      localStorage.setItem('chatPartner', JSON.stringify({
-        partner_id: id,
-        partner_type: 'lawyer',
-        partner_name: name
-      }));
-      // Navigate to chat page based on user type
-      if (user.role === 'lawyer' || user.registration_id) {
-        navigate('/lawyer-dashboard/chatapp');
-      } else {
-        navigate('/user/messages');
-      }
-    }
-  };
-
   return (
     <div className="w-full">
-      <div className="gradient-text font-semibold text-base mb-2">
-        {category}
-      </div>
-      <div 
-        className="bg-gray-200/20 p-6 min-h-64 cursor-pointer hover:bg-gray-200/30 transition-colors duration-200"
-        onClick={handleViewProfile}
-      >
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-2">
-          <img
-            src={imageUrl}
-            alt={`${name} - ${category} Attorney`}
-            className="w-full sm:w-24 h-48 sm:h-32 object-cover flex-shrink-0"
-            loading="lazy"
-          />
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        {/* Category Badge */}
+        <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-3">
+          <span className="text-white font-semibold text-sm uppercase tracking-wide">{category}</span>
+        </div>
+        
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Professional Avatar */}
+            <div className="flex-shrink-0">
+              <img
+                src={imageUrl}
+                alt={`${name} - ${category} Attorney`}
+                className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-full border-4 border-gray-100 shadow-md"
+                loading="lazy"
+              />
+            </div>
 
-          <div className="flex-1 sm:pl-2">
-            <h3 className="text-2xl font-semibold gradient-text leading-7 hover:opacity-80 transition-opacity">
-              {name}
-            </h3>
+            <div className="flex-1">
+              {/* Lawyer Name */}
+              <h3 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer" onClick={handleViewProfile}>
+                {name}
+              </h3>
 
-            <div className="mt-1">
-              <p className="text-sm font-medium uppercase tracking-widest text-gray-600 leading-4">
-                Location
-              </p>
-              <div className="flex items-start gap-2 mt-0.5">
-                <svg
-                  className="w-2 h-3 text-gray-600 mt-1 flex-shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+              {/* Location */}
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <p className="text-xs text-gray-600 leading-3">{location}</p>
+                <span className="text-sm text-gray-600">{location}</span>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <span className="text-sm font-semibold text-gray-700">{reviewScore}</span>
+                <span className="text-xs text-gray-500">({reviewCount} reviews)</span>
+              </div>
+
+              {/* Experience */}
+              <div className="mb-4">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {yearsLicensed} years licensed
+                </span>
               </div>
             </div>
+          </div>
 
-            <div className="flex gap-1 mt-2">
-              {[...Array(5)].map((_, i) => (
-                <svg
-                  key={i}
-                  className="w-5 h-5"
-                  viewBox="0 0 20 19"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10 15.27L16.18 19L14.54 11.97L20 7.24L12.81 6.63L10 0L7.19 6.63L0 7.24L5.46 11.97L3.82 19L10 15.27Z"
-                    fill="#FDCF00"
-                  />
-                </svg>
+          {/* Practice Areas */}
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Practice Areas</h4>
+            <div className="flex flex-wrap gap-2">
+              {practiceAreas.map((area, index) => (
+                <span key={index} className="px-2 py-1 bg-white text-gray-700 text-xs rounded-md border border-gray-200 font-medium">
+                  {area}
+                </span>
               ))}
             </div>
-
-            <div className="mt-1">
-              <p className="text-sm text-black leading-4">
-                {reviewCount} Legal Reviews {reviewScore}
-              </p>
-              <p className="text-xs text-gray-600 mt-1 leading-3">
-                Licensed for {yearsLicensed} years
-              </p>
-            </div>
           </div>
-        </div>
 
-        <div className="mt-5">
-          <p className="text-sm font-medium uppercase tracking-widest text-gray-600 leading-4">
-            Practice Areas
-          </p>
-          <p className="text-sm text-black mt-1 leading-4">{practiceAreas.join(", ")}</p>
-        </div>
-
-        <div className="mt-4 flex justify-between items-start">
-          <p className="text-xs text-gray-600 leading-4 flex-1 mr-4">
-            {description}
-          </p>
-          <div className="flex space-x-2 flex-shrink-0">
+          {/* Description & Action */}
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <p className="text-sm text-gray-600 leading-relaxed flex-1">
+              {description}
+            </p>
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewProfile();
-              }}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-400 text-white text-sm rounded-lg hover:opacity-90 transition-opacity"
+              onClick={handleViewProfile}
+              className="px-6 py-3 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap"
             >
               View Profile
             </button>
-
           </div>
         </div>
       </div>
@@ -275,14 +235,24 @@ function LawyerDirectory() {
   const cameFromDashboard = user && location.pathname === '/dashboard/lawyers';
 
   useEffect(() => {
-    // SEO optimization
-    const config = seoConfigs.lawyerDirectory;
-    updatePageMeta(
-      config.title,
-      config.description,
-      config.keywords,
-      config.canonical
-    );
+    // Enhanced SEO optimization for Lawyer Directory
+    document.title = 'Find Lawyers Near You - Professional Attorney Directory | LegalCity';
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+    metaDescription.setAttribute('name', 'description');
+    metaDescription.setAttribute('content', 'Browse our comprehensive lawyer directory. Find qualified attorneys by practice area, location, and experience. Connect with top-rated legal professionals for your legal needs.');
+    if (!document.querySelector('meta[name="description"]')) {
+      document.head.appendChild(metaDescription);
+    }
+    
+    // Add keywords meta tag
+    const metaKeywords = document.querySelector('meta[name="keywords"]') || document.createElement('meta');
+    metaKeywords.setAttribute('name', 'keywords');
+    metaKeywords.setAttribute('content', 'lawyer directory, find lawyers, attorney search, legal professionals, law firms, legal services, qualified attorneys');
+    if (!document.querySelector('meta[name="keywords"]')) {
+      document.head.appendChild(metaKeywords);
+    }
 
     // Add structured data for lawyer directory
     const structuredData = {
@@ -395,9 +365,11 @@ function LawyerDirectory() {
       <section className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-white to-gray-50">
         <img
           src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1440&h=400&fit=crop&auto=format&q=80"
-          alt="Professional legal consultation - Lawyer directory"
+          alt="Professional lawyer directory - Find qualified attorneys and legal professionals for your legal needs"
           className="absolute inset-0 w-full h-full object-cover object-top opacity-85"
           loading="eager"
+          width="1440"
+          height="400"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-blue-50/60 to-white/80" />
 
