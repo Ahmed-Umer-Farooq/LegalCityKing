@@ -246,6 +246,32 @@ app.get('/api/admin/chat-messages', async (req, res) => {
   }
 });
 
+app.get('/api/admin/call-history', async (req, res) => {
+  try {
+    console.log('Admin call history endpoint hit');
+    
+    // Check if table exists and has data
+    const tableExists = await db.schema.hasTable('call_history');
+    console.log('call_history table exists:', tableExists);
+    
+    if (!tableExists) {
+      return res.json([]);
+    }
+    
+    const calls = await db('call_history')
+      .select('*')
+      .orderBy('created_at', 'desc')
+      .limit(100);
+    
+    console.log('Call history found:', calls.length, 'calls');
+    console.log('Sample call data:', calls[0]);
+    res.json(calls);
+  } catch (error) {
+    console.error('Error fetching admin call history:', error);
+    res.status(500).json({ error: 'Failed to fetch call history' });
+  }
+});
+
 const adminRoutes = require('./routes/admin');
 console.log('🔍 Loading admin routes at /api/admin');
 app.use('/api/admin', adminRoutes);

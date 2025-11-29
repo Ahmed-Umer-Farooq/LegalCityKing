@@ -44,4 +44,21 @@ router.get('/chat-messages', getAllChatMessages);
 // Activity logs
 router.get('/activity-logs', getActivityLogs);
 
+// Call history for admin - get all calls
+router.get('/call-history', async (req, res) => {
+  try {
+    const db = require('../db');
+    const calls = await db('call_history')
+      .select('*')
+      .orderBy('created_at', 'desc')
+      .limit(100);
+    
+    console.log('Admin call history query result:', calls.length, 'calls found');
+    res.json(calls);
+  } catch (error) {
+    console.error('Error fetching admin call history:', error);
+    res.status(500).json({ error: 'Failed to fetch call history' });
+  }
+});
+
 module.exports = router;

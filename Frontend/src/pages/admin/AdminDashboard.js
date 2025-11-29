@@ -144,6 +144,15 @@ const AdminDashboard = () => {
     }
   }, [blogsSearch, blogsFilter]);
 
+  useEffect(() => {
+    if (activeTab === 'activity') {
+      const timeoutId = setTimeout(() => {
+        fetchActivityLogs();
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [logsSearch, logsFilter]);
+
   const refreshData = async () => {
     setRefreshing(true);
     if (activeTab === 'dashboard') {
@@ -300,37 +309,67 @@ const AdminDashboard = () => {
 
   const fetchActivityLogs = async () => {
     setLoading(true);
+    console.log('fetchActivityLogs called with filter:', logsFilter);
     try {
-      const response = await api.get('/admin/activity-logs', {
-        params: {
-          page: logsPagination.page,
-          limit: logsPagination.limit,
-          type: logsFilter !== 'all' ? logsFilter : undefined
+      if (logsFilter === 'call_logs') {
+        // Fetch all call history for admin
+        console.log('Fetching call logs...');
+        try {
+          const response = await api.get('/admin/call-history');
+          const calls = response.data || [];
+          console.log('Call history API response:', calls);
+          
+          if (calls.length === 0) {
+            console.log('No call history data found');
+            setActivityLogs([]);
+            return;
+          }
+          
+          const formattedLogs = calls.map(call => ({
+            id: call.id,
+            event: `Voice Call: ${call.partner_name}`,
+            user: `${call.user_type === 'lawyer' ? '⚖️' : '👤'} ${call.partner_name}`,
+            details: `${call.call_type} call lasted ${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')} minutes`,
+            timestamp: new Date(call.created_at).toLocaleDateString(),
+            status: 'success',
+            type: 'call_logs'
+          }));
+          console.log('Formatted call logs:', formattedLogs);
+          setActivityLogs(formattedLogs);
+        } catch (error) {
+          console.error('Error fetching call logs:', error);
+          setActivityLogs([]);
         }
-      });
-      
-      const activities = response.data?.activities || [];
-      
-      // Format the activities for display
-      const formattedLogs = activities.map(activity => ({
-        id: activity.id,
-        event: activity.event,
-        user: activity.user,
-        details: activity.details,
-        timestamp: new Date(activity.timestamp).toLocaleDateString(),
-        status: activity.status,
-        type: activity.type
-      }));
-      
-      setActivityLogs(formattedLogs);
-      setLogsPagination(prev => ({ 
-        ...prev, 
-        total: response.data?.pagination?.total || 0,
-        totalPages: response.data?.pagination?.totalPages || 1
-      }));
+      } else {
+        // Original working activity logs API
+        const response = await api.get('/admin/activity-logs', {
+          params: {
+            page: logsPagination.page,
+            limit: logsPagination.limit,
+            type: logsFilter !== 'all' ? logsFilter : undefined
+          }
+        });
+        
+        const activities = response.data?.activities || [];
+        const formattedLogs = activities.map(activity => ({
+          id: activity.id,
+          event: activity.event,
+          user: activity.user,
+          details: activity.details,
+          timestamp: new Date(activity.timestamp).toLocaleDateString(),
+          status: activity.status,
+          type: activity.type
+        }));
+        
+        setActivityLogs(formattedLogs);
+        setLogsPagination(prev => ({ 
+          ...prev, 
+          total: response.data?.pagination?.total || 0,
+          totalPages: response.data?.pagination?.totalPages || 1
+        }));
+      }
     } catch (error) {
       console.error('Error fetching activity logs:', error);
-      // Fallback to empty array if API fails
       setActivityLogs([]);
     }
     setLoading(false);
@@ -1460,6 +1499,7 @@ const AdminDashboard = () => {
               <option value="chat_activity">Chat Activities</option>
               <option value="blog_activity">Blog Activities</option>
               <option value="report_activity">Report Activities</option>
+              <option value="call_logs">Call Logs</option>
             </select>
           </div>
         </div>
@@ -1488,14 +1528,16 @@ const AdminDashboard = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-medium text-gray-900">{log.event}</span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
+                        <span className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${
                           log.type === 'user_registration' ? 'bg-blue-100 text-blue-800' :
                           log.type === 'lawyer_activity' ? 'bg-purple-100 text-purple-800' :
                           log.type === 'chat_activity' ? 'bg-green-100 text-green-800' :
                           log.type === 'blog_activity' ? 'bg-orange-100 text-orange-800' :
                           log.type === 'report_activity' ? 'bg-red-100 text-red-800' :
+                          log.type === 'call_logs' ? 'bg-indigo-100 text-indigo-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
+                          {log.type === 'call_logs' && <Phone className="w-3 h-3" />}
                           {log.type?.replace('_', ' ') || 'activity'}
                         </span>
                       </div>
