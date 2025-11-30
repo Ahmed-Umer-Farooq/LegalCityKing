@@ -520,7 +520,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    // AuthContext logout() already handles redirection to login page
   };
 
   // Dashboard Stats View

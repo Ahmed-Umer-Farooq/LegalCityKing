@@ -63,12 +63,12 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     }
   ];
   
+  const { logout } = useAuth();
+  
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      sessionStorage.clear();
-      navigate('/logout');
+      logout();
+      // AuthContext logout() already handles redirection to login page
     }
   };
 

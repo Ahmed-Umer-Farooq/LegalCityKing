@@ -177,7 +177,7 @@ export default function LawyerDashboard() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     sessionStorage.clear();
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   const getStatusColors = (status) => {
