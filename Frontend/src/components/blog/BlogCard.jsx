@@ -81,19 +81,19 @@ const BlogCard = ({ blog, onAnalytics, onDelete, formatTimeAgo }) => {
             <BarChart3 className="w-4 h-4" />
             Analytics
           </button>
-          <button onClick={() => window.open(`/blog/${blog.id}`, '_blank')} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={() => window.open(`/blog/${blog.secure_id}`, '_blank')} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
             <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => {
-              navigator.clipboard.writeText(`${window.location.origin}/blog/${blog.id}`);
+              navigator.clipboard.writeText(`${window.location.origin}/blog/${blog.secure_id}`);
               alert('Link copied!');
             }}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Share className="w-4 h-4" />
           </button>
-          <button onClick={() => onDelete(blog.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+          <button onClick={() => onDelete(blog.secure_id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>

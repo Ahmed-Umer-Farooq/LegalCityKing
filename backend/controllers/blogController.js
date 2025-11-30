@@ -1,4 +1,5 @@
 const db = require('../db');
+const crypto = require('crypto');
 
 const blogController = {
   // Get all published blogs (public endpoint)
@@ -9,7 +10,7 @@ const blogController = {
 
       let query = db('blogs')
         .select(
-          'blogs.id',
+          'blogs.secure_id',
           'blogs.title',
           'blogs.slug',
           'blogs.excerpt',
@@ -18,7 +19,11 @@ const blogController = {
           'blogs.views_count',
           'blogs.published_at',
           'blogs.author_name',
-          'blogs.author_id'
+          'blogs.author_id',
+          'blogs.meta_title',
+          'blogs.focus_keyword',
+          'blogs.meta_description',
+          'blogs.image_alt_text'
         )
         .count('blog_comments.id as comment_count')
         .count('blog_likes.id as like_count')
@@ -38,14 +43,17 @@ const blogController = {
     }
   },
 
-  // Get single blog by slug
+  // Get single blog by slug or secure_id
   getBlogBySlug: async (req, res) => {
     try {
       const { identifier } = req.params;
       
       const blog = await db('blogs')
         .select('blogs.*')
-        .where({ 'blogs.slug': identifier, 'blogs.status': 'published' })
+        .where(function() {
+          this.where({ 'blogs.slug': identifier, 'blogs.status': 'published' })
+              .orWhere({ 'blogs.secure_id': identifier, 'blogs.status': 'published' });
+        })
         .first();
 
       if (!blog) {
@@ -62,14 +70,14 @@ const blogController = {
     }
   },
 
-  // Get single blog by ID (check ownership for unpublished)
+  // Get single blog by secure_id (check ownership for unpublished)
   getBlogById: async (req, res) => {
     try {
       const { identifier } = req.params;
       
       const blog = await db('blogs')
         .select('blogs.*')
-        .where('blogs.id', identifier)
+        .where('blogs.secure_id', identifier)
         .first();
 
       if (!blog) {
@@ -116,18 +124,17 @@ const blogController = {
   // Get top authors with post counts
   getTopAuthors: async (req, res) => {
     try {
-      const authors = await db('users')
+      const authors = await db('lawyers')
         .select(
-          'users.id',
-          'users.name',
-          'users.email',
+          'lawyers.id',
+          'lawyers.name',
+          'lawyers.email',
           'lawyers.profile_image'
         )
         .count('blogs.id as post_count')
-        .innerJoin('blogs', 'users.id', 'blogs.author_id')
-        .leftJoin('lawyers', 'users.email', 'lawyers.email')
+        .innerJoin('blogs', 'lawyers.id', 'blogs.author_id')
         .where('blogs.status', 'published')
-        .groupBy('users.id', 'users.name', 'users.email', 'lawyers.profile_image')
+        .groupBy('lawyers.id', 'lawyers.name', 'lawyers.email', 'lawyers.profile_image')
         .orderBy('post_count', 'desc')
         .limit(5);
 
@@ -179,7 +186,7 @@ const blogController = {
     try {
       const posts = await db('blogs')
         .select(
-          'blogs.id',
+          'blogs.secure_id',
           'blogs.title',
           'blogs.slug',
           'blogs.excerpt',
@@ -187,7 +194,11 @@ const blogController = {
           'blogs.category',
           'blogs.views_count',
           'blogs.published_at',
-          'blogs.author_name'
+          'blogs.author_name',
+          'blogs.meta_title',
+          'blogs.focus_keyword',
+          'blogs.meta_description',
+          'blogs.image_alt_text'
         )
         .where('blogs.status', 'published')
         .orderBy('blogs.views_count', 'desc')
@@ -203,7 +214,20 @@ const blogController = {
   // Create new blog (lawyers only)
   createBlog: async (req, res) => {
     try {
-      const { title, content, category, excerpt, imageUrl, tags, author_name } = req.body;
+      const { 
+        title, 
+        content, 
+        category, 
+        excerpt, 
+        imageUrl, 
+        tags, 
+        author_name,
+        slug: customSlug,
+        meta_title,
+        focus_keyword,
+        meta_description,
+        image_alt_text
+      } = req.body;
       
       // Handle image - either uploaded file or URL
       let featured_image = '';
@@ -218,13 +242,23 @@ const blogController = {
         return res.status(400).json({ message: 'Title, content, category, and author name are required' });
       }
 
-      // Generate slug from title
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      // Generate secure random ID
+      const secure_id = crypto.randomBytes(16).toString('hex');
+      
+      // Generate slug from title or use custom slug
+      const slug = customSlug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       
       // Generate excerpt if not provided
       const blogExcerpt = excerpt || content.substring(0, 200) + '...';
       
+      // Generate meta_title if not provided (use title, truncated to 60 chars)
+      const metaTitle = meta_title || title.substring(0, 60);
+      
+      // Generate meta_description if not provided (use excerpt, truncated to 160 chars)
+      const metaDescription = meta_description || blogExcerpt.substring(0, 160);
+      
       const [blogId] = await db('blogs').insert({
+        secure_id,
         title,
         slug,
         content,
@@ -234,6 +268,10 @@ const blogController = {
         tags: tags ? JSON.stringify(tags) : null,
         author_id: req.user.id,
         author_name: author_name,
+        meta_title: metaTitle,
+        focus_keyword: focus_keyword || null,
+        meta_description: metaDescription,
+        image_alt_text: image_alt_text || null,
         status: 'published',
         published_at: new Date()
       });
@@ -250,7 +288,20 @@ const blogController = {
   updateBlog: async (req, res) => {
     try {
       const { identifier } = req.params;
-      const { title, content, category, excerpt, featured_image, tags, status } = req.body;
+      const { 
+        title, 
+        content, 
+        category, 
+        excerpt, 
+        featured_image, 
+        tags, 
+        status,
+        slug: customSlug,
+        meta_title,
+        focus_keyword,
+        meta_description,
+        image_alt_text
+      } = req.body;
       
       const updateData = {
         updated_at: new Date()
@@ -258,7 +309,7 @@ const blogController = {
       
       if (title) {
         updateData.title = title;
-        updateData.slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        updateData.slug = customSlug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       }
       if (content) updateData.content = content;
       if (category) updateData.category = category;
@@ -266,14 +317,18 @@ const blogController = {
       if (featured_image) updateData.featured_image = featured_image;
       if (tags) updateData.tags = JSON.stringify(tags);
       if (status && ['draft', 'pending'].includes(status)) updateData.status = status;
+      if (meta_title) updateData.meta_title = meta_title;
+      if (focus_keyword) updateData.focus_keyword = focus_keyword;
+      if (meta_description) updateData.meta_description = meta_description;
+      if (image_alt_text) updateData.image_alt_text = image_alt_text;
 
-      const updated = await db('blogs').where('id', identifier).update(updateData);
+      const updated = await db('blogs').where('secure_id', identifier).update(updateData);
       
       if (!updated) {
         return res.status(404).json({ message: 'Blog not found' });
       }
 
-      const updatedBlog = await db('blogs').where('id', identifier).first();
+      const updatedBlog = await db('blogs').where('secure_id', identifier).first();
       res.json(updatedBlog);
     } catch (error) {
       console.error('Error updating blog:', error);
@@ -286,7 +341,7 @@ const blogController = {
     try {
       const { identifier } = req.params;
       
-      const deleted = await db('blogs').where('id', identifier).del();
+      const deleted = await db('blogs').where('secure_id', identifier).del();
       
       if (!deleted) {
         return res.status(404).json({ message: 'Blog not found' });
@@ -307,7 +362,7 @@ const blogController = {
       
       let query = db('blogs')
         .select(
-          'blogs.id', 
+          'blogs.secure_id', 
           'blogs.title', 
           'blogs.slug', 
           'blogs.excerpt', 
@@ -316,7 +371,11 @@ const blogController = {
           'blogs.views_count', 
           'blogs.created_at', 
           'blogs.updated_at',
-          'blogs.author_name'
+          'blogs.author_name',
+          'blogs.meta_title',
+          'blogs.focus_keyword',
+          'blogs.meta_description',
+          'blogs.image_alt_text'
         )
         .where('blogs.author_id', req.user.id);
       
@@ -480,7 +539,7 @@ const blogController = {
       // Get blogs with analytics
       const blogs = await db('blogs')
         .select(
-          'blogs.id',
+          'blogs.secure_id',
           'blogs.title',
           'blogs.featured_image',
           'blogs.status',
@@ -510,8 +569,11 @@ const blogController = {
       const { blog_id } = req.params;
       const lawyerId = req.user.id;
       
-      // Verify blog ownership
-      const blog = await db('blogs').where({ id: blog_id, author_id: lawyerId }).first();
+      // Verify blog ownership - check by secure_id first, then fallback to id
+      let blog = await db('blogs').where({ secure_id: blog_id, author_id: lawyerId }).first();
+      if (!blog) {
+        blog = await db('blogs').where({ id: blog_id, author_id: lawyerId }).first();
+      }
       if (!blog) {
         return res.status(404).json({ message: 'Blog not found or access denied' });
       }
@@ -519,7 +581,7 @@ const blogController = {
       // Get engagement metrics
       const metrics = await db('blogs')
         .select(
-          'blogs.id',
+          'blogs.secure_id',
           'blogs.title',
           'blogs.views_count',
           'blogs.created_at'
@@ -530,7 +592,7 @@ const blogController = {
         .leftJoin('blog_comments', 'blogs.id', 'blog_comments.blog_id')
         .leftJoin('blog_likes', 'blogs.id', 'blog_likes.blog_id')
         .leftJoin('blog_saves', 'blogs.id', 'blog_saves.blog_id')
-        .where('blogs.id', blog_id)
+        .where('blogs.id', blog.id)
         .groupBy('blogs.id')
         .first();
 
@@ -542,21 +604,21 @@ const blogController = {
           'users.role as user_role'
         )
         .leftJoin('users', 'blog_comments.user_id', 'users.id')
-        .where('blog_comments.blog_id', blog_id)
+        .where('blog_comments.blog_id', blog.id)
         .orderBy('blog_comments.created_at', 'desc');
 
       // Get users who liked the blog
       const likes = await db('blog_likes')
         .select('users.name', 'users.id', 'blog_likes.created_at')
         .leftJoin('users', 'blog_likes.user_id', 'users.id')
-        .where('blog_likes.blog_id', blog_id)
+        .where('blog_likes.blog_id', blog.id)
         .orderBy('blog_likes.created_at', 'desc');
 
       // Get users who saved the blog
       const saves = await db('blog_saves')
         .select('users.name', 'users.id', 'blog_saves.created_at')
         .leftJoin('users', 'blog_saves.user_id', 'users.id')
-        .where('blog_saves.blog_id', blog_id)
+        .where('blog_saves.blog_id', blog.id)
         .orderBy('blog_saves.created_at', 'desc');
 
       res.json({

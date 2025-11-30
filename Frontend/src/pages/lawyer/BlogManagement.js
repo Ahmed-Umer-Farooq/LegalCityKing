@@ -44,8 +44,13 @@ const BlogManagement = () => {
       setLoading(true);
       const response = await api.get('/blogs');
       const blogsData = response.data?.data || response.data || [];
-      // Filter blogs by current user (author_id: 44 from the token)
-      const userBlogs = blogsData.filter(blog => blog.author_id === 44);
+      // Get current user from token
+      const token = localStorage.getItem('token');
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentUserId = payload.id;
+      
+      // Filter blogs by current user
+      const userBlogs = blogsData.filter(blog => blog.author_id === currentUserId);
       setBlogs(Array.isArray(userBlogs) ? userBlogs : []);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -620,7 +625,7 @@ const BlogManagement = () => {
                         onClick={() => {
                           setSelectedBlog(blog);
                           setActiveView('analytics');
-                          fetchBlogAnalytics(blog.id);
+                          fetchBlogAnalytics(blog.secure_id);
                         }}
                         className="flex-1 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2"
                       >
@@ -628,7 +633,7 @@ const BlogManagement = () => {
                         Analytics
                       </button>
                       <button
-                        onClick={() => handleDelete(blog.id)}
+                        onClick={() => handleDelete(blog.secure_id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -129,10 +129,11 @@ router.post('/:blog_id/report', (req, res, next) => {
   next();
 }, blogController.reportBlog);
 
-// GET /api/blogs/:id - Get single blog (must be last)
+// GET /api/blogs/:identifier - Get single blog by slug or secure_id (must be last)
 router.get('/:identifier', (req, res) => {
   const { identifier } = req.params;
-  if (/^\d+$/.test(identifier)) {
+  // If it's a 32-character hex string, treat as secure_id, otherwise treat as slug
+  if (/^[a-f0-9]{32}$/.test(identifier)) {
     blogController.getBlogById(req, res);
   } else {
     blogController.getBlogBySlug(req, res);

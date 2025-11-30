@@ -127,16 +127,12 @@ const requireAuth = async (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  // Check both users and lawyers tables
-  let user = await db('users').where('id', decoded.id).first();
-  if (!user) {
-    user = await db('lawyers').where('id', decoded.id).first();
-    if (user) {
-      user.role = 'lawyer'; // Set role for lawyers
-      // Ensure verification fields are available
-      user.is_verified = user.is_verified || 0;
-      user.lawyer_verified = user.lawyer_verified || 0;
-    }
+  // Only check lawyers table for blog operations
+  const user = await db('lawyers').where('id', decoded.id).first();
+  if (user) {
+    user.role = 'lawyer';
+    user.is_verified = user.is_verified || 0;
+    user.lawyer_verified = user.lawyer_verified || 0;
   }
 
   if (!user) {
@@ -152,12 +148,12 @@ const requireLawyer = (req, res, next) => {
     return res.status(401).json({ message: 'Authentication required' });
   }
 
-  if (req.user.role !== 'lawyer' && req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Lawyer or admin access required' });
+  if (req.user.role !== 'lawyer') {
+    return res.status(403).json({ message: 'Only lawyers can access this resource' });
   }
 
-  // Check if lawyer is verified (only for lawyers, not admins)
-  if (req.user.role === 'lawyer' && (!req.user.is_verified || !req.user.lawyer_verified)) {
+  // Check if lawyer is verified
+  if (!req.user.is_verified || !req.user.lawyer_verified) {
     return res.status(403).json({ message: 'Only verified lawyers can create blogs' });
   }
 
@@ -183,13 +179,18 @@ const checkBlogOwnership = async (req, res, next) => {
     }
 
     const { id, identifier } = req.params;
-    const blogId = id || identifier;
+    const blogIdentifier = id || identifier;
 
-    if (!blogId) {
-      return res.status(400).json({ message: 'Blog ID required' });
+    if (!blogIdentifier) {
+      return res.status(400).json({ message: 'Blog identifier required' });
     }
 
-    const blog = await db('blogs').where('id', blogId).first();
+    // Check by secure_id first, then fallback to id for backward compatibility
+    let blog = await db('blogs').where('secure_id', blogIdentifier).first();
+    if (!blog) {
+      blog = await db('blogs').where('id', blogIdentifier).first();
+    }
+    
     if (!blog) {
       return res.status(404).json({ message: 'Blog not found' });
     }
