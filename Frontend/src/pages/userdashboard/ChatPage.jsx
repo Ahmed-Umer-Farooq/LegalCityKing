@@ -379,20 +379,7 @@ const ChatPage = () => {
     }
   };
 
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  const scrollToBottomInstant = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-  };
-
-  // Auto-scroll when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Removed auto-scroll functionality
   
   // Handle audio streams
   useEffect(() => {
@@ -1178,7 +1165,7 @@ const ChatPage = () => {
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
+        
             </div>
 
             {/* Message Input */}

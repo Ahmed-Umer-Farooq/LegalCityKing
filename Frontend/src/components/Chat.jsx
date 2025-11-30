@@ -72,10 +72,6 @@ const Chat = ({ currentUser }) => {
     };
   }, [currentUser.id, currentUser.role, activeChat]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const loadConversations = async () => {
     try {
       const convs = await chatService.getConversations();
@@ -156,9 +152,7 @@ const Chat = ({ currentUser }) => {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+
 
   return (
     <div className="flex h-96 bg-white rounded-lg shadow-md">
@@ -227,7 +221,7 @@ const Chat = ({ currentUser }) => {
                   </div>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
+
             </div>
 
             <div className="p-4 border-t border-gray-200 flex">
