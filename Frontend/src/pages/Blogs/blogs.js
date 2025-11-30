@@ -70,7 +70,7 @@ const BlogCard = ({ id, image, category, title, author, authorImage, date, comme
   return (
     <article 
       onClick={handleClick}
-      className="blog-card bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-4 hover:shadow-lg cursor-pointer transition-all duration-300 hover:-translate-y-1"
+      className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl cursor-pointer transition-all duration-300 hover:-translate-y-2"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -81,68 +81,68 @@ const BlogCard = ({ id, image, category, title, author, authorImage, date, comme
       }}
       aria-label={`Read article: ${title}`}
     >
-      {getImageSrc(image) ? (
-        <img 
-          src={getImageSrc(image)} 
-          alt={title || "Blog post"} 
-          className="w-full h-48 object-cover rounded-md" 
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      ) : (
-        <div className="w-full h-48 bg-gradient-to-br from-[#E7EFFD] via-[#B8D4F1] to-[#0071BC] rounded-md flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-              </svg>
+      <div className="relative overflow-hidden">
+        {getImageSrc(image) ? (
+          <img 
+            src={getImageSrc(image)} 
+            alt={title || "Blog post"} 
+            className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300" 
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-56 bg-gradient-to-br from-[#E7EFFD] via-[#B8D4F1] to-[#0071BC] flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-3 bg-white/20 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="text-white font-medium text-sm">{category || 'Legal'} Blog</span>
             </div>
-            <span className="text-white font-medium text-sm">{category || 'Legal'} Blog</span>
           </div>
+        )}
+        <div className="absolute top-4 left-4">
+          <span className="inline-flex px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-[#0071BC] text-sm font-semibold shadow-sm">
+            {category}
+          </span>
         </div>
-      )}
-      <div className="flex flex-col gap-3 p-1">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-start justify-between">
-            <div className="inline-flex px-2.5 py-1 justify-center items-center rounded-md bg-[rgba(75,107,251,0.05)]">
-              <span className="text-[#0082C8] text-sm font-medium">{category}</span>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onReport(id, title);
-              }}
-              className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
-              title="Report this blog"
-            >
-              <Flag className="w-4 h-4" />
-            </button>
-          </div>
-          <h3 className="text-[#181A2A] text-lg font-semibold leading-6 line-clamp-2">
-            {title}
-          </h3>
-        </div>
-        <div className="flex items-center justify-between">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onReport(id, title);
+          }}
+          className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 hover:bg-white transition-all shadow-sm"
+          title="Report this blog"
+        >
+          <Flag className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="p-6">
+        <h3 className="text-[#181A2A] text-xl font-bold leading-tight mb-3 line-clamp-2 group-hover:text-[#0071BC] transition-colors">
+          {title}
+        </h3>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center gap-3">
             {getAuthorImageSrc(authorImage) ? (
               <img 
                 src={getAuthorImageSrc(authorImage)} 
                 alt={author} 
-                className="w-9 h-9 rounded-full object-cover" 
+                className="w-10 h-10 rounded-full object-cover" 
                 onLoad={() => console.log('✅ Author image loaded:', authorImage)}
                 onError={handleAuthorImageError}
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{author?.charAt(0) || 'A'}</span>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{author?.charAt(0) || 'A'}</span>
               </div>
             )}
-            <span className="text-[#97989F] text-base font-medium">{author}</span>
+            <div>
+              <p className="text-[#181A2A] font-semibold text-sm">{author}</p>
+              <p className="text-[#97989F] text-xs">{date}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[#97989F] text-base">{date}</span>
-            <CommentCount count={comment_count} className="text-[#97989F]" />
-          </div>
+          <CommentCount count={comment_count} className="text-[#97989F]" />
         </div>
       </div>
     </article>
@@ -193,27 +193,35 @@ const CategoriesWidget = ({ onCategoryClick, selectedCategory }) => {
   }
 
   return (
-    <div className="sidebar-widget">
-      <div className="h-12 bg-gradient-to-b from-[#0071BC] to-[#00D2FF] flex items-center px-4">
-        <h2 className="text-white text-lg font-semibold capitalize">Categories</h2>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-4">
+        <h2 className="text-white text-xl font-bold">Categories</h2>
       </div>
-      <div className="compact-padding">
-        {categories && categories.length > 0 ? categories.map((category, index) => (
-          <div key={index}>
-            <button 
-              onClick={() => onCategoryClick(category.name)}
-              className={`w-full flex justify-between items-center py-3 hover:bg-gray-50 transition-colors ${
-                selectedCategory === category.name ? 'bg-blue-50 text-blue-600' : ''
-              }`}
-            >
-              <span className="text-[15px] font-medium capitalize">{category.name}</span>
-              <span className="text-[15px] font-medium">{category.count?.toString().padStart(2, '0') || '00'}</span>
-            </button>
-            {index < categories.length - 1 && <div className="h-px bg-[#D1E7E5]"></div>}
+      <div className="p-6">
+        {categories && categories.length > 0 ? (
+          <div className="space-y-3">
+            {categories.map((category, index) => (
+              <button 
+                key={index}
+                onClick={() => onCategoryClick(category.name)}
+                className={`w-full flex justify-between items-center py-3 px-4 rounded-lg transition-all ${
+                  selectedCategory === category.name 
+                    ? 'bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white shadow-md' 
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <span className="font-semibold capitalize">{category.name}</span>
+                <span className={`px-2 py-1 rounded-full text-sm font-bold ${
+                  selectedCategory === category.name ? 'bg-white/20' : 'bg-gray-100'
+                }`}>
+                  {category.count?.toString().padStart(2, '0') || '00'}
+                </span>
+              </button>
+            ))}
           </div>
-        )) : (
-          <div className="p-4 text-center text-gray-500">
-            No categories available
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            <p>No categories available</p>
           </div>
         )}
       </div>
@@ -269,47 +277,51 @@ const TopAuthorsWidget = () => {
   }
 
   return (
-    <div className="sidebar-widget">
-      <div className="h-12 bg-gradient-to-b from-[#0071BC] to-[#00D2FF] flex items-center px-4">
-        <h2 className="text-white text-lg font-semibold capitalize">top authors</h2>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-4">
+        <h2 className="text-white text-xl font-bold">Top Authors</h2>
       </div>
-      <div className="compact-padding flex flex-col compact-spacing">
-        {authors.map((author) => (
-          <div key={author.id} className="flex gap-3">
-            {author.profile_image ? (
-              <img 
-                src={author.profile_image} 
-                alt={author.name} 
-                className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                onError={(e) => {
-                  console.error('❌ Top author image failed:', author.profile_image);
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center flex-shrink-0" style={{display: author.profile_image ? 'none' : 'flex'}}>
-              <span className="text-white text-sm font-bold">{author.name?.charAt(0) || 'A'}</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-[#222] text-sm font-semibold capitalize mb-1">{author.name}</h3>
-              <p className="text-[#666] text-xs font-light leading-[150%] capitalize mb-2">
-                {author.bio || `${author.post_count} articles`}
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-[#0071BC] text-xs font-medium">{author.post_count} Posts</span>
-                <div className="flex gap-1.5">
-                  {[...Array(Math.min(author.post_count, 5))].map((_, i) => (
-                    <div key={i} className="w-[18px] h-[18px] rounded-sm border border-[#C4C4C4] bg-gradient-to-b from-[#0071BC] to-[#00D2FF]"></div>
-                  ))}
-                  {[...Array(Math.max(0, 5 - author.post_count))].map((_, i) => (
-                    <div key={i} className="w-[18px] h-[18px] rounded-sm border border-[#C4C4C4]"></div>
-                  ))}
+      <div className="p-6">
+        <div className="space-y-6">
+          {authors.map((author) => (
+            <div key={author.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+              {author.profile_image ? (
+                <img 
+                  src={author.profile_image} 
+                  alt={author.name} 
+                  className="w-14 h-14 rounded-full object-cover flex-shrink-0 ring-2 ring-gray-100"
+                  onError={(e) => {
+                    console.error('❌ Top author image failed:', author.profile_image);
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center flex-shrink-0 ring-2 ring-gray-100" style={{display: author.profile_image ? 'none' : 'flex'}}>
+                <span className="text-white text-lg font-bold">{author.name?.charAt(0) || 'A'}</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[#181A2A] font-bold text-lg capitalize mb-1">{author.name}</h3>
+                <p className="text-[#666] text-sm mb-3">
+                  {author.bio || `${author.post_count} articles published`}
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    {author.post_count} Posts
+                  </span>
+                  <div className="flex gap-1">
+                    {[...Array(Math.min(author.post_count, 5))].map((_, i) => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-gradient-to-r from-[#0071BC] to-[#00D2FF]"></div>
+                    ))}
+                    {[...Array(Math.max(0, 5 - author.post_count))].map((_, i) => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-gray-200"></div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -357,20 +369,20 @@ const TagsWidget = ({ onTagClick, selectedTag }) => {
   }
 
   return (
-    <div className="sidebar-widget">
-      <div className="h-12 bg-gradient-to-b from-[#0071BC] to-[#00D2FF] flex items-center px-4">
-        <h2 className="text-white text-lg font-semibold capitalize">Search with tags</h2>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-4">
+        <h2 className="text-white text-xl font-bold">Search Tags</h2>
       </div>
-      <div className="compact-padding">
-        <div className="flex flex-wrap gap-2">
+      <div className="p-6">
+        <div className="flex flex-wrap gap-3">
           {tags.map((tag, index) => (
             <button
               key={index}
               onClick={() => onTagClick(tag.name)}
-              className={`px-5 py-2.5 rounded text-[15px] capitalize transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold capitalize transition-all ${
                 selectedTag === tag.name
-                  ? 'border-transparent bg-gradient-to-b from-[#0071BC] to-[#00D2FF] text-white'
-                  : 'border border-[#C4C4C4] text-[#666] hover:border-[#0071BC]'
+                  ? 'bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               {tag.name}
@@ -431,40 +443,43 @@ const PopularPostsWidget = () => {
   }
 
   return (
-    <div className="sidebar-widget">
-      <div className="h-12 bg-gradient-to-b from-[#0071BC] to-[#00D2FF] flex items-center px-4">
-        <h2 className="text-white text-lg font-semibold capitalize">Popular posted</h2>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-4">
+        <h2 className="text-white text-xl font-bold">Popular Posts</h2>
       </div>
-      <div className="compact-padding flex flex-col compact-spacing">
-        {posts.map((post) => (
-          <div key={post.id} className="flex gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
-            <img 
-              src={post.featured_image && post.featured_image.trim() !== '' 
-                ? (post.featured_image.startsWith('http') ? post.featured_image : `http://localhost:5001${post.featured_image}`)
-                : `https://picsum.photos/80/64?seed=legal${post.id}`
-              } 
-              alt={post.title || "Popular post"} 
-              className="w-20 h-16 rounded object-cover flex-shrink-0"
-              onError={(e) => {
-                e.target.src = `https://picsum.photos/80/64?seed=legal${post.id}`;
-              }}
-            />
-            <div className="flex-1 flex flex-col">
-              <div className="inline-flex px-1.5 py-1 rounded bg-[#F6F8FF] self-start mb-2">
-                <span className="text-[#666] text-[10px] capitalize">{post.category}</span>
-              </div>
-              <h4 className="text-[#222] text-sm font-medium leading-[150%] capitalize mb-auto line-clamp-2">
-                {post.title}
-              </h4>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="w-4 h-4 rounded-full bg-gray-300"></div>
-                <span className="text-[#777] text-[10px] capitalize">{post.author_name}</span>
-                <div className="w-2.5 h-px bg-[#999]"></div>
-                <span className="text-[#777] text-[10px]">{post.views_count} views</span>
+      <div className="p-6">
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <div key={post.id} className="group cursor-pointer hover:bg-gray-50 p-4 rounded-xl transition-all">
+              <div className="flex gap-4">
+                <img 
+                  src={post.featured_image && post.featured_image.trim() !== '' 
+                    ? (post.featured_image.startsWith('http') ? post.featured_image : `http://localhost:5001${post.featured_image}`)
+                    : `https://picsum.photos/80/64?seed=legal${post.id}`
+                  } 
+                  alt={post.title || "Popular post"} 
+                  className="w-20 h-16 rounded-lg object-cover flex-shrink-0 group-hover:scale-105 transition-transform"
+                  onError={(e) => {
+                    e.target.src = `https://picsum.photos/80/64?seed=legal${post.id}`;
+                  }}
+                />
+                <div className="flex-1">
+                  <span className="inline-block px-2 py-1 bg-blue-50 text-[#0071BC] text-xs font-semibold rounded-full mb-2 capitalize">
+                    {post.category}
+                  </span>
+                  <h4 className="text-[#181A2A] font-bold text-sm leading-tight mb-3 line-clamp-2 group-hover:text-[#0071BC] transition-colors">
+                    {post.title}
+                  </h4>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="capitalize font-medium">{post.author_name}</span>
+                    <span>•</span>
+                    <span>{post.views_count} views</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -483,8 +498,10 @@ const Blog = () => {
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAllBlogs, setShowAllBlogs] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [reportModal, setReportModal] = useState({ isOpen: false, blogId: null, blogTitle: '' });
+  
+  const POSTS_PER_PAGE = 10;
   
   // Check if coming from user dashboard or admin dashboard
   const fromUserDashboard = location.pathname === '/user/legal-blog';
@@ -622,6 +639,7 @@ const Blog = () => {
     
     console.log('✅ Final filtered posts:', filtered.length);
     setFilteredPosts(filtered);
+    setCurrentPage(1);
   }, [searchTerm, selectedCategory, currentBlogPosts]);
 
   const handleSearch = () => {
@@ -646,7 +664,9 @@ const Blog = () => {
   };
 
   const allPosts = filteredPosts.length > 0 ? filteredPosts : currentBlogPosts;
-  const displayPosts = showAllBlogs ? allPosts : allPosts.slice(0, 6);
+  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+  const displayPosts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
   const handleReport = (blogId, blogTitle) => {
     setReportModal({ isOpen: true, blogId, blogTitle });
@@ -802,43 +822,71 @@ const Blog = () => {
         </div>
       </div>
 
-      <section className="w-full px-4 md:px-8 lg:px-24 py-6">
-        <div className="blog-container">
-          <div className="flex flex-col lg:flex-row gap-6">
+      <section className="w-full">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row gap-12">
             {/* Blog Posts */}
-            <div className="blog-main flex-1">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-[#181A2A] text-2xl font-bold">Latest Blogs</h2>
-                {/* LawyerActions removed - using existing dashboard */}
+            <div className="flex-1 max-w-4xl">
+              <div className="mb-12">
+                <h2 className="text-[#181A2A] text-3xl font-bold mb-2">Latest Blogs</h2>
+                <p className="text-gray-600">Stay updated with expert legal insights and analysis</p>
               </div>
               
-              <div className="blog-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                 {displayPosts.map((post, index) => (
                   <BlogCard key={post.id || index} {...post} onReport={handleReport} />
                 ))}
               </div>
               
               {displayPosts.length === 0 && searchTerm && (
-                <div className="text-center py-8">
+                <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                  <div className="text-gray-400 mb-4">
+                    <Search className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No articles found</h3>
                   <p className="text-gray-600">No blogs found matching "{searchTerm}"</p>
                 </div>
               )}
 
-              {!showAllBlogs && allPosts.length > 6 && (
-                <div className="flex justify-center">
-                  <button 
-                    onClick={() => setShowAllBlogs(true)}
-                    className="px-5 py-3 rounded-md border border-[#696A75]/30 text-[#696A75] text-base font-medium hover:bg-gray-50 transition-colors"
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    View All Blogs ({allPosts.length})
+                    Previous
+                  </button>
+                  
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`px-4 py-2 rounded-lg ${
+                        currentPage === i + 1
+                          ? 'bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
                   </button>
                 </div>
               )}
             </div>
 
             {/* Right Sidebar */}
-            <aside className="blog-sidebar w-full lg:w-[320px] flex-shrink-0">
-              <div className="sidebar-sticky flex flex-col gap-4">
+            <aside className="w-full lg:w-80 flex-shrink-0">
+              <div className="sticky top-8 space-y-8">
                 <CategoriesWidget 
                   onCategoryClick={handleCategoryClick} 
                   selectedCategory={selectedCategory} 
