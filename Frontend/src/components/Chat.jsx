@@ -97,7 +97,12 @@ const Chat = ({ currentUser }) => {
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!newMessage.trim() || !activeChat) return;
 
     const messageData = {
@@ -230,12 +235,23 @@ const Chat = ({ currentUser }) => {
                 type="text"
                 value={newMessage}
                 onChange={handleTyping}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sendMessage(e);
+                  }
+                }}
                 placeholder="Type a message..."
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 mr-2"
               />
               <button 
-                onClick={sendMessage}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sendMessage(e);
+                }}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
               >
                 Send

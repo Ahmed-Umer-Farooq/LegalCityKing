@@ -268,7 +268,11 @@ const ChatPage = () => {
   }, [socket, selectedConversation, user.id, userType]);
 
   const sendMessage = async (e) => {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if ((!newMessage.trim() && !selectedFile) || !selectedConversation || !socket || sending) return;
 
     setSending(true);
@@ -431,7 +435,10 @@ const ChatPage = () => {
   };
 
   const handleVoiceCall = async () => {
-    if (!selectedConversation || isInCall) return;
+    if (!selectedConversation || isInCall) {
+      console.log('Cannot start call: no conversation selected or already in call');
+      return;
+    }
     
     console.log('Starting voice call to:', selectedConversation.partner_name);
     
@@ -1037,12 +1044,25 @@ const ChatPage = () => {
                 
                 <div className="flex items-center space-x-2">
                   <button 
-                    onClick={() => handleVoiceCall()}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleVoiceCall();
+                    }}
                     className="p-3 hover:bg-green-50 rounded-2xl transition-all duration-300 hover:scale-110 group"
+                    title="Start Voice Call"
                   >
                     <Phone size={22} className="text-green-600 group-hover:text-green-700" />
                   </button>
-                  <button className="p-3 hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:scale-110 group">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="p-3 hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:scale-110 group"
+                  >
                     <MoreVertical size={22} className="text-gray-600 group-hover:text-gray-700" />
                   </button>
                 </div>
@@ -1199,7 +1219,11 @@ const ChatPage = () => {
                   />
                   <button 
                     type="button" 
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
                     disabled={uploading}
                     className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all duration-300 hover:scale-110 group disabled:opacity-50"
                   >
@@ -1215,11 +1239,22 @@ const ChatPage = () => {
                         type="text"
                         value={newMessage}
                         onChange={handleTyping}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            sendMessage(e);
+                          }
+                        }}
                         placeholder="Type your message..."
                         className="flex-1 outline-none text-gray-800 placeholder-gray-500 bg-transparent font-medium"
                       />
                       <button 
                         type="button" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-2xl transition-all duration-300 hover:scale-110"
                       >
                         <Smile size={20} />
@@ -1227,20 +1262,17 @@ const ChatPage = () => {
                     </div>
                   </div>
                   
-                  {/* Quick Actions */}
-                  <div className="absolute right-4 -top-12 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleVoiceCall()}
-                      className="p-2 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110"
-                    >
-                      <Phone size={16} className="text-green-500" />
-                    </button>
-                  </div>
+                  {/* Quick Actions - Removed to prevent accidental calls */}
                 </div>
                 
                 {/* Send Button */}
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sendMessage(e);
+                  }}
                   disabled={(!newMessage.trim() && !selectedFile) || uploading || sending}
                   className={`relative p-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl ${
                     (newMessage.trim() || selectedFile) && !uploading && !sending
