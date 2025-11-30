@@ -123,6 +123,28 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                     'share-2': Share2, 'user': User, 'settings': Settings
                   }[item.icon];
                   
+                  if (item.label === 'Dashboard') {
+                    return (
+                      <button
+                        key={itemIndex}
+                        onClick={() => navigate(item.path)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                          isCollapsed ? 'justify-center' : ''
+                        } ${
+                          isActive
+                            ? 'bg-[#0284C7]/10 text-[#0284C7] border border-[#0284C7]/20 shadow-sm backdrop-blur-sm' 
+                            : 'text-[#6B7280] hover:bg-[#0284C7]/5 hover:text-[#0284C7]'
+                        }`}
+                        title={isCollapsed ? item.label : ''}
+                      >
+                        <IconComponent className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && (
+                          <span className="font-medium text-sm">{item.label}</span>
+                        )}
+                      </button>
+                    );
+                  }
+                  
                   return (
                     <Link
                       key={itemIndex}

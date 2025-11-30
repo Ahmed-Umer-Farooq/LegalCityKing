@@ -611,7 +611,7 @@ const Layout = ({ children, showFooter = false }) => {
   }, []);
 
   const handleChatClick = () => {
-    navigate('/messages');
+    navigate('/user/messages');
   };
 
   return (

@@ -80,7 +80,7 @@ function App() {
         
         {/* SEO-Friendly User Dashboard Routes */}
         <Route element={<ProtectedRoute><SharedLayout /></ProtectedRoute>}>
-          <Route path="/user/dashboard" element={<Dashboard />} />
+
           <Route path="/user/legal-blog" element={<BlogPage />} />
           <Route path="/user/legal-blog/:id/:slug?" element={<BlogDetail />} />
           <Route path="/user/legal-blog/:id" element={<BlogDetail />} />
