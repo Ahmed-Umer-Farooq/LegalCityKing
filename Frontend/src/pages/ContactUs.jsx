@@ -1,7 +1,26 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, Facebook, Twitter, Instagram, Linkedin, Shield, Users, Award, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import SEOHead from '../components/SEOHead';
 
 const ContactUs = () => {
+  const navigate = useNavigate();
+  
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Contact Legal City",
+    "description": "Contact our experienced legal professionals for comprehensive legal services and exceptional results.",
+    "url": "https://legalcity.com/contact-us",
+    "mainEntity": {
+      "@type": "LegalService",
+      "name": "Legal City Contact",
+      "provider": {
+        "@type": "Organization",
+        "name": "LegalCity"
+      }
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -55,41 +74,72 @@ const ContactUs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Contact Legal City</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Connect with our experienced legal professionals. We provide comprehensive legal services 
-            and are committed to delivering exceptional results for our clients.
-          </p>
-        </div>
+    <>
+      <SEOHead 
+        title="Contact Legal City | Professional Legal Services"
+        description="Contact our experienced legal professionals for comprehensive legal services. Get expert legal consultation and exceptional results for your case."
+        keywords="contact lawyer, legal consultation, attorney contact, legal services, professional legal help"
+        canonical="https://legalcity.com/contact-us"
+        structuredData={structuredData}
+      />
 
-        {/* Trust Indicators */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-blue-600" />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section - Matching Home Page */}
+        <section className="relative w-full h-[500px] sm:h-[600px] bg-gradient-to-br from-blue-50 via-white to-gray-50">
+          <img
+            src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1440&h=600&fit=crop&auto=format&q=80"
+            srcSet="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=768&h=400&fit=crop&auto=format&q=80 768w, https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1440&h=600&fit=crop&auto=format&q=80 1440w"
+            sizes="(max-width: 768px) 768px, 1440px"
+            alt="Professional legal consultation - Contact Legal City"
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
+            loading="eager"
+            fetchpriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-blue-50/60 to-white/80" />
+
+          <div className="relative h-full flex items-center justify-center px-4 sm:px-6">
+            <div className="w-full max-w-[700px] text-center">
+              <h1 className="text-gray-900 text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                Contact <span className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] bg-clip-text text-transparent">Legal City</span>
+              </h1>
+              <p className="text-gray-700 text-xl sm:text-2xl mb-8 leading-relaxed font-medium">
+                Connect with Experienced Legal Professionals for Comprehensive Legal Services and Exceptional Results.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => navigate('/lawyers')}
+                  className="px-10 py-4 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
+                >
+                  Find Lawyers
+                </button>
+                <button
+                  onClick={() => navigate('/qa')}
+                  className="px-10 py-4 bg-white/90 backdrop-blur-md text-gray-800 font-bold rounded-xl hover:bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 text-lg"
+                >
+                  Ask Question
+                </button>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Confidential Consultation</h3>
-            <p className="text-gray-600">All communications are protected by attorney-client privilege</p>
           </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-green-600" />
+        </section>
+
+        <div className="max-w-7xl mx-auto px-4 py-16">
+
+          {/* Trust Indicators - Simplified */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 text-center">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Confidential Consultation</h3>
+              <p className="text-gray-600">All communications protected by attorney-client privilege</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Expert Legal Team</h3>
-            <p className="text-gray-600">Over 500+ qualified attorneys across multiple practice areas</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Award className="w-8 h-8 text-purple-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Expert Legal Team</h3>
+              <p className="text-gray-600">500+ qualified attorneys across multiple practice areas</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Proven Track Record</h3>
-            <p className="text-gray-600">Successfully resolved 10,000+ legal cases nationwide</p>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Proven Track Record</h3>
+              <p className="text-gray-600">10,000+ legal cases resolved nationwide</p>
+            </div>
           </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
           {/* Contact Information */}
@@ -98,84 +148,53 @@ const ContactUs = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-8">Contact Information</h2>
               
               <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Phone Numbers</h3>
-                    <p className="text-gray-600 mb-1">Main Office: +1 (555) 123-4567</p>
-                    <p className="text-gray-600">Emergency: +1 (555) 987-6543</p>
-                    <p className="text-sm text-blue-600 mt-1">Available 24/7 for urgent matters</p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Phone Numbers</h3>
+                  <p className="text-gray-600 mb-1">Main Office: +1 (555) 123-4567</p>
+                  <p className="text-gray-600">Emergency: +1 (555) 987-6543</p>
+                  <p className="text-sm text-blue-600 mt-1">Available 24/7 for urgent matters</p>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Email Addresses</h3>
-                    <p className="text-gray-600 mb-1">General Inquiries: info@legalcity.com</p>
-                    <p className="text-gray-600 mb-1">New Clients: intake@legalcity.com</p>
-                    <p className="text-gray-600">Support: support@legalcity.com</p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Email Addresses</h3>
+                  <p className="text-gray-600 mb-1">General: info@legalcity.com</p>
+                  <p className="text-gray-600 mb-1">New Clients: intake@legalcity.com</p>
+                  <p className="text-gray-600">Support: support@legalcity.com</p>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Office Location</h3>
-                    <p className="text-gray-600">Legal City Professional Center<br />1250 Broadway, Suite 3600<br />New York, NY 10001</p>
-                    <p className="text-sm text-blue-600 mt-1">Convenient subway access</p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Office Location</h3>
+                  <p className="text-gray-600">Legal City Professional Center<br />1250 Broadway, Suite 3600<br />New York, NY 10001</p>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Office Hours</h3>
-                    <p className="text-gray-600 mb-1">Monday - Friday: 8:00 AM - 7:00 PM</p>
-                    <p className="text-gray-600 mb-1">Saturday: 9:00 AM - 5:00 PM</p>
-                    <p className="text-gray-600">Sunday: By appointment only</p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Office Hours</h3>
+                  <p className="text-gray-600 mb-1">Monday - Friday: 8:00 AM - 7:00 PM</p>
+                  <p className="text-gray-600 mb-1">Saturday: 9:00 AM - 5:00 PM</p>
+                  <p className="text-gray-600">Sunday: By appointment only</p>
                 </div>
               </div>
             </div>
 
-            {/* Professional Social Media */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Connect With Us</h2>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <a href="https://linkedin.com/company/legalcity" target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-200 group">
-                  <Linkedin className="w-6 h-6 text-blue-700 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <span className="font-semibold text-gray-900">LinkedIn</span>
-                    <p className="text-sm text-gray-600">Professional updates & legal insights</p>
-                  </div>
+                   className="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  <span className="font-semibold text-gray-900">LinkedIn</span>
+                  <p className="text-sm text-gray-600">Professional updates & legal insights</p>
                 </a>
                 
                 <a href="https://twitter.com/legalcity" target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-4 p-4 bg-sky-50 rounded-xl hover:bg-sky-100 transition-all duration-200 group">
-                  <Twitter className="w-6 h-6 text-sky-500 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <span className="font-semibold text-gray-900">Twitter</span>
-                    <p className="text-sm text-gray-600">Legal news & industry updates</p>
-                  </div>
+                   className="block p-3 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors">
+                  <span className="font-semibold text-gray-900">Twitter</span>
+                  <p className="text-sm text-gray-600">Legal news & industry updates</p>
                 </a>
                 
                 <a href="https://facebook.com/legalcity" target="_blank" rel="noopener noreferrer" 
-                   className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-200 group">
-                  <Facebook className="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <span className="font-semibold text-gray-900">Facebook</span>
-                    <p className="text-sm text-gray-600">Community engagement & events</p>
-                  </div>
+                   className="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  <span className="font-semibold text-gray-900">Facebook</span>
+                  <p className="text-sm text-gray-600">Community engagement & events</p>
                 </a>
               </div>
             </div>
@@ -206,7 +225,7 @@ const ContactUs = () => {
                       }`}
                       placeholder="John Doe"
                     />
-                    {errors.name && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span>⚠</span>{errors.name}</p>}
+                    {errors.name && <p className="text-red-500 text-sm mt-2">{errors.name}</p>}
                   </div>
 
                   <div>
@@ -224,7 +243,7 @@ const ContactUs = () => {
                       }`}
                       placeholder="john@example.com"
                     />
-                    {errors.email && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span>⚠</span>{errors.email}</p>}
+                    {errors.email && <p className="text-red-500 text-sm mt-2">{errors.email}</p>}
                   </div>
                 </div>
 
@@ -278,7 +297,7 @@ const ContactUs = () => {
                     }`}
                     placeholder="Brief description of your legal matter"
                   />
-                  {errors.subject && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span>⚠</span>{errors.subject}</p>}
+                  {errors.subject && <p className="text-red-500 text-sm mt-2">{errors.subject}</p>}
                 </div>
 
                 <div>
@@ -296,29 +315,25 @@ const ContactUs = () => {
                     }`}
                     placeholder="Please provide details about your legal situation, including relevant dates, parties involved, and specific questions you have..."
                   />
-                  {errors.message && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span>⚠</span>{errors.message}</p>}
+                  {errors.message && <p className="text-red-500 text-sm mt-2">{errors.message}</p>}
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-semibold mb-1">Confidentiality Guarantee</p>
-                      <p>All information shared through this form is protected by attorney-client privilege and will be kept strictly confidential.</p>
-                    </div>
+                  <div className="text-sm text-blue-800">
+                    <p className="font-semibold mb-1">Confidentiality Guarantee</p>
+                    <p>All information shared is protected by attorney-client privilege and kept strictly confidential.</p>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
+                  className={`w-full px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
                     isSubmitting
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl'
                   }`}
                 >
-                  <Send className="w-5 h-5" />
                   {isSubmitting ? 'Sending Your Request...' : 'Request Legal Consultation'}
                 </button>
               </form>
@@ -352,23 +367,21 @@ const ContactUs = () => {
             </div>
           </div>
         </div>
-        {/* Office Location */}
-        <div className="mt-16">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Visit Our Office</h2>
-            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl h-80 flex items-center justify-center relative overflow-hidden">
-              <div className="text-center z-10">
-                <MapPin className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                <p className="text-lg font-semibold text-gray-800 mb-2">Legal City Professional Center</p>
-                <p className="text-gray-600">1250 Broadway, Suite 3600<br />New York, NY 10001</p>
-                <p className="text-sm text-blue-600 mt-2">Interactive map integration coming soon</p>
+          {/* Office Location - Simplified */}
+          <div className="mt-16">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Visit Our Office</h2>
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl h-60 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-gray-800 mb-2">Legal City Professional Center</p>
+                  <p className="text-gray-600">1250 Broadway, Suite 3600<br />New York, NY 10001</p>
+                </div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
