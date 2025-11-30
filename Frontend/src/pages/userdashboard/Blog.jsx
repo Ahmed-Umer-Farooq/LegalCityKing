@@ -46,6 +46,8 @@ const Blog = () => {
         const data = await response.json();
         const transformedBlogs = data.map(blog => ({
           id: blog.id,
+          secure_id: blog.secure_id,
+          slug: blog.slug,
           title: blog.title,
           category: blog.category || 'General',
           author: blog.author_name || 'Unknown Author',
@@ -54,7 +56,7 @@ const Blog = () => {
             month: 'long',
             day: 'numeric'
           }),
-          image: getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category || 'General', blog.id),
+          image: getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category || 'General', blog.secure_id),
           comment_count: parseInt(blog.comment_count) || 0
         }));
         setBlogs(transformedBlogs);
@@ -66,9 +68,10 @@ const Blog = () => {
     }
   };
 
-  const handleBlogClick = (blogId) => {
-    // Navigate to dashboard blog view format
-    navigate(`/user/legal-blog/${blogId}`, { state: { from: 'user-dashboard' } });
+  const handleBlogClick = (blog) => {
+    // Navigate to dashboard blog view format using secure_id
+    const slug = blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    navigate(`/user/legal-blog/${slug}/${blog.secure_id}`, { state: { from: 'user-dashboard' } });
   };
 
   const handleViewAllBlogs = () => {
@@ -130,7 +133,7 @@ const Blog = () => {
               {filteredBlogs.map(blog => (
                 <div 
                   key={blog.id} 
-                  onClick={() => handleBlogClick(blog.id)}
+                  onClick={() => handleBlogClick(blog)}
                   className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <img 

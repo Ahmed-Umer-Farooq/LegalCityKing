@@ -139,12 +139,12 @@ const BlogDetail = () => {
         
         // Filter out current article and take first 3
         const related = articles
-          .filter(article => article.id !== parseInt(id))
+          .filter(article => article.secure_id !== id)
           .slice(0, 3)
           .map(article => ({
-            id: article.id,
+            id: article.secure_id,
             title: article.title,
-            image: getImageUrl(article.featured_image) || getPlaceholderImage(article.category || 'General', article.id),
+            image: getImageUrl(article.featured_image) || getPlaceholderImage(article.category || 'General', article.secure_id),
             category: article.category || 'General',
             readTime: '5 min read'
           }));

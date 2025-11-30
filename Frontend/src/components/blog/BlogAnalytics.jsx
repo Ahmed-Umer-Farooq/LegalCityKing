@@ -51,7 +51,10 @@ const BlogAnalytics = ({ blog, analytics, onDeleteComment, formatTimeAgo }) => {
             <p className="text-gray-600">Published {formatTimeAgo(blog.created_at)}</p>
           </div>
           <button
-            onClick={() => window.open(`/blog/${blog.id}`, '_blank')}
+            onClick={() => {
+              const slug = blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              window.open(`/legal-blog/${slug}/${blog.secure_id}`, '_blank');
+            }}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Eye className="w-4 h-4" />

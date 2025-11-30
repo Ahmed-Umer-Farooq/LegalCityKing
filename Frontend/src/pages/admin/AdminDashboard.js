@@ -1181,7 +1181,10 @@ const AdminDashboard = () => {
                         <MessageCircle className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => navigate(`/admin/legal-blog/${blog.id}`)}
+                        onClick={() => {
+                          const slug = blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                          navigate(`/admin/legal-blog/${slug}/${blog.secure_id}`);
+                        }}
                         className="p-1 text-green-600 hover:text-green-800"
                         title="View Blog"
                       >

@@ -182,7 +182,10 @@ const AuthorProfile = () => {
               {blogs.map((blog) => (
                 <div 
                   key={blog.id}
-                  onClick={() => navigate(`/legal-blog/${blog.slug}`)}
+                  onClick={() => {
+                    const slug = blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    navigate(`/legal-blog/${slug}/${blog.secure_id}`);
+                  }}
                   className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <img 
