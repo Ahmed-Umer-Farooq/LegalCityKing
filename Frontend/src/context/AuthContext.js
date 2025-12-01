@@ -23,18 +23,39 @@ export const AuthProvider = ({ children }) => {
       try {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
-        // Auth status set
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-        // Auth status cleared
       }
     }
     
-    // Navigation guard disabled for development
+    // Listen for storage changes across tabs
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' || e.key === 'user') {
+        const newToken = localStorage.getItem('token');
+        const newUser = localStorage.getItem('user');
+        
+        if (newToken && newUser) {
+          try {
+            setToken(newToken);
+            setUser(JSON.parse(newUser));
+          } catch (error) {
+            console.error('Error parsing user data:', error);
+          }
+        } else {
+          setToken(null);
+          setUser(null);
+        }
+      }
+    };
     
+    window.addEventListener('storage', handleStorageChange);
     setLoading(false);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const login = (token, userData) => {
@@ -51,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     sessionStorage.clear();
-    window.location.href = '/login';
+    // Don't redirect automatically - let components handle navigation
   };
 
   const value = {
