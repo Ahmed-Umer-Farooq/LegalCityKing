@@ -530,6 +530,23 @@ const blogController = {
     }
   },
 
+  // Check like status (auth required)
+  checkLikeStatus: async (req, res) => {
+    try {
+      const { blog_id } = req.params;
+      const userId = req.user.id;
+
+      const existingLike = await db('blog_likes')
+        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .first();
+
+      res.json({ liked: !!existingLike });
+    } catch (error) {
+      console.error('Error checking like status:', error);
+      res.status(500).json({ message: 'Failed to check like status' });
+    }
+  },
+
   // Save/Unsave blog (auth required)
   toggleBlogSave: async (req, res) => {
     try {
@@ -553,6 +570,23 @@ const blogController = {
     } catch (error) {
       console.error('Error toggling blog save:', error);
       res.status(500).json({ message: 'Failed to toggle save' });
+    }
+  },
+
+  // Check save status (auth required)
+  checkSaveStatus: async (req, res) => {
+    try {
+      const { blog_id } = req.params;
+      const userId = req.user.id;
+
+      const existingSave = await db('blog_saves')
+        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .first();
+
+      res.json({ saved: !!existingSave });
+    } catch (error) {
+      console.error('Error checking save status:', error);
+      res.status(500).json({ message: 'Failed to check save status' });
     }
   },
 

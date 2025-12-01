@@ -51,6 +51,7 @@ const BlogDetail = () => {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reportModal, setReportModal] = useState({ isOpen: false, blogId: null, blogTitle: '' });
+  const [blogId, setBlogId] = useState(null); // Store the actual blog ID for API calls
 
 
 
@@ -86,6 +87,14 @@ const BlogDetail = () => {
         
         const data = await response.json();
         console.log('📊 Blog detail response:', data);
+        
+        // Store the actual blog ID for API calls
+        setBlogId(data.id);
+        
+        // Fetch like/save status for authenticated users
+        if (isAuthenticated && data.id) {
+          fetchLikeSaveStatus(data.id);
+        }
         
         // Transform backend data to match frontend format
         const transformedPost = {
@@ -128,6 +137,33 @@ const BlogDetail = () => {
 
     fetchBlogPost();
   }, [id]);
+
+  // Fetch current like/save status for authenticated users
+  const fetchLikeSaveStatus = async (blogId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const [likeRes, saveRes] = await Promise.all([
+        fetch(`/api/blogs/${blogId}/like-status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`/api/blogs/${blogId}/save-status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+      
+      if (likeRes.ok) {
+        const likeData = await likeRes.json();
+        setLiked(likeData.liked);
+      }
+      
+      if (saveRes.ok) {
+        const saveData = await saveRes.json();
+        setSaved(saveData.saved);
+      }
+    } catch (error) {
+      console.log('Could not fetch like/save status:', error);
+    }
+  };
 
   // Fetch related articles from database
   useEffect(() => {
@@ -183,9 +219,16 @@ const BlogDetail = () => {
       return;
     }
     
+    // Check if we have the blog ID
+    if (!blogId) {
+      console.error('Blog ID not available for like operation');
+      alert('Unable to like this post. Please try refreshing the page.');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/blogs/${id}/like`, {
+      const response = await fetch(`/api/blogs/${blogId}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -195,9 +238,15 @@ const BlogDetail = () => {
       if (response.ok) {
         const data = await response.json();
         setLiked(data.liked);
+        console.log('Like toggled successfully:', data.message);
+      } else {
+        const errorData = await response.json();
+        console.error('Like operation failed:', errorData.message);
+        alert('Failed to like this post. Please try again.');
       }
     } catch (error) {
       console.error('Error toggling like:', error);
+      alert('Network error. Please check your connection and try again.');
     }
   };
 
@@ -223,9 +272,16 @@ const BlogDetail = () => {
       return;
     }
     
+    // Check if we have the blog ID
+    if (!blogId) {
+      console.error('Blog ID not available for save operation');
+      alert('Unable to save this post. Please try refreshing the page.');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/blogs/${id}/save`, {
+      const response = await fetch(`/api/blogs/${blogId}/save`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -235,9 +291,15 @@ const BlogDetail = () => {
       if (response.ok) {
         const data = await response.json();
         setSaved(data.saved);
+        console.log('Save toggled successfully:', data.message);
+      } else {
+        const errorData = await response.json();
+        console.error('Save operation failed:', errorData.message);
+        alert('Failed to save this post. Please try again.');
       }
     } catch (error) {
       console.error('Error toggling save:', error);
+      alert('Network error. Please check your connection and try again.');
     }
   };
 
@@ -385,7 +447,7 @@ const BlogDetail = () => {
                 <span className="font-medium">Share</span>
               </button>
               <button
-                onClick={() => setReportModal({ isOpen: true, blogId: id, blogTitle: currentBlogPost.title })}
+                onClick={() => setReportModal({ isOpen: true, blogId: blogId, blogTitle: currentBlogPost.title })}
                 className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                 title="Report this blog"
               >
@@ -436,7 +498,7 @@ const BlogDetail = () => {
       {/* Comments Section */}
       <div className="bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <CommentSection blogId={blogPost?.id} isDashboardView={isDashboardView} isPublicView={isPublicView} />
+          <CommentSection blogId={blogId} isDashboardView={isDashboardView} isPublicView={isPublicView} />
         </div>
       </div>
 

@@ -100,8 +100,14 @@ router.delete('/comments/:comment_id', requireAuth, blogController.deleteBlogCom
 // POST /api/blogs/:blog_id/like - Toggle like (auth required)
 router.post('/:blog_id/like', requireAuth, blogController.toggleBlogLike);
 
+// GET /api/blogs/:blog_id/like-status - Check like status (auth required)
+router.get('/:blog_id/like-status', requireAuth, blogController.checkLikeStatus);
+
 // POST /api/blogs/:blog_id/save - Toggle save (auth required)
 router.post('/:blog_id/save', requireAuth, blogController.toggleBlogSave);
+
+// GET /api/blogs/:blog_id/save-status - Check save status (auth required)
+router.get('/:blog_id/save-status', requireAuth, blogController.checkSaveStatus);
 
 // PUT /api/blogs/reports/:report_id - Update report status (admin only)
 router.put('/reports/:report_id', requireAuth, (req, res, next) => {
