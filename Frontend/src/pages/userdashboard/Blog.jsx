@@ -69,9 +69,9 @@ const Blog = () => {
   };
 
   const handleBlogClick = (blog) => {
-    // Navigate to dashboard blog view format using secure_id
+    // Navigate to dashboard blog view format using secure_id first, then slug
     const slug = blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    navigate(`/user/legal-blog/${slug}/${blog.secure_id}`, { state: { from: 'user-dashboard' } });
+    navigate(`/user/legal-blog/${blog.secure_id}/${slug}`, { state: { from: 'user-dashboard' } });
   };
 
   const handleViewAllBlogs = () => {

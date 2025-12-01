@@ -159,7 +159,7 @@ const CommentSection = ({ blogId, isDashboardView, isPublicView }) => {
         </h3>
       </div>
 
-      {isDashboardView && isAuthenticated ? (
+      {isAuthenticated ? (
         <form onSubmit={handleSubmitComment} className="mb-8">
           <div className="flex gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-600 flex items-center justify-center flex-shrink-0">
@@ -254,7 +254,7 @@ const CommentSection = ({ blogId, isDashboardView, isPublicView }) => {
                       {comment.comment_text}
                     </p>
                     <div className="flex items-center gap-4">
-                      {isDashboardView && isAuthenticated && (
+                      {isAuthenticated && (
                         <button
                           onClick={() => setReplyTo(comment.id)}
                           className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
