@@ -28,6 +28,16 @@ const SubscriptionManagement = () => {
     }
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      const response = await api.post('/stripe/create-billing-portal-session');
+      window.open(response.data.url, '_blank');
+    } catch (error) {
+      console.error('Error creating billing portal session:', error);
+      toast.error('Failed to open billing portal');
+    }
+  };
+
   const fetchEarnings = async () => {
     try {
       const response = await api.get('/stripe/lawyer-earnings');
@@ -131,14 +141,17 @@ const SubscriptionManagement = () => {
             <div className="text-sm text-gray-600 mb-4">
               {lawyer?.stripe_customer_id ? 'Card on file' : 'No payment method'}
             </div>
-            <button className="text-[#1e3a8a] hover:text-[#1e40af] font-medium text-sm">
+            <button 
+              onClick={handleManageSubscription}
+              className="text-[#1e3a8a] hover:text-[#1e40af] font-medium text-sm"
+            >
               Manage Payment Methods
             </button>
           </div>
         </div>
 
         {/* Subscription Plans */}
-        {!lawyer?.subscription_tier || lawyer?.subscription_tier === 'free' ? (
+        {(!lawyer?.subscription_tier || lawyer?.subscription_tier === 'free' || lawyer?.subscription_tier === 'professional') ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-[#374151] mb-2">Upgrade Your Practice</h2>
@@ -155,10 +168,10 @@ const SubscriptionManagement = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="px-6 py-3 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e40af] transition-colors">
-                  Upgrade Plan
-                </button>
-                <button className="px-6 py-3 border border-gray-300 text-[#374151] rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={handleManageSubscription}
+                  className="px-6 py-3 border border-gray-300 text-[#374151] rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   Manage Subscription
                 </button>
               </div>

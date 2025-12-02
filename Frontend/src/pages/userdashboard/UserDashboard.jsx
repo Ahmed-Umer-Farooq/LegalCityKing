@@ -278,7 +278,7 @@ const DashboardStats = () => {
     { label: "Active Cases", value: "12", icon: Folder, bgColor: "bg-[#E2F1FF]", iconBg: "bg-[#007EF4]", textColor: "text-[#03498B]" },
     { label: "Pending Tasks", value: "8", icon: CheckSquare, bgColor: "bg-[#FFF4E0]", iconBg: "bg-[#F5AB23]", textColor: "text-[#654C1F]" },
     { label: "Messages", value: "24", icon: MessageCircle, bgColor: "bg-[#DCFCE7]", iconBg: "bg-[#16D959]", textColor: "text-[#1F5632]" },
-    { label: "Appointments", value: "3", icon: Calendar, bgColor: "bg-[#FFE3E1]", iconBg: "bg-[#E6372B]", textColor: "text-[#931B12]" },
+    { label: "Subscriptions", value: "1", icon: BarChart3, bgColor: "bg-[#F3E8FF]", iconBg: "bg-[#8B5CF6]", textColor: "text-[#5B21B6]" },
   ];
 
   return (
@@ -376,6 +376,22 @@ const RecentActivity = () => {
 const DashboardContent = () => {
   const { user } = useAuth();
   const userName = user?.first_name || user?.name || 'User';
+  const [userSubscriptions, setUserSubscriptions] = useState([]);
+
+  useEffect(() => {
+    fetchUserSubscriptions();
+  }, []);
+
+  const fetchUserSubscriptions = async () => {
+    try {
+      // This would fetch real subscription data from backend
+      // For now, showing empty array (no subscriptions)
+      setUserSubscriptions([]);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      setUserSubscriptions([]);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -386,6 +402,52 @@ const DashboardContent = () => {
       
       <DashboardStats />
       <QuickActions />
+      
+      {/* Subscription Status */}
+      <div className="bg-white rounded-xl border border-[#F8F9FA] shadow-sm p-6 mb-8">
+        <div className="mb-6">
+          <h2 className="text-[#181A2A] text-lg font-semibold mb-1">Recent Payments</h2>
+          <p className="text-[#737791] text-sm">Your recent lawyer consultation payments</p>
+        </div>
+        {userSubscriptions.length > 0 ? (
+          <div className="space-y-4">
+            {userSubscriptions.map((subscription, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{subscription.lawyerName}</h3>
+                    <p className="text-sm text-gray-600">${subscription.amount} - {subscription.description}</p>
+                    <p className="text-xs text-green-600">✓ Paid on {new Date(subscription.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Completed
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-gray-900 font-medium mb-2">No payments yet</h3>
+            <p className="text-gray-500 text-sm mb-4">Make your first consultation payment to see it here</p>
+            <Link 
+              to="/user/lawyer-directory"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Find a Lawyer
+            </Link>
+          </div>
+        )}
+      </div>
+      
       <RecentActivity />
     </div>
   );

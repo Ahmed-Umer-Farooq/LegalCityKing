@@ -208,7 +208,8 @@ const getLawyerById = async (req, res) => {
       .select(
         'id', 'secure_id', 'name', 'email', 'address', 'rating', 'experience', 'speciality',
         'description', 'profile_image', 'registration_id', 'law_firm',
-        'mobile_number', 'city', 'state', 'zip_code', 'country'
+        'mobile_number', 'city', 'state', 'zip_code', 'country',
+        'subscription_tier', 'subscription_status', 'subscription_created_at'
       )
       .where('secure_id', secureId)
       .where('is_verified', 1)
@@ -240,7 +241,10 @@ const getLawyerById = async (req, res) => {
       city: lawyer.city,
       state: lawyer.state,
       zip_code: lawyer.zip_code,
-      country: lawyer.country
+      country: lawyer.country,
+      subscription_tier: lawyer.subscription_tier,
+      subscription_status: lawyer.subscription_status,
+      subscription_created_at: lawyer.subscription_created_at
     };
 
     res.json(processedLawyer);

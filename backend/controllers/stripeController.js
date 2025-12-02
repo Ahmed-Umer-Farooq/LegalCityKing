@@ -151,6 +151,28 @@ const getLawyerEarnings = async (req, res) => {
   }
 };
 
+// Create billing portal session
+const createBillingPortalSession = async (req, res) => {
+  try {
+    const lawyerId = req.user.id;
+    const lawyer = await db('lawyers').where('id', lawyerId).first();
+    
+    if (!lawyer || !lawyer.stripe_customer_id) {
+      return res.status(400).json({ error: 'No Stripe customer found' });
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: lawyer.stripe_customer_id,
+      return_url: `${process.env.FRONTEND_URL}/lawyer-dashboard/subscription`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Billing portal error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get payment receipt
 const getPaymentReceipt = async (req, res) => {
   try {
@@ -298,6 +320,7 @@ module.exports = {
   createConsultationCheckout,
   getSubscriptionPlans,
   getLawyerEarnings,
+  createBillingPortalSession,
   getPaymentReceipt,
   handleWebhook
 };

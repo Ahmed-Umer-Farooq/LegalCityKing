@@ -109,7 +109,7 @@ const authenticateLawyer = async (req, res, next) => {
     return res.status(403).json({ message: 'Lawyer not found' });
   }
 
-  req.user = { ...decoded, role: 'lawyer' };
+  req.user = { ...decoded, ...lawyer, role: 'lawyer' };
   next();
 };
 

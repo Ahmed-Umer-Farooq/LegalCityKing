@@ -312,6 +312,12 @@ export default function LawyerDashboard() {
                         <span className="text-xs text-green-600 font-medium">Verified Lawyer</span>
                       </div>
                     )}
+                    {currentUser?.subscription_tier && currentUser.subscription_tier !== 'free' && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs text-blue-600 font-medium capitalize">{currentUser.subscription_tier} Plan</span>
+                      </div>
+                    )}
                   </div>
                   <a href="#profile" className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors">
                     <User className="w-4 h-4" />

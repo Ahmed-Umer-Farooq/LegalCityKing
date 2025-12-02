@@ -144,7 +144,15 @@ export default function LawyerProfile() {
     awards: ['Licensed Attorney', 'Verified Professional'],
     hourlyRate: '$300-500',
     address: `${lawyer.address || ''}, ${lawyer.city || ''}, ${lawyer.state || ''} ${lawyer.zip_code || ''}`.replace(/^,\s*|,\s*$/g, ''),
+    // Include subscription data
+    subscription_tier: lawyer.subscription_tier,
+    subscription_status: lawyer.subscription_status
   };
+
+  console.log('Lawyer subscription data:', { 
+    subscription_tier: lawyer?.subscription_tier, 
+    subscription_status: lawyer?.subscription_status 
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -202,6 +210,11 @@ export default function LawyerProfile() {
                     <span className="px-4 py-2 bg-green-50 text-green-700 rounded-md text-sm font-medium border border-green-200">
                       Licensed {displayLawyer.yearsLicensed} years
                     </span>
+                    {displayLawyer?.subscription_tier && displayLawyer.subscription_tier !== 'free' && (
+                      <span className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md text-sm font-medium shadow-sm">
+                        ⭐ {displayLawyer.subscription_tier.charAt(0).toUpperCase() + displayLawyer.subscription_tier.slice(1)} Member
+                      </span>
+                    )}
                     {displayLawyer.freeConsultation && (
                       <span className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium border border-blue-200">
                         Free Consultation
@@ -264,6 +277,51 @@ export default function LawyerProfile() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-100">About</h2>
               <p className="text-gray-700 leading-relaxed text-lg">{displayLawyer.about}</p>
             </div>
+
+            {/* Subscription Benefits */}
+            {displayLawyer?.subscription_tier && displayLawyer.subscription_tier !== 'free' && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-8 mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">⭐</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{displayLawyer.subscription_tier.charAt(0).toUpperCase() + displayLawyer.subscription_tier.slice(1)} Member Benefits</h2>
+                    <p className="text-gray-600 text-sm">This lawyer has enhanced features and priority support</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Enhanced profile with video intro</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Unlimited client messages</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Priority placement in search</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Analytics dashboard</span>
+                  </div>
+                  {displayLawyer.subscription_tier === 'premium' && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700">Featured homepage placement</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700">Verified badge</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Practice Areas */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
