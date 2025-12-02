@@ -565,15 +565,15 @@ const BlogManagement = () => {
               </div>
             ) : (
               filteredBlogs.map((blog) => (
-                <div key={blog.id} className="bg-white rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
+                <div key={blog.secure_id} className="bg-white rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
                   <div className="aspect-video bg-gradient-to-br from-slate-100 to-blue-50 relative overflow-hidden">
                     <img 
-                      src={getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category, blog.id)} 
+                      src={getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category, blog.secure_id)} 
                       alt={blog.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         if (!e.target.src.includes('picsum.photos')) {
-                          e.target.src = getPlaceholderImage(blog.category, blog.id);
+                          e.target.src = getPlaceholderImage(blog.category, blog.secure_id);
                         }
                       }}
                     />

@@ -206,13 +206,13 @@ const CommentSection = ({ blogId, isDashboardView, isPublicView }) => {
               onClick={() => {
                 // Save current blog URL for redirect after login
                 const currentPath = window.location.pathname;
-                let blogId;
+                let blogPath;
                 if (currentPath.includes('/legal-blog/')) {
-                  blogId = currentPath.split('/legal-blog/')[1].split('/')[0];
+                  blogPath = currentPath.split('/legal-blog/')[1];
                 } else {
-                  blogId = currentPath.split('/').pop();
+                  blogPath = currentPath.split('/').slice(-2).join('/');
                 }
-                sessionStorage.setItem('redirectAfterLogin', `/user/legal-blog/${blogId}`);
+                sessionStorage.setItem('redirectAfterLogin', `/user/legal-blog/${blogPath}`);
                 window.location.href = '/login';
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

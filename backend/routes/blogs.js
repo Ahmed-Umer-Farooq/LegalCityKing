@@ -88,6 +88,7 @@ router.get('/', blogController.getAllBlogs);
 
 
 // COMMENT ROUTES
+// COMMENT ROUTES
 // GET /api/blogs/:blog_id/comments - Get comments for a blog (public)
 router.get('/:blog_id/comments', blogController.getBlogComments);
 

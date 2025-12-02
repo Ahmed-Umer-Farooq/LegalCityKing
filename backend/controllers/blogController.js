@@ -41,7 +41,6 @@ const blogController = {
           db('blog_likes').where('blog_id', blog.id).count('* as count').first()
         ]);
         return {
-          id: blog.id,
           secure_id: blog.secure_id,
           title: blog.title,
           slug: blog.slug,
@@ -73,7 +72,26 @@ const blogController = {
       const { identifier } = req.params;
       
       const blog = await db('blogs')
-        .select('blogs.*')
+        .select(
+          'blogs.secure_id',
+          'blogs.title',
+          'blogs.slug',
+          'blogs.content',
+          'blogs.excerpt',
+          'blogs.featured_image',
+          'blogs.category',
+          'blogs.tags',
+          'blogs.views_count',
+          'blogs.published_at',
+          'blogs.created_at',
+          'blogs.updated_at',
+          'blogs.author_name',
+          'blogs.meta_title',
+          'blogs.focus_keyword',
+          'blogs.meta_description',
+          'blogs.image_alt_text',
+          'blogs.status'
+        )
         .where(function() {
           this.where({ 'blogs.slug': identifier, 'blogs.status': 'published' })
               .orWhere({ 'blogs.secure_id': identifier, 'blogs.status': 'published' });
@@ -85,7 +103,7 @@ const blogController = {
       }
 
       // Increment view count
-      await db('blogs').where('id', blog.id).increment('views_count', 1);
+      await db('blogs').where('secure_id', blog.secure_id).increment('views_count', 1);
 
       res.json(blog);
     } catch (error) {
@@ -150,7 +168,6 @@ const blogController = {
     try {
       const authors = await db('lawyers')
         .select(
-          'lawyers.id',
           'lawyers.name',
           'lawyers.email',
           'lawyers.profile_image'
@@ -158,7 +175,7 @@ const blogController = {
         .count('blogs.id as post_count')
         .innerJoin('blogs', 'lawyers.id', 'blogs.author_id')
         .where('blogs.status', 'published')
-        .groupBy('lawyers.id', 'lawyers.name', 'lawyers.email', 'lawyers.profile_image')
+        .groupBy('lawyers.name', 'lawyers.email', 'lawyers.profile_image')
         .orderBy('post_count', 'desc')
         .limit(5);
 
@@ -210,7 +227,6 @@ const blogController = {
     try {
       const posts = await db('blogs')
         .select(
-          'id',
           'secure_id',
           'title',
           'slug',
@@ -424,14 +440,31 @@ const blogController = {
     try {
       const { blog_id } = req.params;
       
+      // First get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id); // fallback for internal ID
+        })
+        .first();
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+      
       const comments = await db('blog_comments')
         .select(
-          'blog_comments.*',
+          'blog_comments.id',
+          'blog_comments.comment_text',
+          'blog_comments.created_at',
+          'blog_comments.parent_comment_id',
           'users.name as user_name',
           'users.role as user_role'
         )
         .leftJoin('users', 'blog_comments.user_id', 'users.id')
-        .where('blog_comments.blog_id', blog_id)
+        .where('blog_comments.blog_id', blog.id)
         .orderBy('blog_comments.created_at', 'asc');
 
       res.json(comments);
@@ -451,14 +484,22 @@ const blogController = {
         return res.status(400).json({ message: 'Comment text is required' });
       }
 
-      // Check if blog exists
-      const blog = await db('blogs').where('id', blog_id).first();
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id); // fallback for internal ID
+        })
+        .first();
+      
       if (!blog) {
         return res.status(404).json({ message: 'Blog not found' });
       }
 
       const [commentId] = await db('blog_comments').insert({
-        blog_id: parseInt(blog_id),
+        blog_id: blog.id,
         user_id: req.user.id,
         comment_text: comment_text.trim(),
         parent_comment_id: parent_comment_id || null
@@ -466,7 +507,10 @@ const blogController = {
 
       const newComment = await db('blog_comments')
         .select(
-          'blog_comments.*',
+          'blog_comments.id',
+          'blog_comments.comment_text',
+          'blog_comments.created_at',
+          'blog_comments.parent_comment_id',
           'users.name as user_name',
           'users.role as user_role'
         )
@@ -510,18 +554,32 @@ const blogController = {
       const { blog_id } = req.params;
       const userId = req.user.id;
 
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id);
+        })
+        .first();
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
       // Check if user already liked this blog
       const existingLike = await db('blog_likes')
-        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .where({ blog_id: blog.id, user_id: userId })
         .first();
 
       if (existingLike) {
         // Unlike
-        await db('blog_likes').where({ blog_id: parseInt(blog_id), user_id: userId }).del();
+        await db('blog_likes').where({ blog_id: blog.id, user_id: userId }).del();
         res.json({ liked: false, message: 'Blog unliked' });
       } else {
         // Like
-        await db('blog_likes').insert({ blog_id: parseInt(blog_id), user_id: userId });
+        await db('blog_likes').insert({ blog_id: blog.id, user_id: userId });
         res.json({ liked: true, message: 'Blog liked' });
       }
     } catch (error) {
@@ -536,8 +594,22 @@ const blogController = {
       const { blog_id } = req.params;
       const userId = req.user.id;
 
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id);
+        })
+        .first();
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
       const existingLike = await db('blog_likes')
-        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .where({ blog_id: blog.id, user_id: userId })
         .first();
 
       res.json({ liked: !!existingLike });
@@ -553,18 +625,32 @@ const blogController = {
       const { blog_id } = req.params;
       const userId = req.user.id;
 
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id);
+        })
+        .first();
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
       // Check if user already saved this blog
       const existingSave = await db('blog_saves')
-        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .where({ blog_id: blog.id, user_id: userId })
         .first();
 
       if (existingSave) {
         // Unsave
-        await db('blog_saves').where({ blog_id: parseInt(blog_id), user_id: userId }).del();
+        await db('blog_saves').where({ blog_id: blog.id, user_id: userId }).del();
         res.json({ saved: false, message: 'Blog removed from saved' });
       } else {
         // Save
-        await db('blog_saves').insert({ blog_id: parseInt(blog_id), user_id: userId });
+        await db('blog_saves').insert({ blog_id: blog.id, user_id: userId });
         res.json({ saved: true, message: 'Blog saved' });
       }
     } catch (error) {
@@ -579,8 +665,22 @@ const blogController = {
       const { blog_id } = req.params;
       const userId = req.user.id;
 
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id);
+        })
+        .first();
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
       const existingSave = await db('blog_saves')
-        .where({ blog_id: parseInt(blog_id), user_id: userId })
+        .where({ blog_id: blog.id, user_id: userId })
         .first();
 
       res.json({ saved: !!existingSave });
@@ -773,14 +873,22 @@ const blogController = {
         return res.status(400).json({ message: 'Reason is required' });
       }
 
-      // Check if blog exists
-      const blog = await db('blogs').where('id', blog_id).first();
+      // Get the internal blog ID from secure_id or slug
+      const blog = await db('blogs')
+        .select('id', 'title')
+        .where(function() {
+          this.where('secure_id', blog_id)
+              .orWhere('slug', blog_id)
+              .orWhere('id', blog_id);
+        })
+        .first();
+      
       if (!blog) {
         return res.status(404).json({ message: 'Blog not found' });
       }
 
       const reportData = {
-        blog_id: parseInt(blog_id),
+        blog_id: blog.id,
         reason,
         description: description || null,
         status: 'pending'

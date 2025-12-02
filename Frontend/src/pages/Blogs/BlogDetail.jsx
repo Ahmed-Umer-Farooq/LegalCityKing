@@ -88,17 +88,16 @@ const BlogDetail = () => {
         const data = await response.json();
         console.log('📊 Blog detail response:', data);
         
-        // Store the actual blog ID for API calls
-        setBlogId(data.id);
+        // Store the secure ID for API calls
+        setBlogId(data.secure_id);
         
         // Fetch like/save status for authenticated users
-        if (isAuthenticated && data.id) {
-          fetchLikeSaveStatus(data.id);
+        if (isAuthenticated && data.secure_id) {
+          fetchLikeSaveStatus(data.secure_id);
         }
         
         // Transform backend data to match frontend format
         const transformedPost = {
-          id: data.id,
           title: data.title,
           subtitle: data.excerpt || 'Read more about this topic',
           image: getImageUrl(data.featured_image) || getPlaceholderImage(data.category || 'General', data.id),
@@ -178,7 +177,7 @@ const BlogDetail = () => {
           .filter(article => article.secure_id !== id)
           .slice(0, 3)
           .map(article => ({
-            id: article.secure_id,
+            secure_id: article.secure_id,
             title: article.title,
             image: getImageUrl(article.featured_image) || getPlaceholderImage(article.category || 'General', article.secure_id),
             category: article.category || 'General',
@@ -468,7 +467,7 @@ const BlogDetail = () => {
             className="w-full h-96 object-cover rounded-xl shadow-lg"
             onError={(e) => {
               if (!e.target.src.includes('picsum.photos')) {
-                e.target.src = getPlaceholderImage(currentBlogPost.category, currentBlogPost.id);
+                e.target.src = getPlaceholderImage(currentBlogPost.category, currentBlogPost.secure_id);
               }
             }}
           />
@@ -518,7 +517,7 @@ const BlogDetail = () => {
                 onClick={() => {
                   console.log('🔗 Related article clicked:', article.title);
                   const slug = generateSlug(article.title);
-                  navigate(`/legal-blog/${slug}/${article.id}`);
+                  navigate(`/legal-blog/${slug}/${article.secure_id}`);
                 }}
                 className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
@@ -528,7 +527,7 @@ const BlogDetail = () => {
                   className="w-full h-48 object-cover"
                   onError={(e) => {
                     if (!e.target.src.includes('picsum.photos')) {
-                      e.target.src = getPlaceholderImage(article.category, article.id);
+                      e.target.src = getPlaceholderImage(article.category, article.secure_id);
                     }
                   }}
                 />

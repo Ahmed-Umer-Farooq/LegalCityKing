@@ -238,7 +238,7 @@ const BlogReports = () => {
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                   <p><span className="font-medium">Title:</span> {selectedReport.blog_title}</p>
                   <p><span className="font-medium">Author:</span> {selectedReport.author_name}</p>
-                  <p><span className="font-medium">Blog ID:</span> {selectedReport.blog_id}</p>
+
                 </div>
               </div>
 

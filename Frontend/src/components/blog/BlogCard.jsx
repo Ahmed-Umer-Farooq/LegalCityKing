@@ -30,12 +30,12 @@ const BlogCard = ({ blog, onAnalytics, onDelete, formatTimeAgo }) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
       <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-t-xl flex items-center justify-center overflow-hidden">
         <img 
-          src={getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category, blog.id)} 
+          src={getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category, blog.secure_id)} 
           alt={blog.title} 
           className="w-full h-full object-cover" 
           onError={(e) => {
             if (!e.target.src.includes('picsum.photos')) {
-              e.target.src = getPlaceholderImage(blog.category, blog.id);
+              e.target.src = getPlaceholderImage(blog.category, blog.secure_id);
             }
           }}
         />

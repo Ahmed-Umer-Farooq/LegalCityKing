@@ -6,7 +6,7 @@ import ReportBlogModal from '../../components/modals/ReportBlogModal';
 
 
 // Blog Card Component
-const BlogCard = ({ id, secure_id, slug, image, category, title, author, authorImage, date, comment_count = 0, onReport }) => {
+const BlogCard = ({ secure_id, slug, image, category, title, author, authorImage, date, comment_count = 0, onReport }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [imageError, setImageError] = useState(false);
@@ -29,7 +29,7 @@ const BlogCard = ({ id, secure_id, slug, image, category, title, author, authorI
   
   const getImageSrc = (featuredImage) => {
     if (imageError || !featuredImage || featuredImage.trim() === '') {
-      return `https://picsum.photos/400/200?seed=legal${id}`;
+      return `https://picsum.photos/400/200?seed=legal${secure_id}`;
     }
     if (featuredImage.startsWith('http')) {
       return featuredImage;
@@ -106,7 +106,7 @@ const BlogCard = ({ id, secure_id, slug, image, category, title, author, authorI
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onReport(id, title);
+            onReport(secure_id, title);
           }}
           className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 hover:bg-white transition-all shadow-sm"
           title="Report this blog"
@@ -280,7 +280,7 @@ const TopAuthorsWidget = () => {
       <div className="p-6">
         <div className="space-y-6">
           {authors.map((author) => (
-            <div key={author.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+            <div key={author.name} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
               {author.profile_image ? (
                 <img 
                   src={author.profile_image} 
@@ -446,17 +446,17 @@ const PopularPostsWidget = () => {
       <div className="p-6">
         <div className="space-y-6">
           {posts.map((post) => (
-            <div key={post.id} className="group cursor-pointer hover:bg-gray-50 p-4 rounded-xl transition-all">
+            <div key={post.secure_id} className="group cursor-pointer hover:bg-gray-50 p-4 rounded-xl transition-all">
               <div className="flex gap-4">
                 <img 
                   src={post.featured_image && post.featured_image.trim() !== '' 
                     ? (post.featured_image.startsWith('http') ? post.featured_image : `http://localhost:5001${post.featured_image}`)
-                    : `https://picsum.photos/80/64?seed=legal${post.id}`
+                    : `https://picsum.photos/80/64?seed=legal${post.secure_id}`
                   } 
                   alt={post.title || "Popular post"} 
                   className="w-20 h-16 rounded-lg object-cover flex-shrink-0 group-hover:scale-105 transition-transform"
                   onError={(e) => {
-                    e.target.src = `https://picsum.photos/80/64?seed=legal${post.id}`;
+                    e.target.src = `https://picsum.photos/80/64?seed=legal${post.secure_id}`;
                   }}
                 />
                 <div className="flex-1">
@@ -577,7 +577,6 @@ const Blog = () => {
         
         // Transform your database data to match frontend format
         const transformedBlogs = data.map(blog => ({
-          id: blog.id,
           secure_id: blog.secure_id,
           slug: blog.slug,
           title: blog.title,
@@ -803,7 +802,7 @@ const Blog = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                 {displayPosts.map((post, index) => (
-                  <BlogCard key={post.id || index} {...post} onReport={handleReport} />
+                  <BlogCard key={post.secure_id || index} {...post} onReport={handleReport} />
                 ))}
               </div>
               
