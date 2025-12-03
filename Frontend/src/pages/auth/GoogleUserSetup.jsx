@@ -32,9 +32,9 @@ const GoogleUserSetup = () => {
     email: '',
     username: '',
     address: '',
-    zip_code: '',
     city: '',
     state: '',
+    zip_code: '',
     country: '',
     mobile_number: '',
   });
@@ -83,9 +83,9 @@ const GoogleUserSetup = () => {
           email: prev.email || u.email || '',
           username: prev.username || u.username || '',
           address: prev.address || u.address || '',
-          zip_code: prev.zip_code || u.zip_code || '',
           city: prev.city || u.city || '',
           state: prev.state || u.state || '',
+          zip_code: prev.zip_code || u.zip_code || '',
           country: prev.country || u.country || '',
           mobile_number: prev.mobile_number || u.mobile_number || '',
         }));
@@ -147,13 +147,19 @@ const GoogleUserSetup = () => {
         const userData = response.data.user || response.data.lawyer || response.data;
         if (userData) {
           login(token, userData);
-          // Use backend redirect field from response
-          const redirectPath = response.data.redirect || userData.redirect || '/user-dashboard';
-          console.log('🚀 GoogleUserSetup redirect:', redirectPath);
-          navigate(redirectPath);
+          // Check if profile is complete, if not redirect to profile page
+          if (userData.profile_completion_percentage < 100) {
+            toast.success('Profile updated! Please complete remaining fields.');
+            navigate('/user/profile-settings');
+          } else {
+            // Use backend redirect field from response
+            const redirectPath = response.data.redirect || userData.redirect || '/user-dashboard';
+            console.log('🚀 GoogleUserSetup redirect:', redirectPath);
+            navigate(redirectPath);
+          }
         } else {
           console.error('No user data in response');
-          navigate('/user-dashboard');
+          navigate('/user/profile-settings');
         }
       } catch (error) {
         console.error('Profile update error:', error);
@@ -171,18 +177,16 @@ const GoogleUserSetup = () => {
         const response = await api.post('/auth/submit-later', {});
         const userData = response.data.user || response.data;
         login(token, userData);
-        toast.info('You can complete your profile later from settings.');
-        // Use backend redirect field from response
-        const redirectPath = response.data.redirect || userData.redirect || '/user-dashboard';
-        console.log('🚀 GoogleUserSetup submit later redirect:', redirectPath);
-        navigate(redirectPath);
+        toast.info('You can complete your profile later. Redirecting to profile page...');
+        // Always redirect to profile page for completion
+        navigate('/user/profile-settings');
         return;
       }
     } catch (error) {
       console.error('Error updating status on submit later:', error);
     }
-    toast.info('You can complete your profile later from settings.');
-    navigate('/');
+    toast.info('You can complete your profile later. Redirecting to profile page...');
+    navigate('/user/profile-settings');
   };
 
   const handleBackToLogin = () => {
@@ -350,6 +354,7 @@ const GoogleUserSetup = () => {
                 className="w-full px-4 py-3 bg-gray-200 border-0 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
               />
             </div>
+
           </div>
 
           {/* Action Buttons */}
