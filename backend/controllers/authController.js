@@ -305,27 +305,82 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const calculateProfileCompletion = (user, userType) => {
+  const requiredFields = userType === 'lawyer' 
+    ? ['name', 'email', 'username', 'mobile_number', 'registration_id', 'law_firm', 'speciality']
+    : ['name', 'email', 'username', 'mobile_number'];
+  
+  const optionalFields = ['address', 'city', 'state', 'zip_code', 'country', 'date_of_birth', 'bio'];
+  
+  let completed = 0;
+  let total = requiredFields.length + optionalFields.length;
+  
+  // Check required fields (weighted more)
+  requiredFields.forEach(field => {
+    if (user[field] && user[field].toString().trim()) completed += 2;
+  });
+  
+  // Check optional fields
+  optionalFields.forEach(field => {
+    if (user[field] && user[field].toString().trim()) completed += 1;
+  });
+  
+  // Adjust total for weighting
+  total = requiredFields.length * 2 + optionalFields.length;
+  
+  return Math.round((completed / total) * 100);
+};
+
 const getProfile = async (req, res) => {
   try {
     // Check lawyers table first for this user ID
-    let user = await db('lawyers').where({ id: req.user.id }).select('id', 'name', 'username', 'email', 'registration_id', 'law_firm', 'speciality', 'address', 'zip_code', 'city', 'state', 'country', 'mobile_number', 'is_verified', 'lawyer_verified', 'profile_completed', 'google_id').first();
+    let user = await db('lawyers').where({ id: req.user.id }).select(
+      'id', 'name', 'username', 'email', 'registration_id', 'law_firm', 'speciality', 
+      'address', 'zip_code', 'city', 'state', 'country', 'mobile_number', 
+      'date_of_birth', 'bio', 'profile_image', 'social_links', 'interests', 'privacy_settings',
+      'is_verified', 'lawyer_verified', 'profile_completed', 'profile_completion_percentage', 'google_id'
+    ).first();
+    
     if (user) {
+      const completionPercentage = calculateProfileCompletion(user, 'lawyer');
+      
+      // Update completion percentage if different
+      if (user.profile_completion_percentage !== completionPercentage) {
+        await db('lawyers').where({ id: user.id }).update({ profile_completion_percentage: completionPercentage });
+        user.profile_completion_percentage = completionPercentage;
+      }
+      
       return res.json({
         ...user,
         role: 'lawyer',
         is_admin: false,
-        verified: user.profile_completed === 1
+        verified: user.profile_completed === 1,
+        profile_completion_percentage: completionPercentage
       });
     }
 
     // Check users table if not found in lawyers
-    user = await db('users').where({ id: req.user.id }).select('id', 'name', 'username', 'email', 'address', 'zip_code', 'city', 'state', 'country', 'mobile_number', 'role', 'is_admin', 'is_verified', 'profile_completed', 'google_id').first();
+    user = await db('users').where({ id: req.user.id }).select(
+      'id', 'name', 'username', 'email', 'address', 'zip_code', 'city', 'state', 'country', 'mobile_number',
+      'date_of_birth', 'bio', 'profile_image', 'job_title', 'company', 'social_links', 'interests', 'privacy_settings',
+      'role', 'is_admin', 'is_verified', 'profile_completed', 'profile_completion_percentage', 'google_id'
+    ).first();
+    
     if (user) {
+      const completionPercentage = calculateProfileCompletion(user, 'user');
+      
+      // Update completion percentage if different
+      if (user.profile_completion_percentage !== completionPercentage) {
+        await db('users').where({ id: user.id }).update({ profile_completion_percentage: completionPercentage });
+        user.profile_completion_percentage = completionPercentage;
+      }
+      
       return res.json({
         ...user,
         role: user.role || 'user',
         is_admin: user.is_admin || false,
-        verified: user.profile_completed === 1
+        verified: user.profile_completed === 1,
+        profile_completion_percentage: completionPercentage
       });
     }
 
@@ -348,6 +403,13 @@ const updateProfile = async (req, res) => {
       state,
       zip_code,
       country,
+      date_of_birth,
+      bio,
+      job_title,
+      company,
+      social_links,
+      interests,
+      privacy_settings,
       registration_id,
       law_firm,
       speciality,
@@ -390,6 +452,13 @@ const updateProfile = async (req, res) => {
         state,
         zip_code,
         country,
+        date_of_birth,
+        bio,
+        job_title,
+        company,
+        social_links: social_links ? JSON.stringify(social_links) : undefined,
+        interests: interests ? JSON.stringify(interests) : undefined,
+        privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : undefined,
         profile_completed: 1
       };
 
@@ -448,6 +517,11 @@ const updateProfile = async (req, res) => {
         state,
         zip_code,
         country,
+        date_of_birth,
+        bio,
+        social_links: social_links ? JSON.stringify(social_links) : undefined,
+        interests: interests ? JSON.stringify(interests) : undefined,
+        privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : undefined,
         profile_completed: 1, // Mark profile as completed
         updated_at: db.fn.now()
       };

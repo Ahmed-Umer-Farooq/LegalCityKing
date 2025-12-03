@@ -1,5 +1,6 @@
 const express = require('express');
 const passport = require('../config/passport');
+const db = require('../db');
 const { authenticateToken, authenticateAdmin } = require('../utils/middleware');
 const { authLimiter } = require('../utils/limiter');
 const { getRedirectPath } = require('../utils/redirectLogic');
@@ -19,6 +20,9 @@ const { registerUser, loginUser } = require('../controllers/userController');
 const { registerLawyer, loginLawyer } = require('../controllers/lawyerController');
 
 const router = express.Router();
+
+// Profile routes
+router.use('/profile', require('./profile'));
 
 // Registration
 router.post('/register-user', authLimiter, registerUser);
@@ -94,78 +98,100 @@ router.get('/google/lawyer', (req, res, next) => {
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
 
-router.get('/google/callback',
-  (req, res, next) => {
+router.get('/google/callback', async (req, res) => {
+  try {
     console.log('🔵 Google callback received:', req.query);
-    passport.authenticate('google', { 
-      failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth_failed`,
-      session: false,
-      failureFlash: false
-    })(req, res, (err) => {
-      if (err) {
-        console.log('❌ OAuth error:', err);
-        return res.redirect(`${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(err.message || 'oauth_failed')}`);
-      }
-      next();
-    });
-  },
-  (req, res) => {
-    console.log('✅ Google OAuth success:', req.user ? 'User found' : 'No user');
     
-    if (!req.user) {
-      console.log('❌ No user data from OAuth');
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+    // Handle OAuth manually
+    const { code } = req.query;
+    if (!code) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_code`);
     }
     
-    const { token, role, user: oauthUser } = req.user;
-
-    // Check if profile is completed - more robust checking
-    const completed = oauthUser && (oauthUser.profile_completed === 1 || oauthUser.profile_completed === true);
-    const isVerified = oauthUser && (oauthUser.is_verified === 1 || oauthUser.is_verified === true);
-    const lawyerVerified = oauthUser && (oauthUser.lawyer_verified === 1 || oauthUser.lawyer_verified === true);
+    // Exchange code for tokens
+    const { google } = require('googleapis');
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CALLBACK_URL
+    );
     
-    let redirectUrl;
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
     
-    console.log('🔍 OAuth Callback - Role:', role, 'Completed:', completed, 'Verified:', isVerified, 'LawyerVerified:', lawyerVerified);
-    console.log('🔍 OAuth User Data:', { 
-      id: oauthUser.id, 
-      email: oauthUser.email, 
-      profile_completed: oauthUser.profile_completed,
-      is_verified: oauthUser.is_verified,
-      lawyer_verified: oauthUser.lawyer_verified,
-      registration_id: oauthUser.registration_id
-    });
+    // Get user profile
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const { data: profile } = await oauth2.userinfo.get();
     
-    // Determine if user needs profile setup
-    const needsSetup = role === 'lawyer' ? !completed : (!completed && !isVerified);
+    console.log('👤 Google profile:', profile.id, profile.name);
     
-    if (needsSetup) {
-      // Redirect to appropriate setup page
-      if (role === 'lawyer') {
-        redirectUrl = `${process.env.FRONTEND_URL}/google-lawyer-setup?token=${token}`;
-      } else {
-        redirectUrl = `${process.env.FRONTEND_URL}/google-user-setup?token=${token}`;
+    const email = profile.email;
+    if (!email) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_email`);
+    }
+    
+    // Check if user exists
+    let user = await db('users').where({ email }).first();
+    
+    if (user) {
+      // User exists - check if it's a password account
+      if (user.password && !user.google_id) {
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=${encodeURIComponent('Account already exists. Please login with password.')}`);
+      }
+      // Update google_id if missing
+      if (!user.google_id) {
+        await db('users').where({ id: user.id }).update({ google_id: profile.id, email_verified: 1 });
+        user = await db('users').where({ id: user.id }).first();
       }
     } else {
-      // Profile is complete, redirect to dashboard
-      const userData = {
-        role: role || 'user',
-        is_admin: oauthUser.is_admin === 1 || oauthUser.is_admin === true || oauthUser.role === 'admin',
-        registration_id: oauthUser.registration_id || null,
-        redirect: oauthUser.redirect || null
-      };
-      
-      const redirectPath = getRedirectPath(userData);
-      redirectUrl = `${process.env.FRONTEND_URL}${redirectPath}?token=${token}`;
+      // Create new Google user
+      const [id] = await db('users').insert({
+        name: profile.name,
+        email,
+        google_id: profile.id,
+        email_verified: 1,
+        is_verified: 1,
+        password: '',
+        role: 'user',
+        profile_completed: 0,
+        secure_id: require('crypto').randomBytes(16).toString('hex'),
+        avatar: profile.picture
+      });
+      user = await db('users').where({ id }).first();
     }
-
-    // Clear the stored role from session
-    delete req.session.oauthRole;
-
-    console.log(`🚀 Google OAuth redirect - Role: ${role}, NeedsSetup: ${needsSetup}, URL: ${redirectUrl}`);
-    res.redirect(redirectUrl);
+    
+    const token = require('../utils/token').generateToken(user);
+    
+    console.log('🔍 User profile status:', {
+      id: user.id,
+      profile_completed: user.profile_completed,
+      has_basic_info: !!(user.name && user.email)
+    });
+    
+    // If user already has profile completed OR has basic info, go to dashboard
+    if (user.profile_completed || (user.name && user.email && user.mobile_number)) {
+      const dashboardUrl = `${process.env.FRONTEND_URL}/user-dashboard?token=${token}`;
+      console.log('✅ Redirecting existing user to dashboard');
+      console.log('🌐 Dashboard URL:', dashboardUrl);
+      console.log('🔑 Token length:', token.length);
+      console.log('🔑 Token starts with:', token.substring(0, 20));
+      
+      // Set headers to ensure proper redirect
+      res.setHeader('Location', dashboardUrl);
+      res.status(302);
+      return res.end();
+    }
+    
+    // New user needs profile setup
+    const setupUrl = `${process.env.FRONTEND_URL}/google-user-setup?token=${token}`;
+    console.log('🆕 Redirecting new user to profile setup:', setupUrl);
+    res.redirect(setupUrl);
+    
+  } catch (error) {
+    console.error('❌ Google OAuth error:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
   }
-);
+});
 
 router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 router.get('/facebook/callback',

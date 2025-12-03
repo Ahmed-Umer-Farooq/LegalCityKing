@@ -28,6 +28,19 @@ router.get('/stats', (req, res) => {
 
 // User management
 router.get('/users', getUsers);
+router.get('/users/all', async (req, res) => {
+  try {
+    const users = await require('../db')('users')
+      .select('id', 'name', 'email', 'mobile_number', 'role', 'is_verified', 'is_active', 'google_id', 'created_at')
+      .orderBy('created_at', 'desc');
+    
+    console.log('All users debug:', users.length, 'users found');
+    res.json({ users, total: users.length });
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
 router.delete('/users/:id', deleteUser);
 router.put('/users/:id/make-admin', makeAdmin);
 router.put('/users/:id/remove-admin', removeAdmin);

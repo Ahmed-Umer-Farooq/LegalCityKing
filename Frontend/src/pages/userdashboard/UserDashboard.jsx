@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Search, Grid3x3, Calendar, Folder, CheckSquare, FileText, MessageCircle, HelpCircle, Edit3, Users, UserPlus, DollarSign, Share2, User, Settings, LogOut, BarChart3 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import MessageNotification from '../../components/MessageNotification';
 import { useAuth } from '../../context/AuthContext';
 
@@ -650,6 +650,69 @@ const Layout = ({ children, showFooter = false }) => {
 
 // Main App Component (Default Export)
 const UserDashboard = () => {
+  const [searchParams] = useSearchParams();
+  const { login, user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handleTokenAuth = async () => {
+      const urlToken = searchParams.get('token');
+      
+      if (urlToken && !user) {
+        console.log('🔑 Token found in URL, authenticating user');
+        try {
+          // Decode token to get user info
+          const payload = urlToken.split('.')[1];
+          const decoded = JSON.parse(atob(payload));
+          
+          // Store token and login user
+          localStorage.setItem('token', urlToken);
+          
+          // Create user object from token
+          const userData = {
+            id: decoded.id,
+            email: decoded.email,
+            role: decoded.role || 'user'
+          };
+          
+          login(urlToken, userData);
+          
+          // Clean URL by removing token parameter
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+          
+          console.log('✅ User authenticated successfully');
+        } catch (error) {
+          console.error('❌ Token authentication failed:', error);
+          navigate('/login');
+        }
+      } else if (!urlToken && !user && !localStorage.getItem('token')) {
+        // No token and no user, redirect to login
+        console.log('❌ No token or user found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      
+      setLoading(false);
+    };
+
+    if (loading) {
+      handleTokenAuth();
+    }
+  }, [searchParams, login, user, navigate, loading]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Layout>
       <DashboardContent />

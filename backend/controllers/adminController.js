@@ -48,7 +48,7 @@ const getStats = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', role } = req.query;
+    const { page = 1, limit = 20, search = '', role } = req.query;
     const offset = (page - 1) * limit;
     
     console.log('🔍 Admin getUsers called with:', { page, limit, search, role });
@@ -76,12 +76,18 @@ const getUsers = async (req, res) => {
     }
 
     const total = await query.clone().count('id as count').first();
-    const users = await query.orderBy('created_at', 'desc').limit(limit).offset(offset);
+    const users = await query.orderBy('created_at', 'desc').limit(parseInt(limit)).offset(offset);
     
     console.log('🔍 Query result:', { totalFound: total.count, usersReturned: users.length });
+    console.log('🔍 First 3 users:', users.slice(0, 3).map(u => ({ id: u.id, name: u.name, email: u.email })));
 
     res.json({
-      users,
+      users: users.map(user => ({
+        ...user,
+        phone: user.mobile_number || 'Not provided',
+        status: user.is_verified ? 'Verified' : (user.is_active ? 'Active' : 'Inactive'),
+        joined: user.created_at
+      })),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
