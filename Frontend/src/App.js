@@ -39,6 +39,8 @@ import Logout from './pages/auth/Logout';
 import LegalForms from './pages/LegalForms';
 import QAPage from './pages/public/QAPage';
 import ContactUs from './pages/ContactUs';
+import PaymentSuccess from './pages/PaymentSuccess';
+import SubscriptionManagement from './pages/lawyer/SubscriptionManagement';
 
 // Redirect component for legacy blog routes
 const BlogRedirect = () => {
@@ -75,6 +77,8 @@ function App() {
         {/* Dashboard routes - No header/footer */}
         <Route path="/lawyer-dashboard" element={<ProtectedRoute><LawyerDashboard /></ProtectedRoute>} />
         <Route path="/lawyer-dashboard/chatapp" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="/lawyer-dashboard/subscription" element={<ProtectedRoute><SubscriptionManagement /></ProtectedRoute>} />
+        <Route path="/lawyer-dashboard/subscription/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         
@@ -122,6 +126,7 @@ function App() {
           <Route path="/legal-forms" element={<LegalForms />} />
           <Route path="/qa" element={<QAPage />} />
           <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
           {/* Legacy redirects */}
           <Route path="/find-lawyer" element={<Navigate to="/find-a-lawyer" replace />} />
           <Route path="/blogs" element={<Navigate to="/legal-blog" replace />} />

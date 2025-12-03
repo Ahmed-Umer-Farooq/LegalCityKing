@@ -175,7 +175,7 @@ const getProfile = async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const lawyer = await db('lawyers')
-      .select('id', 'name', 'email', 'registration_id', 'law_firm', 'speciality', 'mobile_number', 'address', 'city', 'state', 'is_verified', 'lawyer_verified')
+      .select('id', 'name', 'email', 'registration_id', 'law_firm', 'speciality', 'mobile_number', 'address', 'city', 'state', 'is_verified', 'lawyer_verified', 'subscription_tier', 'subscription_status', 'subscription_created_at', 'stripe_customer_id', 'stripe_subscription_id')
       .where('id', lawyerId)
       .first();
 
@@ -195,7 +195,12 @@ const getProfile = async (req, res) => {
       city: lawyer.city,
       state: lawyer.state,
       verified: lawyer.is_verified === 1,
-      lawyer_verified: lawyer.lawyer_verified === 1
+      lawyer_verified: lawyer.lawyer_verified === 1,
+      subscription_tier: lawyer.subscription_tier || 'free',
+      subscription_status: lawyer.subscription_status || 'inactive',
+      subscription_created_at: lawyer.subscription_created_at,
+      stripe_customer_id: lawyer.stripe_customer_id,
+      stripe_subscription_id: lawyer.stripe_subscription_id
     });
   } catch (error) {
     console.error('Get profile error:', error);

@@ -1,8 +1,9 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Star, Phone, Mail, MapPin, Award, Calendar, Shield, MessageCircle } from 'lucide-react';
+import { Star, Phone, Mail, MapPin, Award, Calendar, Shield, MessageCircle, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DashboardHeader from '../components/layout/DashboardHeader';
+import PaymentModal from '../components/payment/PaymentModal';
 import { toast } from 'sonner';
 import api from '../utils/api';
 
@@ -13,6 +14,7 @@ export default function LawyerProfile() {
   const navigate = useNavigate();
   const [lawyer, setLawyer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // Check if user came from dashboard vs public pages
   const cameFromDashboard = localStorage.getItem('navigatedFromDashboard') === 'true' || location.pathname.startsWith('/dashboard/lawyer/');
@@ -24,11 +26,24 @@ export default function LawyerProfile() {
   const fetchLawyer = async () => {
     try {
       setLoading(true);
+      
+      // Check if id is valid
+      if (!id || id === 'null' || id === 'undefined') {
+        console.error('Invalid lawyer ID received:', id);
+        throw new Error('Invalid lawyer ID');
+      }
+      
+      console.log('Fetching lawyer with ID:', id);
       const response = await api.get(`/lawyers/${id}`);
+      console.log('Lawyer data received:', response.data);
       setLawyer(response.data);
     } catch (error) {
       console.error('Error fetching lawyer:', error);
-      toast.error('Failed to load lawyer profile');
+      if (error.response?.status === 404) {
+        toast.error('Lawyer profile not found');
+      } else {
+        toast.error('Failed to load lawyer profile');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,14 +98,28 @@ export default function LawyerProfile() {
   if (!lawyer) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Lawyer not found</p>
-          <button 
-            onClick={() => navigate('/lawyers')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Back to Directory
-          </button>
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Lawyer Profile Not Found</h2>
+          <p className="text-gray-600 mb-6">The lawyer profile you're looking for doesn't exist or may have been removed.</p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/lawyers')}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Browse All Lawyers
+            </button>
+            <button 
+              onClick={() => navigate(-1)}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -115,7 +144,15 @@ export default function LawyerProfile() {
     awards: ['Licensed Attorney', 'Verified Professional'],
     hourlyRate: '$300-500',
     address: `${lawyer.address || ''}, ${lawyer.city || ''}, ${lawyer.state || ''} ${lawyer.zip_code || ''}`.replace(/^,\s*|,\s*$/g, ''),
+    // Include subscription data
+    subscription_tier: lawyer.subscription_tier,
+    subscription_status: lawyer.subscription_status
   };
+
+  console.log('Lawyer subscription data:', { 
+    subscription_tier: lawyer?.subscription_tier, 
+    subscription_status: lawyer?.subscription_status 
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,6 +210,11 @@ export default function LawyerProfile() {
                     <span className="px-4 py-2 bg-green-50 text-green-700 rounded-md text-sm font-medium border border-green-200">
                       Licensed {displayLawyer.yearsLicensed} years
                     </span>
+                    {displayLawyer?.subscription_tier && displayLawyer.subscription_tier !== 'free' && (
+                      <span className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md text-sm font-medium shadow-sm">
+                        ⭐ {displayLawyer.subscription_tier.charAt(0).toUpperCase() + displayLawyer.subscription_tier.slice(1)} Member
+                      </span>
+                    )}
                     {displayLawyer.freeConsultation && (
                       <span className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium border border-blue-200">
                         Free Consultation
@@ -235,6 +277,51 @@ export default function LawyerProfile() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-100">About</h2>
               <p className="text-gray-700 leading-relaxed text-lg">{displayLawyer.about}</p>
             </div>
+
+            {/* Subscription Benefits */}
+            {displayLawyer?.subscription_tier && displayLawyer.subscription_tier !== 'free' && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-8 mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">⭐</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{displayLawyer.subscription_tier.charAt(0).toUpperCase() + displayLawyer.subscription_tier.slice(1)} Member Benefits</h2>
+                    <p className="text-gray-600 text-sm">This lawyer has enhanced features and priority support</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Enhanced profile with video intro</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Unlimited client messages</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Priority placement in search</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Analytics dashboard</span>
+                  </div>
+                  {displayLawyer.subscription_tier === 'premium' && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700">Featured homepage placement</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700">Verified badge</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Practice Areas */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -577,6 +664,15 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
+                <button 
+                  onClick={() => setShowPaymentModal(true)}
+                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] text-white rounded-xl hover:from-[#1e40af] hover:to-[#1d4ed8] transition-all duration-300 hover:scale-105 hover:shadow-lg border border-[#1e3a8a]"
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <span className="font-semibold">Pay Now</span>
+                </button>
                 <button className="w-full flex items-center gap-3 p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                   <Calendar className="w-4 h-4" />
                   <span className="font-medium">Schedule Consultation</span>
@@ -732,6 +828,14 @@ export default function LawyerProfile() {
           </div>
         </div>
       </div>
+      
+      {/* Payment Modal */}
+      <PaymentModal 
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        lawyer={displayLawyer}
+        user={user}
+      />
     </div>
   );
 }

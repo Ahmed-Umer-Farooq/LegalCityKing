@@ -228,7 +228,8 @@ export default function LawyerDashboard() {
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); } },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
-                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount }
+                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount },
+                { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
@@ -309,6 +310,12 @@ export default function LawyerDashboard() {
                       <div className="flex items-center gap-1 mt-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <span className="text-xs text-green-600 font-medium">Verified Lawyer</span>
+                      </div>
+                    )}
+                    {currentUser?.subscription_tier && currentUser.subscription_tier !== 'free' && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs text-blue-600 font-medium capitalize">{currentUser.subscription_tier} Plan</span>
                       </div>
                     )}
                   </div>
@@ -529,6 +536,12 @@ export default function LawyerDashboard() {
               <button onClick={() => setShowPaymentModal(true)} className="flex flex-col items-center gap-2 p-3 bg-[#F8F9FA] hover:bg-[#E5E7EB] rounded-lg transition-all min-h-[80px] cursor-pointer">
                 <CreditCard className="w-5 h-5 text-[#6B7280]" />
                 <span className="text-xs font-medium text-center leading-tight text-[#374151]">Record Payment</span>
+              </button>
+              <button onClick={() => window.location.href = '/lawyer-dashboard/subscription'} className="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-[#1e3a8a] to-[#1e40af] hover:from-[#1e40af] hover:to-[#1d4ed8] rounded-lg transition-all min-h-[80px] cursor-pointer">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <span className="text-xs font-medium text-center leading-tight text-white">Subscription</span>
               </button>
             </div>
           </div>

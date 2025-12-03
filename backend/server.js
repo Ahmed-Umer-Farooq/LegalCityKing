@@ -310,6 +310,8 @@ const messagesRoutes = require('./routes/messages');
 app.use('/api/messages', messagesRoutes);
 const paymentsRoutes = require('./routes/payments');
 app.use('/api/payments', paymentsRoutes);
+const stripeRoutes = require('./routes/stripe');
+app.use('/api/stripe', stripeRoutes);
 const intakesRoutes = require('./routes/intakes');
 app.use('/api/intakes', intakesRoutes);
 const blogsRoutes = require('./routes/blogs');
