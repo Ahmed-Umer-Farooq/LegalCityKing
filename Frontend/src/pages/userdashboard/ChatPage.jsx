@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import chatService from '../../utils/chatService';
-import { Send, Search, MoreVertical, Phone, Paperclip, Smile, CheckCheck, MessageCircle, Settings, Bell, Users, Archive, Star, Shield, Zap, Crown, Mic, MicOff } from 'lucide-react';
+import { Send, Search, MoreVertical, Phone, Paperclip, CheckCheck, MessageCircle, Mic, MicOff } from 'lucide-react';
 
 const ChatPage = () => {
   const { user } = useAuth();
@@ -679,97 +679,78 @@ const ChatPage = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden">
       {/* Conversations Sidebar */}
       <div className="w-1/3 bg-white border-r border-gray-200 shadow-lg flex flex-col">
 
         
         {/* Header */}
-        <div className="bg-gray-800 text-white p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg">
-                  <span className="text-xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">{user?.name?.charAt(0) || 'U'}</span>
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+        <div className="bg-white border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold">{user?.name?.charAt(0) || 'U'}</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Legal Chat</h2>
-                <p className="text-gray-200 text-sm">{userType === 'lawyer' ? 'Attorney Portal' : 'Client Portal'}</p>
+                <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+                <p className="text-gray-500 text-sm">{userType === 'lawyer' ? 'Attorney' : 'Client'}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => { setShowCallHistory(!showCallHistory); loadCallHistory(); }}
-                className="p-2 hover:bg-white/10 rounded-xl transition-all duration-300 hover:scale-110"
-                title="Call History"
-              >
-                <Phone className="w-5 h-5" />
-              </button>
-            </div>
+            <button 
+              onClick={() => { setShowCallHistory(!showCallHistory); loadCallHistory(); }}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Call History"
+            >
+              <Phone className="w-5 h-5 text-gray-600" />
+            </button>
           </div>
           
-          {/* Enhanced Search */}
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 rounded-2xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-            <div className="relative flex items-center">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 group-hover:text-white transition-colors" size={20} />
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all duration-300 backdrop-blur-sm"
-              />
-            </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
 
         {/* Conversations List */}
-        <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto">
           {filteredConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8">
-              <div className="relative mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center shadow-xl">
-                  <MessageCircle className="w-10 h-10 text-blue-500" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                  <Zap className="w-4 h-4 text-white" />
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">No conversations yet</h3>
-              <p className="text-center text-sm text-gray-500 mb-4">Start connecting with {userType === 'lawyer' ? 'clients' : 'legal professionals'}</p>
-              <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium shadow-lg">
-                ✨ Professional Legal Chat
-              </div>
+              <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No conversations yet</h3>
+              <p className="text-center text-sm text-gray-500">Start connecting with {userType === 'lawyer' ? 'clients' : 'legal professionals'}</p>
             </div>
           ) : (
             <div className="p-2">
-              {filteredConversations.map((conv, index) => (
+              {filteredConversations.map((conv) => (
                 <div
                   key={`${conv.partner_id}-${conv.partner_type}`}
-                  className={`group relative mb-2 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                  className={`group relative mb-1 rounded-lg transition-colors cursor-pointer ${
                     selectedConversation?.partner_id === conv.partner_id 
-                      ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-200 shadow-lg' 
-                      : 'bg-white/60 hover:bg-white/80 border border-white/40'
+                      ? 'bg-blue-50 border-l-4 border-blue-500' 
+                      : 'hover:bg-gray-50'
                   }`}
+                  onClick={() => setSelectedConversation(conv)}
                 >
                   {/* Three-dots menu */}
-                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         const menu = e.currentTarget.nextElementSibling;
                         menu.classList.toggle('hidden');
                       }}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
-                      title="More options"
+                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
                     >
                       <MoreVertical size={16} />
                     </button>
-                    {/* Dropdown menu */}
-                    <div className="hidden absolute right-0 top-8 bg-white rounded-lg shadow-lg border py-1 min-w-[120px] z-20">
+                    <div className="hidden absolute right-0 top-6 bg-white rounded-lg shadow-lg border py-1 min-w-[120px] z-20">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -783,83 +764,41 @@ const ChatPage = () => {
                     </div>
                   </div>
                   
-                  {/* Clickable Conversation Area */}
-                  <div
-                    onClick={() => setSelectedConversation(conv)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (window.confirm(`Delete conversation with ${conv.partner_name}?`)) {
-                        deleteConversation(conv, e);
-                      }
-                    }}
-                    className="p-4 cursor-pointer"
-                    title="Right-click for options"
-                  >
-                    <div className="flex items-center space-x-4">
+                  <div className="p-3">
+                    <div className="flex items-center space-x-3">
                       <div className="relative">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg ${
-                          selectedConversation?.partner_id === conv.partner_id
-                            ? 'bg-gradient-to-br from-blue-500 to-purple-600'
-                            : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                        }`}>
+                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                           {conv.partner_name?.charAt(0) || 'U'}
                         </div>
                         {isUserOnline(conv.partner_id) && (
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-3 border-white rounded-full shadow-sm animate-pulse">
-                            <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
-                          </div>
-                        )}
-                        {userType === 'lawyer' && (
-                          <div className="absolute -top-1 -left-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                            <Crown className="w-3 h-3 text-white" />
-                          </div>
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                         )}
                       </div>
                       
-                      <div className="flex-1 min-w-0 pr-8">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                          <h3 className="font-medium text-gray-900 truncate">
                             {conv.partner_name}
                           </h3>
                           <div className="flex items-center space-x-2">
                             {conv.last_message_time && (
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                              <span className="text-xs text-gray-500">
                                 {new Date(conv.last_message_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </span>
                             )}
                             {conv.unread_count > 0 && (
-                              <div className="relative">
-                                <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg animate-bounce">
-                                  {conv.unread_count}
-                                </span>
-                                <div className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-75"></div>
-                              </div>
+                              <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                                {conv.unread_count}
+                              </span>
                             )}
                           </div>
                         </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600 truncate flex-1 mr-2">
-                          {conv.last_message || (
-                            <span className="italic text-gray-400 flex items-center">
-                              <MessageCircle className="w-3 h-3 mr-1" />
-                              Start conversation
-                            </span>
-                          )}
+                        <p className="text-sm text-gray-600 truncate">
+                          {conv.last_message || 'Start conversation'}
                         </p>
-                        <div className="flex items-center space-x-1">
-                          {isUserOnline(conv.partner_id) && (
-                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          )}
-                          <Star className="w-3 h-3 text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               ))}
             </div>
@@ -874,34 +813,33 @@ const ChatPage = () => {
       {/* Call History Modal */}
       {showCallHistory && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Recent Calls</h3>
+              <h3 className="text-lg font-semibold">Call History</h3>
               <button 
                 onClick={() => setShowCallHistory(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-gray-100 rounded text-gray-500"
               >
                 ×
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {callHistory.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No call history yet</p>
+                <p className="text-gray-500 text-center py-8">No calls yet</p>
               ) : (
                 callHistory.map((call, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <Phone className="w-4 h-4 text-green-600" />
+                      <Phone className="w-4 h-4 text-gray-600" />
                       <div>
-                        <p className="font-medium">{call.partner_name}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(call.created_at).toLocaleDateString()} at {new Date(call.created_at).toLocaleTimeString()}
+                        <p className="font-medium text-sm">{call.partner_name}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(call.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium">{Math.floor(call.duration / 60)}:{(call.duration % 60).toString().padStart(2, '0')}</p>
-                      <p className="text-xs text-gray-500">{call.call_type}</p>
+                      <p className="text-sm text-gray-600">{Math.floor(call.duration / 60)}:{(call.duration % 60).toString().padStart(2, '0')}</p>
                     </div>
                   </div>
                 ))
@@ -914,22 +852,22 @@ const ChatPage = () => {
       {/* Incoming Call Modal */}
       {incomingCall && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Phone className="w-10 h-10 text-white" />
+          <div className="bg-white rounded-lg p-6 text-center shadow-xl">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Phone className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Incoming Voice Call</h3>
-            <p className="text-gray-600 mb-6">{incomingCall.fromName} is calling...</p>
-            <div className="flex space-x-4">
+            <h3 className="text-lg font-semibold mb-2">Incoming Call</h3>
+            <p className="text-gray-600 mb-6">{incomingCall.fromName}</p>
+            <div className="flex space-x-3">
               <button 
                 onClick={rejectCall}
-                className="flex-1 bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors"
+                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
               >
                 Decline
               </button>
               <button 
                 onClick={acceptCall}
-                className="flex-1 bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 transition-colors"
+                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
               >
                 Accept
               </button>
@@ -940,48 +878,36 @@ const ChatPage = () => {
       
       {/* Active Call Overlay */}
       {isInCall && (
-        <div className="fixed top-4 right-4 bg-white rounded-2xl p-6 shadow-2xl border z-40 min-w-[280px]">
-          <div className="text-center mb-4">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="font-medium text-gray-800">Call with {selectedConversation?.partner_name || incomingCall?.fromName || 'Unknown'}</span>
+        <div className="fixed top-4 right-4 bg-white rounded-lg p-4 shadow-lg border z-40">
+          <div className="text-center mb-3">
+            <div className="flex items-center justify-center space-x-2 mb-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="font-medium text-gray-800 text-sm">In call with {selectedConversation?.partner_name || incomingCall?.fromName || 'Unknown'}</span>
             </div>
-            <div className="text-2xl font-mono text-gray-600">
+            <div className="text-lg font-mono text-gray-600">
               {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}
             </div>
           </div>
           
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex items-center justify-center space-x-2">
             <button 
               onClick={toggleMute}
-              className={`p-3 rounded-full transition-colors ${
+              className={`p-2 rounded-lg transition-colors ${
                 isMuted 
                   ? 'bg-red-500 text-white hover:bg-red-600' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               title={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </button>
-            
-            <button 
-              onClick={() => {
-                if (remoteAudioRef.current) {
-                  remoteAudioRef.current.play();
-                }
-              }}
-              className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
-              title="Enable Audio"
-            >
-              🔊
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
             
             <button 
               onClick={endCall}
-              className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors"
+              className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors"
               title="End Call"
             >
-              <Phone className="w-5 h-5 rotate-135" />
+              <Phone className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -992,72 +918,53 @@ const ChatPage = () => {
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 p-6 shadow-sm">
+            <div className="bg-white border-b border-gray-200 p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative group">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-xl group-hover:scale-110 transition-transform duration-300">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
                       {selectedConversation.partner_name?.charAt(0) || 'U'}
                     </div>
                     {isUserOnline(selectedConversation.partner_id) && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-3 border-white rounded-full shadow-lg">
-                        <div className="w-full h-full bg-green-500 rounded-full animate-ping"></div>
-                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
                     )}
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Shield className="w-3 h-3 text-white" />
-                    </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    <h3 className="font-semibold text-gray-900">
                       {selectedConversation.partner_name}
                     </h3>
                     <div className="flex items-center space-x-2">
                       {isUserOnline(selectedConversation.partner_id) ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="text-sm font-medium text-green-600">Online now</span>
-                        </div>
+                        <span className="text-sm text-green-600">Online</span>
                       ) : (
-                        <span className="text-sm text-gray-500">Last seen recently</span>
+                        <span className="text-sm text-gray-500">Offline</span>
                       )}
-                      <div className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                        {selectedConversation.partner_type === 'lawyer' ? '⚖️ Attorney' : '👤 Client'}
-                      </div>
+                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-xs text-gray-500">
+                        {selectedConversation.partner_type === 'lawyer' ? 'Attorney' : 'Client'}
+                      </span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2">
                   <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleVoiceCall();
-                    }}
-                    className="p-3 hover:bg-green-50 rounded-2xl transition-all duration-300 hover:scale-110 group"
-                    title="Start Voice Call"
+                    onClick={handleVoiceCall}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Voice Call"
                   >
-                    <Phone size={22} className="text-green-600 group-hover:text-green-700" />
+                    <Phone size={20} className="text-gray-600" />
                   </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    className="p-3 hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:scale-110 group"
-                  >
-                    <MoreVertical size={22} className="text-gray-600 group-hover:text-gray-700" />
+                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <MoreVertical size={20} className="text-gray-600" />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.map((message, index) => {
                 const isMine = message.sender_id === user.id && message.sender_type === userType;
                 const showAvatar = index === 0 || messages[index - 1]?.sender_id !== message.sender_id;
@@ -1065,101 +972,81 @@ const ChatPage = () => {
                 return (
                   <div
                     key={message.id}
-                    className={`mb-4 flex items-end space-x-3 group ${isMine ? 'justify-end flex-row-reverse space-x-reverse' : 'justify-start'}`}
+                    className={`mb-3 flex ${isMine ? 'justify-end' : 'justify-start'}`}
                   >
-                    {/* Avatar */}
-                    {showAvatar && (
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-600 font-semibold text-sm">
-                        {isMine ? user?.name?.charAt(0) : selectedConversation.partner_name?.charAt(0)}
-                      </div>
-                    )}
-                    
                     {/* Message Bubble */}
-                    <div className={`relative max-w-xs lg:max-w-md ${showAvatar ? '' : isMine ? 'mr-13' : 'ml-13'}`}>
-                      <div className="px-4 py-2">
-                        {message.message_type === 'file' ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Paperclip className={`w-4 h-4 ${
-                                isMine ? 'text-gray-600' : 'text-gray-600'
-                              }`} />
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-sm font-medium truncate ${
-                                  isMine ? 'text-gray-900' : 'text-gray-900'
-                                }`}>
-                                  {message.file_name || 'File attachment'}
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                      isMine 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-white text-gray-900 border border-gray-200'
+                    }`}>
+                      {message.message_type === 'file' ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Paperclip className="w-4 h-4" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {message.file_name || 'File attachment'}
+                              </p>
+                              {message.file_size && (
+                                <p className="text-xs opacity-75">
+                                  {(message.file_size / 1024).toFixed(1)} KB
                                 </p>
-                                {message.file_size && (
-                                  <p className={`text-xs ${
-                                    isMine ? 'text-gray-600' : 'text-gray-500'
-                                  }`}>
-                                    {(message.file_size / 1024).toFixed(1)} KB
-                                  </p>
-                                )}
-                              </div>
-                              {message.file_url && (
-                                <a 
-                                  href={`http://localhost:5001${message.file_url}`} 
-                                  download={message.file_name}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-500 hover:text-blue-600"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                </a>
                               )}
                             </div>
-                            {message.content !== `📎 ${message.file_name}` && (
-                              <p className="text-sm">{message.content}</p>
+                            {message.file_url && (
+                              <a 
+                                href={`http://localhost:5001${message.file_url}`} 
+                                download={message.file_name}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-600"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </a>
                             )}
                           </div>
-                        ) : (
-                          <p className="text-sm">{message.content}</p>
-                        )}
-                        
-                        {/* Message Footer */}
-                        <div className={`flex items-center justify-end mt-1 space-x-1`}>
-                          <span className={`text-xs ${
-                            isMine ? 'text-gray-600' : 'text-gray-500'
-                          }`}>
-                            {new Date(message.created_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                          {isMine && (
-                            <div className="flex items-center">
-                              {message.status === 'sending' ? (
-                                <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" title="Sending" />
-                              ) : message.read_status === 1 ? (
-                                <CheckCheck size={14} className="text-blue-500" title="Read" />
-                              ) : (
-                                <CheckCheck size={14} className="text-gray-500" title="Delivered" />
-                              )}
-                            </div>
+                          {message.content !== `📎 ${message.file_name}` && (
+                            <p className="text-sm">{message.content}</p>
                           )}
                         </div>
-                      </div>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
+                      )}
                       
-
+                      {/* Message Footer */}
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs opacity-75">
+                          {new Date(message.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        {isMine && (
+                          <div className="ml-2">
+                            {message.status === 'sending' ? (
+                              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin opacity-50" />
+                            ) : message.read_status === 1 ? (
+                              <CheckCheck size={14} className="opacity-75" />
+                            ) : (
+                              <CheckCheck size={14} className="opacity-50" />
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
               {isTyping && (
-                <div className="flex justify-start mb-4 items-end space-x-3">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-600 font-semibold text-sm">
-                    {selectedConversation.partner_name?.charAt(0)}
-                  </div>
-                  <div className="px-6 py-4">
-                    <div className="flex space-x-2 items-center">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                      </div>
+                <div className="flex justify-start mb-3">
+                  <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2">
+                    <div className="flex space-x-1 items-center">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                       <span className="text-xs text-gray-500 ml-2">typing...</span>
                     </div>
                   </div>
@@ -1169,190 +1056,117 @@ const ChatPage = () => {
             </div>
 
             {/* Message Input */}
-            <div className="bg-white border-t border-gray-200 p-6 shadow-sm">
+            <div className="bg-white border-t border-gray-200 p-4">
               {/* File Preview */}
               {selectedFile && (
-                <div className="mb-4 p-4">
+                <div className="mb-3 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Paperclip className="w-5 h-5 text-gray-600" />
+                    <div className="flex items-center space-x-2">
+                      <Paperclip className="w-4 h-4 text-gray-600" />
                       <div>
-                        <p className="font-medium text-gray-800">{selectedFile.name}</p>
-                        <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                        <p className="font-medium text-gray-800 text-sm">{selectedFile.name}</p>
+                        <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                       </div>
                     </div>
                     <button 
                       type="button" 
                       onClick={removeSelectedFile}
-                      className="p-2 text-red-500"
+                      className="p-1 text-red-500 hover:bg-red-50 rounded"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      ×
                     </button>
                   </div>
                 </div>
               )}
               
-              <form onSubmit={sendMessage} className="flex items-end space-x-4">
+              <form onSubmit={sendMessage} className="flex items-center space-x-3">
                 {/* Attachment Button */}
-                <div className="relative">
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploading}
-                    className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all duration-300 hover:scale-110 group disabled:opacity-50"
-                  >
-                    <Paperclip size={22} className="group-hover:rotate-12 transition-transform" />
-                  </button>
-                </div>
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <Paperclip size={20} />
+                </button>
                 
-                {/* Message Input Container */}
-                <div className="flex-1 relative">
-                  <div className="bg-white/90 backdrop-blur-sm rounded-3xl border-2 border-gray-200 focus-within:border-blue-400 transition-all duration-300 shadow-lg hover:shadow-xl">
-                    <div className="flex items-center px-6 py-4">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={handleTyping}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            sendMessage(e);
-                          }
-                        }}
-                        placeholder="Type your message..."
-                        className="flex-1 outline-none text-gray-800 placeholder-gray-500 bg-transparent font-medium"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-2xl transition-all duration-300 hover:scale-110"
-                      >
-                        <Smile size={20} />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Quick Actions - Removed to prevent accidental calls */}
+                {/* Message Input */}
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={handleTyping}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendMessage(e);
+                      }
+                    }}
+                    placeholder="Type your message..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 </div>
                 
                 {/* Send Button */}
                 <button
                   type="submit"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    sendMessage(e);
-                  }}
                   disabled={(!newMessage.trim() && !selectedFile) || uploading || sending}
-                  className={`relative p-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl ${
+                  className={`p-2 rounded-lg transition-colors ${
                     (newMessage.trim() || selectedFile) && !uploading && !sending
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:scale-110 hover:rotate-12' 
-                      : 'bg-gray-200 text-gray-400 scale-95 cursor-not-allowed'
+                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   {(uploading || sending) ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <Send size={20} className={(newMessage.trim() || selectedFile) ? 'animate-pulse' : ''} />
-                  )}
-                  {(newMessage.trim() || selectedFile) && !uploading && !sending && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl animate-ping opacity-25"></div>
+                    <Send size={20} />
                   )}
                 </button>
               </form>
               
               {/* Connection Status */}
-              <div className="flex items-center justify-center mt-4">
-                <div className={`flex items-center space-x-2 px-4 py-2 rounded-full text-xs font-medium shadow-lg backdrop-blur-sm ${
+              <div className="flex items-center justify-center mt-3">
+                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs ${
                   isConnected 
-                    ? 'text-green-700 bg-green-100/80 border border-green-200' 
-                    : 'text-red-700 bg-red-100/80 border border-red-200'
+                    ? 'text-green-600 bg-green-50' 
+                    : 'text-red-600 bg-red-50'
                 }`}>
                   <div className={`w-2 h-2 rounded-full ${
-                    isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500 animate-bounce'
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
                   }`}></div>
                   <span>
                     {isConnected 
-                      ? 'Secure Connection Active' 
+                      ? 'Connected' 
                       : connectionAttempts > 0 
-                        ? `Reconnecting... (${connectionAttempts})` 
+                        ? `Reconnecting...` 
                         : 'Connecting...'
                     }
                   </span>
-                  {isConnected && <Shield size={12} />}
                 </div>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50/50 to-purple-50/30">
-            <div className="text-center max-w-md mx-auto p-8">
-              {/* Animated Logo */}
-              <div className="relative mb-8">
-                <div className="w-40 h-40 bg-gradient-to-br from-white to-blue-50 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl animate-pulse">
-                    <MessageCircle className="w-12 h-12 text-white" />
-                  </div>
-                </div>
-                
-                {/* Floating Elements */}
-                <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg animate-bounce">
-                  <Crown className="w-6 h-6 text-white" />
-                </div>
-                <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div className="absolute top-1/2 -left-8 w-8 h-8 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full flex items-center justify-center shadow-lg animate-ping">
-                  <Zap className="w-4 h-4 text-white" />
-                </div>
-              </div>
-              
-              {/* Welcome Text */}
-              <div className="space-y-4">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Legal City Chat
-                </h3>
-                <p className="text-lg text-gray-600 font-medium">
-                  Professional Legal Communication Platform
-                </p>
-                <p className="text-gray-500">
-                  Select a conversation to start secure messaging
-                </p>
-              </div>
-              
-              {/* Features */}
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
-                  <Shield className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-gray-700">Secure & Encrypted</p>
-                </div>
-                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
-                  <Zap className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-gray-700">Real-time Messaging</p>
-                </div>
-              </div>
-              
-              {/* Status Badge */}
-              <div className="mt-6 inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full border border-green-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">System Online</span>
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center p-8">
+              <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                Legal City Chat
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Select a conversation to start messaging
+              </p>
+              <div className="inline-flex items-center space-x-2 px-3 py-1 bg-green-50 text-green-600 rounded-full text-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Secure & Private</span>
               </div>
             </div>
           </div>
@@ -1362,29 +1176,6 @@ const ChatPage = () => {
   );
 };
 
-// Add custom scrollbar styles
-const styles = `
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 10px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
-    border-radius: 10px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(45deg, #2563eb, #7c3aed);
-  }
-`;
 
-// Inject styles
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.innerText = styles;
-  document.head.appendChild(styleSheet);
-}
 
 export default ChatPage;
