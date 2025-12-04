@@ -318,6 +318,8 @@ const userAppointmentsRoutes = require('./routes/userAppointments');
 app.use('/api/user/appointments', userAppointmentsRoutes);
 const userCasesRoutes = require('./routes/userCases');
 app.use('/api/user/cases', userCasesRoutes);
+const userTasksRoutes = require('./routes/userTasks');
+app.use('/api/user/tasks', userTasksRoutes);
 const blogsRoutes = require('./routes/blogs');
 app.use('/api/blogs', blogsRoutes);
 const uploadRoutes = require('./routes/upload');

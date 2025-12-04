@@ -1,57 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, CheckCircle, Circle, Calendar, User, Flag, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import api from '../../utils/api';
 
 const Tasks = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: 'Review contract documents',
-      description: 'Review and analyze the employment contract for client John Doe',
-      status: 'pending',
-      priority: 'high',
-      dueDate: '2024-12-20',
-      assignedTo: 'John Smith',
-      caseId: 'PI-2024-001',
-      completed: false,
-      createdDate: '2024-12-10'
-    },
-    {
-      id: 2,
-      title: 'Prepare court filing',
-      description: 'Prepare and submit motion for summary judgment',
-      status: 'in-progress',
-      priority: 'high',
-      dueDate: '2024-12-18',
-      assignedTo: 'Sarah Johnson',
-      caseId: 'CD-2024-002',
-      completed: false,
-      createdDate: '2024-12-08'
-    },
-    {
-      id: 3,
-      title: 'Client consultation follow-up',
-      description: 'Follow up with client regarding settlement options',
-      status: 'completed',
-      priority: 'medium',
-      dueDate: '2024-12-15',
-      assignedTo: 'Michael Brown',
-      caseId: 'DP-2024-003',
-      completed: true,
-      createdDate: '2024-12-05'
-    }
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, completed: 0 });
+  const [loading, setLoading] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium',
-    dueDate: '',
-    assignedTo: '',
-    caseId: ''
+    due_date: '',
+    assigned_lawyer: '',
+    case_secure_id: ''
   });
+
+  useEffect(() => {
+    fetchTasks();
+    fetchStats();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/user/tasks', {
+        params: { 
+          status: statusFilter !== 'all' ? statusFilter : undefined, 
+          priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+          search: searchTerm 
+        }
+      });
+      if (response.data.success) {
+        setTasks(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/user/tasks/stats');
+      if (response.data.success) {
+        setStats(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchTasks();
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, statusFilter, priorityFilter]);
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -79,28 +90,44 @@ const Tasks = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const toggleTaskComplete = (taskId) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed, status: !task.completed ? 'completed' : 'pending' }
-        : task
-    ));
+
+
+  const handleAddTask = async () => {
+    if (!newTask.title || !newTask.due_date) {
+      toast.error('Please fill in title and due date');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await api.post('/user/tasks', newTask);
+      if (response.data.success) {
+        toast.success('Task created successfully');
+        fetchTasks();
+        fetchStats();
+        setNewTask({ title: '', description: '', priority: 'medium', due_date: '', assigned_lawyer: '', case_secure_id: '' });
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error('Failed to create task');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddTask = () => {
-    if (!newTask.title || !newTask.dueDate) return;
-    
-    const task = {
-      id: Date.now(),
-      status: 'pending',
-      completed: false,
-      createdDate: new Date().toISOString().split('T')[0],
-      ...newTask
-    };
-    
-    setTasks([...tasks, task]);
-    setNewTask({ title: '', description: '', priority: 'medium', dueDate: '', assignedTo: '', caseId: '' });
-    setShowModal(false);
+  const toggleTaskComplete = async (taskSecureId, currentStatus) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    try {
+      const response = await api.put(`/user/tasks/${taskSecureId}`, { status: newStatus });
+      if (response.data.success) {
+        fetchTasks();
+        fetchStats();
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
+    }
   };
 
   const isOverdue = (dueDate) => {
@@ -124,10 +151,10 @@ const Tasks = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Tasks', value: tasks.length, color: 'bg-blue-500' },
-          { label: 'Pending', value: tasks.filter(t => t.status === 'pending').length, color: 'bg-gray-500' },
-          { label: 'In Progress', value: tasks.filter(t => t.status === 'in-progress').length, color: 'bg-yellow-500' },
-          { label: 'Completed', value: tasks.filter(t => t.completed).length, color: 'bg-green-500' }
+          { label: 'Total Tasks', value: stats.total, color: 'bg-blue-500' },
+          { label: 'Pending', value: stats.pending, color: 'bg-gray-500' },
+          { label: 'In Progress', value: stats.inProgress, color: 'bg-yellow-500' },
+          { label: 'Completed', value: stats.completed, color: 'bg-green-500' }
         ].map((stat, index) => (
           <div key={index} className="bg-white rounded-lg border border-gray-100 p-4">
             <div className="flex items-center justify-between">
@@ -187,66 +214,78 @@ const Tasks = () => {
           <h2 className="text-lg font-semibold text-gray-900">Your Tasks ({filteredTasks.length})</h2>
         </div>
         <div className="divide-y divide-gray-100">
-          {filteredTasks.map(task => (
-            <div key={task.id} className={`p-4 hover:bg-gray-50 transition-colors ${task.completed ? 'opacity-75' : ''}`}>
-              <div className="flex items-start gap-4">
-                <button
-                  onClick={() => toggleTaskComplete(task.id)}
-                  className="mt-1 text-gray-400 hover:text-blue-600 transition-colors"
-                >
-                  {task.completed ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <Circle className="w-5 h-5" />
-                  )}
-                </button>
-                
-                <div className="flex-1">
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-2 mb-2">
-                    <div>
-                      <h3 className={`font-semibold ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                        {task.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(task.status)}`}>
-                        {task.status}
-                      </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+              <p className="text-gray-600">Create your first task to get started</p>
+            </div>
+          ) : (
+            tasks.map(task => (
+              <div key={task.secure_id} className={`p-4 hover:bg-gray-50 transition-colors ${task.status === 'completed' ? 'opacity-75' : ''}`}>
+                <div className="flex items-start gap-4">
+                  <button
+                    onClick={() => toggleTaskComplete(task.secure_id, task.status)}
+                    className="mt-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  >
+                    {task.status === 'completed' ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Circle className="w-5 h-5" />
+                    )}
+                  </button>
                   
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span className={isOverdue(task.dueDate) ? 'text-red-600 font-medium' : ''}>
-                        Due: {new Date(task.dueDate).toLocaleDateString()}
-                      </span>
+                  <div className="flex-1">
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-2 mb-2">
+                      <div>
+                        <h3 className={`font-semibold ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                          {task.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(task.status)}`}>
+                          {task.status}
+                        </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                      </div>
                     </div>
-                    {task.assignedTo && (
+                    
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        <span>{task.assignedTo}</span>
+                        <Calendar className="w-4 h-4" />
+                        <span className={isOverdue(task.due_date) ? 'text-red-600 font-medium' : ''}>
+                          Due: {new Date(task.due_date).toLocaleDateString()}
+                        </span>
                       </div>
-                    )}
-                    {task.caseId && (
+                      {task.assigned_lawyer && (
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          <span>{task.assigned_lawyer}</span>
+                        </div>
+                      )}
+                      {task.case_number && (
+                        <div className="flex items-center gap-1">
+                          <Flag className="w-4 h-4" />
+                          <span>Case: {task.case_number}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1">
-                        <Flag className="w-4 h-4" />
-                        <span>Case: {task.caseId}</span>
+                        <Clock className="w-4 h-4" />
+                        <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Created: {new Date(task.createdDate).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -296,8 +335,8 @@ const Tasks = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                   <input
                     type="date"
-                    value={newTask.dueDate}
-                    onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                    value={newTask.due_date}
+                    onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -307,8 +346,8 @@ const Tasks = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
                 <input
                   type="text"
-                  value={newTask.assignedTo}
-                  onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
+                  value={newTask.assigned_lawyer}
+                  onChange={(e) => setNewTask({...newTask, assigned_lawyer: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Lawyer or team member"
                 />
