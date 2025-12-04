@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Eye, Calendar, User, FileText, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import api from '../../utils/api';
 
 const Cases = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,67 +15,55 @@ const Cases = () => {
   const [meetingData, setMeetingData] = useState({ date: '', time: '', title: '' });
   const [documentData, setDocumentData] = useState({ name: '', file: null });
   const [newStatus, setNewStatus] = useState('');
-  const [cases, setCases] = useState([
-    {
-      id: 1,
-      title: 'Personal Injury Claim',
-      caseNumber: 'PI-2024-001',
-      lawyer: 'John Smith',
-      status: 'active',
-      priority: 'high',
-      dateCreated: '2024-01-15',
-      nextHearing: '2024-12-20',
-      description: 'Car accident compensation case',
-      documents: ['Medical Report.pdf', 'Police Report.pdf'],
-      notes: 'Client suffered minor injuries. Insurance company initially denied claim.',
-      timeline: [
-        { date: '2024-01-15', event: 'Case opened' },
-        { date: '2024-01-20', event: 'Documents submitted' },
-        { date: '2024-02-01', event: 'Initial hearing scheduled' }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Contract Dispute',
-      caseNumber: 'CD-2024-002',
-      lawyer: 'Sarah Johnson',
-      status: 'pending',
-      priority: 'medium',
-      dateCreated: '2024-02-10',
-      nextHearing: '2024-12-25',
-      description: 'Business contract disagreement',
-      documents: ['Contract.pdf', 'Email Correspondence.pdf'],
-      notes: 'Dispute over payment terms and delivery schedule.',
-      timeline: [
-        { date: '2024-02-10', event: 'Case opened' },
-        { date: '2024-02-15', event: 'Mediation requested' }
-      ]
-    },
-    {
-      id: 3,
-      title: 'Divorce Proceedings',
-      caseNumber: 'DP-2024-003',
-      lawyer: 'Michael Brown',
-      status: 'closed',
-      priority: 'low',
-      dateCreated: '2024-01-05',
-      nextHearing: null,
-      description: 'Divorce and custody arrangements',
-      documents: ['Marriage Certificate.pdf', 'Financial Records.pdf'],
-      notes: 'Amicable divorce proceedings. Custody arrangement finalized.',
-      timeline: [
-        { date: '2024-01-05', event: 'Case opened' },
-        { date: '2024-03-15', event: 'Settlement reached' },
-        { date: '2024-04-01', event: 'Case closed' }
-      ]
-    }
-  ]);
+  const [cases, setCases] = useState([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, closed: 0 });
+  const [loading, setLoading] = useState(false);
   const [newCase, setNewCase] = useState({
     title: '',
-    lawyer: '',
+    lawyer_name: '',
     priority: 'medium',
     description: ''
   });
+
+  useEffect(() => {
+    fetchCases();
+    fetchStats();
+  }, []);
+
+  const fetchCases = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/user/cases', {
+        params: { status: statusFilter !== 'all' ? statusFilter : undefined, search: searchTerm }
+      });
+      if (response.data.success) {
+        setCases(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cases:', error);
+      toast.error('Failed to load cases');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/user/cases/stats');
+      if (response.data.success) {
+        setStats(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchCases();
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, statusFilter]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -100,21 +90,57 @@ const Cases = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleAddCase = () => {
-    if (!newCase.title || !newCase.lawyer) return;
+  const handleAddCase = async () => {
+    if (!newCase.title || !newCase.lawyer_name) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
     
-    const caseItem = {
-      id: Date.now(),
-      caseNumber: `CS-2024-${String(cases.length + 1).padStart(3, '0')}`,
-      status: 'pending',
-      dateCreated: new Date().toISOString().split('T')[0],
-      nextHearing: null,
-      ...newCase
-    };
-    
-    setCases([...cases, caseItem]);
-    setNewCase({ title: '', lawyer: '', priority: 'medium', description: '' });
-    setShowModal(false);
+    try {
+      setLoading(true);
+      const response = await api.post('/user/cases', newCase);
+      if (response.data.success) {
+        toast.success('Case created successfully');
+        fetchCases();
+        fetchStats();
+        setNewCase({ title: '', lawyer_name: '', priority: 'medium', description: '' });
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating case:', error);
+      toast.error('Failed to create case');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (caseSecureId, newStatus) => {
+    try {
+      const response = await api.put(`/user/cases/${caseSecureId}`, { status: newStatus });
+      if (response.data.success) {
+        toast.success('Case status updated');
+        fetchCases();
+        fetchStats();
+      }
+    } catch (error) {
+      console.error('Error updating case:', error);
+      toast.error('Failed to update case');
+    }
+  };
+
+  const handleAddDocument = async (caseSecureId, documentName) => {
+    try {
+      const response = await api.post(`/user/cases/${caseSecureId}/documents`, {
+        document_name: documentName
+      });
+      if (response.data.success) {
+        toast.success('Document added successfully');
+        fetchCases();
+      }
+    } catch (error) {
+      console.error('Error adding document:', error);
+      toast.error('Failed to add document');
+    }
   };
 
   return (
@@ -134,10 +160,10 @@ const Cases = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Cases', value: cases.length, color: 'bg-blue-500' },
-          { label: 'Active Cases', value: cases.filter(c => c.status === 'active').length, color: 'bg-green-500' },
-          { label: 'Pending Cases', value: cases.filter(c => c.status === 'pending').length, color: 'bg-yellow-500' },
-          { label: 'Closed Cases', value: cases.filter(c => c.status === 'closed').length, color: 'bg-gray-500' }
+          { label: 'Total Cases', value: stats.total, color: 'bg-blue-500' },
+          { label: 'Active Cases', value: stats.active, color: 'bg-green-500' },
+          { label: 'Pending Cases', value: stats.pending, color: 'bg-yellow-500' },
+          { label: 'Closed Cases', value: stats.closed, color: 'bg-gray-500' }
         ].map((stat, index) => (
           <div key={index} className="bg-white rounded-lg border border-gray-100 p-4">
             <div className="flex items-center justify-between">
@@ -188,14 +214,25 @@ const Cases = () => {
           <h2 className="text-lg font-semibold text-gray-900">Your Cases ({filteredCases.length})</h2>
         </div>
         <div className="divide-y divide-gray-100">
-          {filteredCases.map(caseItem => (
-            <div key={caseItem.id} className="p-4 hover:bg-gray-50 transition-colors">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : cases.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No cases found</h3>
+              <p className="text-gray-600">Create your first case to get started</p>
+            </div>
+          ) : (
+            cases.map(caseItem => (
+              <div key={caseItem.secure_id} className="p-4 hover:bg-gray-50 transition-colors">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold text-gray-900">{caseItem.title}</h3>
-                      <p className="text-sm text-gray-500">Case #{caseItem.caseNumber}</p>
+                      <p className="text-sm text-gray-500">Case #{caseItem.case_number}</p>
                     </div>
                     <div className="flex gap-2">
                       <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(caseItem.status)}`}>
@@ -212,16 +249,16 @@ const Cases = () => {
                   <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <User className="w-4 h-4" />
-                      <span>{caseItem.lawyer}</span>
+                      <span>{caseItem.lawyer_name}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>Created: {new Date(caseItem.dateCreated).toLocaleDateString()}</span>
+                      <span>Created: {new Date(caseItem.created_at).toLocaleDateString()}</span>
                     </div>
-                    {caseItem.nextHearing && (
+                    {caseItem.next_hearing && (
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>Next: {new Date(caseItem.nextHearing).toLocaleDateString()}</span>
+                        <span>Next: {new Date(caseItem.next_hearing).toLocaleDateString()}</span>
                       </div>
                     )}
                   </div>
@@ -240,8 +277,9 @@ const Cases = () => {
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -252,7 +290,7 @@ const Cases = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">{selectedCase.title}</h3>
-                <p className="text-sm text-gray-500">Case #{selectedCase.caseNumber}</p>
+                <p className="text-sm text-gray-500">Case #{selectedCase.case_number}</p>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -282,11 +320,11 @@ const Cases = () => {
                     </div>
                     <div>
                       <span className="text-gray-500">Created:</span>
-                      <span className="ml-2 text-gray-900">{new Date(selectedCase.dateCreated).toLocaleDateString()}</span>
+                      <span className="ml-2 text-gray-900">{new Date(selectedCase.created_at).toLocaleDateString()}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Lawyer:</span>
-                      <span className="ml-2 text-gray-900">{selectedCase.lawyer}</span>
+                      <span className="ml-2 text-gray-900">{selectedCase.lawyer_name}</span>
                     </div>
                   </div>
                 </div>
@@ -306,10 +344,19 @@ const Cases = () => {
                   <div className="space-y-3">
                     {selectedCase.timeline?.map((item, index) => (
                       <div key={index} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <div>
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          item.type === 'meeting' ? 'bg-green-500' : 
+                          item.event.includes('Document') ? 'bg-purple-500' : 'bg-blue-500'
+                        }`}></div>
+                        <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">{item.event}</p>
                           <p className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</p>
+                          {item.type === 'meeting' && item.meeting_data && (
+                            <div className="mt-1 p-2 bg-green-50 rounded text-xs">
+                              <p><strong>Meeting:</strong> {item.meeting_data.title}</p>
+                              <p><strong>Time:</strong> {item.meeting_data.time}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -323,18 +370,35 @@ const Cases = () => {
                   <h4 className="font-medium text-gray-900 mb-3">Documents</h4>
                   <div className="space-y-2">
                     {selectedCase.documents?.map((doc, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                        <FileText className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{doc}</span>
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <span className="text-sm text-gray-700">{typeof doc === 'string' ? doc : doc.name}</span>
+                            {typeof doc === 'object' && doc.added_date && (
+                              <p className="text-xs text-gray-500">Added: {new Date(doc.added_date).toLocaleDateString()}</p>
+                            )}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            const docName = typeof doc === 'string' ? doc : doc.name;
+                            // Create a simple document viewer modal or download
+                            alert(`Opening document: ${docName}\n\nNote: This is a demo. In production, this would:\n- Open PDF viewer\n- Download the file\n- Show document preview`);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-50"
+                        >
+                          View
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {selectedCase.nextHearing && (
+                {selectedCase.next_hearing && (
                   <div className="bg-blue-50 rounded-lg p-4">
                     <h4 className="font-medium text-blue-900 mb-2">Next Hearing</h4>
-                    <p className="text-sm text-blue-700">{new Date(selectedCase.nextHearing).toLocaleDateString()}</p>
+                    <p className="text-sm text-blue-700">{new Date(selectedCase.next_hearing).toLocaleDateString()}</p>
                   </div>
                 )}
 
@@ -410,11 +474,42 @@ const Cases = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  // Add meeting logic here
-                  alert(`Meeting "${meetingData.title}" scheduled for ${meetingData.date} at ${meetingData.time}`);
-                  setMeetingData({ date: '', time: '', title: '' });
-                  setShowScheduleModal(false);
+                onClick={async () => {
+                  if (!meetingData.title || !meetingData.date || !meetingData.time) {
+                    toast.error('Please fill in all fields');
+                    return;
+                  }
+                  try {
+                    const response = await api.post('/user/appointments', {
+                      title: meetingData.title,
+                      date: meetingData.date,
+                      time: meetingData.time,
+                      type: 'meeting',
+                      lawyer_name: selectedCase.lawyer_name,
+                      description: `Meeting for case: ${selectedCase.title}`
+                    });
+                    if (response.data.success) {
+                      // Also add to case timeline
+                      await api.post(`/user/cases/${selectedCase.secure_id}/meetings`, {
+                        meeting_title: meetingData.title,
+                        meeting_date: meetingData.date,
+                        meeting_time: meetingData.time
+                      });
+                      toast.success('Meeting scheduled successfully');
+                      await fetchCases(); // Refresh to show in timeline
+                      // Update selected case with fresh data
+                      const updatedCases = await api.get('/user/cases');
+                      if (updatedCases.data.success) {
+                        const refreshedCase = updatedCases.data.data.find(c => c.secure_id === selectedCase.secure_id);
+                        if (refreshedCase) setSelectedCase(refreshedCase);
+                      }
+                      setMeetingData({ date: '', time: '', title: '' });
+                      setShowScheduleModal(false);
+                    }
+                  } catch (error) {
+                    console.error('Error scheduling meeting:', error);
+                    toast.error('Failed to schedule meeting');
+                  }
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -459,17 +554,20 @@ const Cases = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  if (documentData.name) {
-                    const updatedCases = cases.map(c => 
-                      c.id === selectedCase.id 
-                        ? {...c, documents: [...(c.documents || []), documentData.name + '.pdf']}
-                        : c
-                    );
-                    setCases(updatedCases);
-                    setSelectedCase({...selectedCase, documents: [...(selectedCase.documents || []), documentData.name + '.pdf']});
+                onClick={async () => {
+                  if (!documentData.name) {
+                    toast.error('Please enter document name');
+                    return;
+                  }
+                  try {
+                    await handleAddDocument(selectedCase.secure_id, documentData.name);
                     setDocumentData({ name: '', file: null });
                     setShowDocumentModal(false);
+                    // Refresh selected case
+                    const updatedCase = cases.find(c => c.secure_id === selectedCase.secure_id);
+                    if (updatedCase) setSelectedCase(updatedCase);
+                  } catch (error) {
+                    console.error('Error adding document:', error);
                   }
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -510,15 +608,16 @@ const Cases = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  const updatedCases = cases.map(c => 
-                    c.id === selectedCase.id 
-                      ? {...c, status: newStatus}
-                      : c
-                  );
-                  setCases(updatedCases);
-                  setSelectedCase({...selectedCase, status: newStatus});
-                  setShowStatusModal(false);
+                onClick={async () => {
+                  try {
+                    await handleUpdateStatus(selectedCase.secure_id, newStatus);
+                    setShowStatusModal(false);
+                    // Refresh selected case
+                    const updatedCase = cases.find(c => c.secure_id === selectedCase.secure_id);
+                    if (updatedCase) setSelectedCase(updatedCase);
+                  } catch (error) {
+                    console.error('Error updating status:', error);
+                  }
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -551,8 +650,8 @@ const Cases = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Lawyer</label>
                 <input
                   type="text"
-                  value={newCase.lawyer}
-                  onChange={(e) => setNewCase({...newCase, lawyer: e.target.value})}
+                  value={newCase.lawyer_name}
+                  onChange={(e) => setNewCase({...newCase, lawyer_name: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Lawyer name"
                 />

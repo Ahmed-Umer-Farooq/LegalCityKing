@@ -36,7 +36,7 @@ const Calendar = () => {
       
       if (response.data.success) {
         const formattedAppointments = response.data.data.map(apt => ({
-          id: apt.id,
+          secure_id: apt.secure_id,
           date: apt.appointment_date,
           time: apt.appointment_time,
           title: apt.title,
@@ -138,9 +138,9 @@ const Calendar = () => {
     }
   };
 
-  const handleDeleteAppointment = async (appointmentId) => {
+  const handleDeleteAppointment = async (appointmentSecureId) => {
     try {
-      const response = await api.delete(`/user/appointments/${appointmentId}`);
+      const response = await api.delete(`/user/appointments/${appointmentSecureId}`);
       if (response.data.success) {
         toast.success('Appointment deleted successfully');
         fetchAppointments();
@@ -159,150 +159,129 @@ const Calendar = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-      </div>
-
-      <div className="relative bg-white rounded-2xl border border-[#F8F9FA] shadow-md">
-        {loading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-2xl">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        )}
-        {/* Professional Calendar Header */}
-        <div className="flex items-center justify-between p-7 border-b border-[#F8F9FA]">
-          <button
-            onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
-          </button>
-          <div className="text-center">
-            <h2 className="text-[#181A2A] text-lg font-semibold">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </h2>
-            <p className="text-[#737791] text-sm">Today: {new Date().toLocaleDateString()}</p>
-          </div>
-          <button
-            onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
-          >
-            <ChevronRight className="w-5 h-5 text-[#6B7280]" />
-          </button>
+    <div className="flex gap-6 h-full">
+      {/* Main Content - Meetings */}
+      <div className="flex-1 min-w-0">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Appointments</h1>
+          <p className="text-gray-600">Manage your upcoming meetings and consultations</p>
         </div>
 
-        {/* Professional Calendar Grid */}
-        <div className="p-7">
-          <div className="space-y-1">
-            {/* Day Headers */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments
+              .filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0))
+              .sort((a, b) => new Date(a.date) - new Date(b.date))
+              .map(apt => (
+                <div key={apt.secure_id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <h3 className="font-semibold text-gray-900">{apt.title}</h3>
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                          {apt.type}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {new Date(apt.date).toLocaleDateString()} at {apt.time}
+                        </div>
+                        {apt.lawyer && (
+                          <div className="flex items-center gap-1">
+                            <User className="w-4 h-4" />
+                            {apt.lawyer}
+                          </div>
+                        )}
+                      </div>
+                      {apt.description && (
+                        <p className="text-sm text-gray-600">{apt.description}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAppointment(apt.secure_id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            }
+            {appointments.filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0)).length === 0 && (
+              <div className="text-center py-12">
+                <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No upcoming appointments</h3>
+                <p className="text-gray-600">Click on a date in the calendar to schedule a new appointment</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Smart Calendar Card - Sidebar */}
+      <div className="w-80 flex-shrink-0">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          {/* Calendar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <button onClick={() => navigateMonth(-1)} className="p-1 hover:bg-gray-100 rounded">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-center">
+              <h3 className="font-semibold text-gray-900">
+                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              </h3>
+            </div>
+            <button onClick={() => navigateMonth(1)} className="p-1 hover:bg-gray-100 rounded">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Mini Calendar */}
+          <div className="p-4">
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-                <div key={i} className="text-center py-2">
-                  <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">{day}</span>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                <div key={i} className="text-center py-1">
+                  <span className="text-xs font-medium text-gray-500">{day}</span>
                 </div>
               ))}
             </div>
-            
-            {/* Calendar Days */}
             <div className="grid grid-cols-7 gap-1">
               {getDaysInMonth(currentDate).map((day, index) => {
                 const dayAppointments = day ? getAppointmentsForDate(currentDate, day) : [];
                 const todayCheck = isToday(day);
-                const isPrevNext = !day;
-                
                 return (
-                  <div key={index} className="relative">
-                    <button 
-                      onClick={() => handleDateClick(day)}
-                      className={`w-full h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-[#F8F9FA] ${
-                        todayCheck 
-                          ? 'bg-[#007EF4] text-white shadow-md' 
-                          : isPrevNext
-                          ? 'text-[#D1D5DB] cursor-default'
-                          : 'text-[#374151] hover:text-[#007EF4]'
-                      }`}
-                      disabled={!day}
-                    >
-                      {day || ''}
-                    </button>
-                    {dayAppointments.length > 0 && (
-                      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-                        <div className="w-1.5 h-1.5 bg-[#16D959] rounded-full"></div>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={index}
+                    onClick={() => handleDateClick(day)}
+                    disabled={!day}
+                    className={`h-8 w-8 text-xs rounded-md transition-colors ${
+                      todayCheck
+                        ? 'bg-blue-500 text-white'
+                        : day
+                        ? 'hover:bg-gray-100 text-gray-700'
+                        : 'text-gray-300 cursor-default'
+                    } ${dayAppointments.length > 0 ? 'font-semibold' : ''}`}
+                  >
+                    {day}
+                  </button>
                 );
               })}
             </div>
           </div>
-          
-          {/* Upcoming Events Section */}
-          <div className="mt-6 pt-6 border-t border-[#F8F9FA]">
-            <h3 className="text-sm font-semibold text-[#374151] mb-3">Upcoming Appointments</h3>
-            <div className="space-y-2">
-              {appointments
-                .filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0))
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .slice(0, 3)
-                .map(apt => (
-                  <div key={apt.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                    <div className="w-2 h-2 bg-[#007EF4] rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[#374151]">{apt.title}</p>
-                      <p className="text-xs text-[#6B7280]">{new Date(apt.date).toLocaleDateString()}, {apt.time}</p>
-                    </div>
-                  </div>
-                ))
-              }
-              {appointments.filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0)).length === 0 && (
-                <p className="text-sm text-[#9CA3AF] italic">No upcoming appointments</p>
-              )}
+
+          {/* Quick Stats */}
+          <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <div className="text-xs text-gray-600 mb-2">This Month</div>
+            <div className="text-sm text-gray-700">
+              {appointments.length} meetings
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Upcoming Appointments */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Appointments</h3>
-        <div className="space-y-3">
-          {appointments
-            .filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0))
-            .sort((a, b) => new Date(a.date) - new Date(b.date))
-            .slice(0, 5)
-            .map(apt => (
-              <div key={apt.id} className="flex items-center gap-4 p-3 border border-[#F3F4F6] rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                <div className="w-10 h-10 bg-[#F8F9FA] rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-[#6B7280]" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{apt.title}</h4>
-                  <p className="text-sm text-gray-500">
-                    {new Date(apt.date).toLocaleDateString()} at {apt.time}
-                  </p>
-                  {apt.lawyer && (
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      {apt.lawyer}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 text-xs rounded-full bg-[#F8F9FA] text-[#6B7280] border border-[#E5E7EB]">
-                    {apt.type}
-                  </span>
-                  <button
-                    onClick={() => handleDeleteAppointment(apt.id)}
-                    className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                    title="Delete appointment"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))
-          }
         </div>
       </div>
 

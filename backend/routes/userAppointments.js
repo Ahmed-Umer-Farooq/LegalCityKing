@@ -12,7 +12,7 @@ const {
 router.get('/', authenticateToken, getUserAppointments);
 router.get('/upcoming', authenticateToken, getUpcomingUserAppointments);
 router.post('/', authenticateToken, createUserAppointment);
-router.put('/:id', authenticateToken, updateUserAppointment);
-router.delete('/:id', authenticateToken, deleteUserAppointment);
+router.put('/:secure_id', authenticateToken, updateUserAppointment);
+router.delete('/:secure_id', authenticateToken, deleteUserAppointment);
 
 module.exports = router;

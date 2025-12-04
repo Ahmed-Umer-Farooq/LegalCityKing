@@ -1,4 +1,9 @@
 const db = require('../db');
+const crypto = require('crypto');
+
+const generateSecureId = () => {
+  return crypto.randomBytes(8).toString('hex');
+};
 
 const getUserAppointments = async (req, res) => {
   try {
@@ -6,7 +11,7 @@ const getUserAppointments = async (req, res) => {
     const { start, end } = req.query;
 
     let query = db('user_appointments')
-      .select('*')
+      .select('secure_id', 'title', 'description', 'appointment_type', 'appointment_date', 'appointment_time', 'user_secure_id', 'lawyer_name', 'lawyer_id', 'status', 'created_at', 'updated_at')
       .where('user_secure_id', userSecureId);
 
     if (start && end) {
@@ -34,6 +39,7 @@ const createUserAppointment = async (req, res) => {
     }
 
     const appointmentData = {
+      secure_id: generateSecureId(),
       title,
       description: description || `${type} appointment`,
       appointment_type: type,
@@ -47,7 +53,7 @@ const createUserAppointment = async (req, res) => {
     console.log('Inserting appointment data:', appointmentData);
 
     const [appointmentId] = await db('user_appointments').insert(appointmentData);
-    const newAppointment = await db('user_appointments').where({ id: appointmentId }).first();
+    const newAppointment = await db('user_appointments').select('secure_id', 'title', 'description', 'appointment_type', 'appointment_date', 'appointment_time', 'user_secure_id', 'lawyer_name', 'lawyer_id', 'status', 'created_at', 'updated_at').where({ id: appointmentId }).first();
     
     console.log('Created appointment:', newAppointment);
     res.status(201).json({ success: true, data: newAppointment });
@@ -59,8 +65,7 @@ const createUserAppointment = async (req, res) => {
 
 const updateUserAppointment = async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
+    const { secure_id } = req.params;
     const { title, date, time, type, lawyer_name, description } = req.body;
 
     let updateData = {};
@@ -72,14 +77,14 @@ const updateUserAppointment = async (req, res) => {
     if (lawyer_name) updateData.lawyer_name = lawyer_name;
 
     const updated = await db('user_appointments')
-      .where({ id, user_secure_id: req.user.secure_id })
+      .where({ secure_id, user_secure_id: req.user.secure_id })
       .update({ ...updateData, updated_at: new Date() });
 
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Appointment not found' });
     }
 
-    const updatedAppointment = await db('user_appointments').where({ id }).first();
+    const updatedAppointment = await db('user_appointments').where({ secure_id }).first();
     res.json({ success: true, data: updatedAppointment });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -88,10 +93,10 @@ const updateUserAppointment = async (req, res) => {
 
 const deleteUserAppointment = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { secure_id } = req.params;
     const userSecureId = req.user.secure_id;
 
-    const deleted = await db('user_appointments').where({ id, user_secure_id: userSecureId }).del();
+    const deleted = await db('user_appointments').where({ secure_id, user_secure_id: userSecureId }).del();
 
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Appointment not found' });
@@ -114,7 +119,7 @@ const getUpcomingUserAppointments = async (req, res) => {
     const upcomingDateStr = upcomingDate.toISOString().split('T')[0];
 
     const appointments = await db('user_appointments')
-      .select('*')
+      .select('secure_id', 'title', 'description', 'appointment_type', 'appointment_date', 'appointment_time', 'user_secure_id', 'lawyer_name', 'lawyer_id', 'status', 'created_at', 'updated_at')
       .where('user_secure_id', userSecureId)
       .where('status', 'scheduled')
       .whereBetween('appointment_date', [today, upcomingDateStr])

@@ -316,6 +316,8 @@ const intakesRoutes = require('./routes/intakes');
 app.use('/api/intakes', intakesRoutes);
 const userAppointmentsRoutes = require('./routes/userAppointments');
 app.use('/api/user/appointments', userAppointmentsRoutes);
+const userCasesRoutes = require('./routes/userCases');
+app.use('/api/user/cases', userCasesRoutes);
 const blogsRoutes = require('./routes/blogs');
 app.use('/api/blogs', blogsRoutes);
 const uploadRoutes = require('./routes/upload');
