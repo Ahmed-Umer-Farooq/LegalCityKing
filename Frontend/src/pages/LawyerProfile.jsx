@@ -176,7 +176,20 @@ export default function LawyerProfile() {
               Browse All Lawyers
             </button>
             <button 
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                if (user) {
+                  // Redirect based on user role
+                  if (user.role === 'admin' || user.is_admin) {
+                    navigate('/admin-dashboard');
+                  } else if (user.role === 'lawyer' || user.registration_id) {
+                    navigate('/lawyer-dashboard');
+                  } else {
+                    navigate('/user-dashboard');
+                  }
+                } else {
+                  navigate('/');
+                }
+              }}
               className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
             >
               Go Back
@@ -223,7 +236,16 @@ export default function LawyerProfile() {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
           <div className="max-w-7xl mx-auto">
             <button 
-              onClick={() => navigate('/user/lawyer-directory')}
+              onClick={() => {
+                // Redirect based on user role
+                if (user.role === 'admin' || user.is_admin) {
+                  navigate('/admin-dashboard');
+                } else if (user.role === 'lawyer' || user.registration_id) {
+                  navigate('/lawyer-dashboard');
+                } else {
+                  navigate('/user/lawyer-directory');
+                }
+              }}
               className="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg border border-white/20"
             >
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-colors">
@@ -231,7 +253,11 @@ export default function LawyerProfile() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </div>
-              <span className="font-semibold text-lg">Back to Lawyer Directory</span>
+              <span className="font-semibold text-lg">
+                Back to {user.role === 'admin' || user.is_admin ? 'Admin Dashboard' : 
+                         user.role === 'lawyer' || user.registration_id ? 'Lawyer Dashboard' : 
+                         'Lawyer Directory'}
+              </span>
             </button>
           </div>
         </div>

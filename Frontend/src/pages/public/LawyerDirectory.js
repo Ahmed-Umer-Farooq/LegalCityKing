@@ -18,8 +18,15 @@ function Header() {
   const cameFromDashboard = location.state?.from === 'dashboard';
 
   const handleBackNavigation = () => {
-    if (user && cameFromDashboard) {
-      navigate('/user-dashboard');
+    if (user) {
+      // Redirect based on user role
+      if (user.role === 'admin' || user.is_admin) {
+        navigate('/admin-dashboard');
+      } else if (user.role === 'lawyer' || user.registration_id) {
+        navigate('/lawyer-dashboard');
+      } else {
+        navigate('/user-dashboard');
+      }
     } else {
       navigate('/');
     }
