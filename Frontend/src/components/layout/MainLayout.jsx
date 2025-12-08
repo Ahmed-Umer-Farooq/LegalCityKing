@@ -261,7 +261,9 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
               <span className="text-white text-sm">Welcome, {user.name}</span>
               <button
                 onClick={() => {
-                  if (user.role === 'lawyer') {
+                  if (user.role === 'admin' || user.is_admin) {
+                    navigate('/admin-dashboard');
+                  } else if (user.role === 'lawyer' || user.registration_id) {
                     navigate('/lawyer-dashboard');
                   } else {
                     navigate('/user-dashboard');

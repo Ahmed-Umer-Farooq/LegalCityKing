@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { navigateToDashboard } from '../../utils/dashboardRedirect';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -142,7 +143,7 @@ const Header = () => {
                     <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md border z-50">
                       <button
                         onClick={() => {
-                          navigate('/user-dashboard');
+                          navigateToDashboard(navigate, user);
                           setUserDropdownOpen(false);
                         }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
