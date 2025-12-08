@@ -4,6 +4,8 @@ import { Star, Phone, Mail, MapPin, Award, Calendar, Shield, MessageCircle, Cred
 import { useAuth } from '../context/AuthContext';
 import DashboardHeader from '../components/layout/DashboardHeader';
 import PaymentModal from '../components/payment/PaymentModal';
+import ReviewModal from '../components/lawyer/ReviewModal';
+import EndorsementModal from '../components/lawyer/EndorsementModal';
 import { toast } from 'sonner';
 import api from '../utils/api';
 
@@ -15,19 +17,27 @@ export default function LawyerProfile() {
   const [lawyer, setLawyer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showEndorsementModal, setShowEndorsementModal] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [endorsements, setEndorsements] = useState([]);
   
   // Check if user came from dashboard vs public pages
   const cameFromDashboard = localStorage.getItem('navigatedFromDashboard') === 'true' || location.pathname.startsWith('/dashboard/lawyer/');
   
   useEffect(() => {
-    fetchLawyer();
+    const loadData = async () => {
+      await fetchLawyer();
+      await fetchReviews();
+      await fetchEndorsements();
+    };
+    loadData();
   }, [id]);
   
   const fetchLawyer = async () => {
     try {
       setLoading(true);
       
-      // Check if id is valid
       if (!id || id === 'null' || id === 'undefined') {
         console.error('Invalid lawyer ID received:', id);
         throw new Error('Invalid lawyer ID');
@@ -47,6 +57,58 @@ export default function LawyerProfile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await api.get(`/reviews/${id}`);
+      const reviewData = response.data;
+      setReviews(reviewData.reviews || []);
+      
+      // Update lawyer with real review data
+      setLawyer(prev => ({
+        ...prev,
+        rating: parseFloat(reviewData.average_rating) || prev?.rating || 0,
+        reviews: reviewData.total_reviews || 0
+      }));
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
+  const fetchEndorsements = async () => {
+    try {
+      const response = await api.get(`/endorsements/${id}`);
+      setEndorsements(response.data.endorsements || []);
+    } catch (error) {
+      console.error('Error fetching endorsements:', error);
+    }
+  };
+
+  const handleReviewClick = () => {
+    if (!user) {
+      toast.error('Please login to write a review');
+      navigate('/login');
+      return;
+    }
+    if (user.role === 'lawyer') {
+      toast.error('Only users can write reviews');
+      return;
+    }
+    setShowReviewModal(true);
+  };
+
+  const handleEndorseClick = () => {
+    if (!user) {
+      toast.error('Please login to endorse this lawyer');
+      navigate('/login');
+      return;
+    }
+    if (user.role !== 'lawyer') {
+      toast.error('Only lawyers can endorse other lawyers');
+      return;
+    }
+    setShowEndorsementModal(true);
   };
   
   const handleChatWithLawyer = () => {
@@ -130,8 +192,8 @@ export default function LawyerProfile() {
     ...lawyer,
     title: lawyer.speciality || 'Attorney',
     location: `${lawyer.city || 'Unknown'}, ${lawyer.state || 'Unknown'}`,
-    rating: 5.0,
-    reviews: Math.floor(Math.random() * 50) + 10,
+    rating: parseFloat(lawyer.rating) || 0,
+    reviews: lawyer.reviews || 0,
     phone: lawyer.mobile_number || 'Contact for phone',
     image: `https://ui-avatars.com/api/?name=${encodeURIComponent(lawyer.name)}&background=0284c7&color=fff&size=200`,
     yearsLicensed: Math.floor(Math.random() * 15) + 5,
@@ -199,10 +261,21 @@ export default function LawyerProfile() {
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                        <Star 
+                          key={i} 
+                          className={`w-5 h-5 ${
+                            i < Math.round(displayLawyer.rating || 0)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
                       ))}
-                      <span className="ml-2 text-lg font-semibold">{displayLawyer.rating}</span>
-                      <span className="ml-1 text-gray-600">({displayLawyer.reviews} reviews)</span>
+                      <span className="ml-2 text-lg font-semibold">
+                        {displayLawyer.rating > 0 ? displayLawyer.rating.toFixed(1) : '0.0'}
+                      </span>
+                      <span className="ml-1 text-gray-600">
+                        ({displayLawyer.reviews || 0} {displayLawyer.reviews === 1 ? 'review' : 'reviews'})
+                      </span>
                     </div>
                   </div>
 
@@ -230,11 +303,11 @@ export default function LawyerProfile() {
 
                 <div className="flex flex-col gap-3">
                   <button 
-                    onClick={() => window.location.href = `tel:${displayLawyer.phone}`}
+                    onClick={() => window.location.href = `tel:+44-20-8520-1234`}
                     className="flex items-center justify-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                   >
                     <Phone className="w-5 h-5" />
-                    {displayLawyer.phone}
+                    +44-20-8520-1234
                   </button>
                   {user ? (
                     <button 
@@ -258,8 +331,19 @@ export default function LawyerProfile() {
                       <span>Login to Chat</span>
                     </button>
                   )}
-                  <button className="flex items-center justify-center gap-3 border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
-                    Visit Website
+                  <button 
+                    onClick={handleReviewClick}
+                    className="flex items-center justify-center gap-3 border-2 border-blue-300 text-blue-700 px-8 py-4 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 font-medium"
+                  >
+                    <Star className="w-5 h-5" />
+                    {user && user.role !== 'lawyer' ? 'Write Review' : 'Login to Review'}
+                  </button>
+                  <button 
+                    onClick={handleEndorseClick}
+                    className="flex items-center justify-center gap-3 border-2 border-green-300 text-green-700 px-8 py-4 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 font-medium"
+                  >
+                    <Award className="w-5 h-5" />
+                    {user && user.role === 'lawyer' ? 'Endorse Lawyer' : 'Login to Endorse'}
                   </button>
                 </div>
               </div>
@@ -516,98 +600,90 @@ export default function LawyerProfile() {
 
             {/* Reviews */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Client Reviews</h2>
-              <div className="space-y-6">
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex items-center mb-2">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="ml-2 text-sm text-gray-600">May 16, 2023</span>
-                  </div>
-                  <p className="text-gray-700 mb-2">"Chris McLane as my attorney was awesome. So I wanted to take a second and say that Chris was hands down the best of the best. He won my case and got my kids for me!"</p>
-                  <p className="text-sm text-gray-500">- anonymous</p>
-                </div>
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex items-center mb-2">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="ml-2 text-sm text-gray-600">April 12, 2023</span>
-                  </div>
-                  <p className="text-gray-700 mb-2">"Chris was my lawyer through my 1.5 year divorce process which was extremely difficult. He was so kind and patient with me and always had my best interest in mind."</p>
-                  <p className="text-sm text-gray-500">- anonymous</p>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Client Reviews</h2>
+                <button
+                  onClick={handleReviewClick}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                >
+                  Write Review
+                </button>
               </div>
+              {reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-200 pb-6">
+                      <div className="flex items-center mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < review.rating
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {review.review && (
+                        <p className="text-gray-700 mb-2">"{review.review}"</p>
+                      )}
+                      <p className="text-sm text-gray-500">- {review.user_name}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review!</p>
+              )}
             </div>
 
             {/* Attorney Endorsements */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Attorney Endorsements</h2>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Received (12)</span>
-                  <span>Given (28)</span>
-                </div>
+                <button
+                  onClick={handleEndorseClick}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                >
+                  Endorse Lawyer
+                </button>
               </div>
               
-              <div className="space-y-6">
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-600 font-semibold text-sm">MJ</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">Myles Johnson</h4>
-                        <span className="text-sm text-gray-500">Family Attorney</span>
+              {endorsements.length > 0 ? (
+                <div className="space-y-6">
+                  {endorsements.map((endorsement) => {
+                    const initials = endorsement.endorser_name
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')
+                      .toUpperCase();
+                    return (
+                      <div key={endorsement.id} className="border-b border-gray-200 pb-6">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-blue-600 font-semibold text-sm">{initials}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900">{endorsement.endorser_name}</h4>
+                              <span className="text-sm text-gray-500">{endorsement.endorser_speciality || 'Attorney'}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {new Date(endorsement.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Relationship: {endorsement.relationship}
+                            </p>
+                            <p className="text-gray-700 italic">"{endorsement.endorsement_text}"</p>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">Nov 27 • Relationship: Opposing Counsel on matter</p>
-                      <p className="text-gray-700 italic">"Chris is a true professional. From my experience with Chris, he gets right to the meat of the issue and focuses on solutions rather than litigating the litigation unnecessarily. I endorse this lawyer."</p>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
-                
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-green-600 font-semibold text-sm">ET</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">Elizabeth Tharakan</h4>
-                        <span className="text-sm text-gray-500">Family Attorney</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">Jul 31 • Relationship: Worked for lawyer</p>
-                      <p className="text-gray-700 italic">"Chris hired me at Family Law Center of the Rockies. He was an excellent boss who let me learn my own way and make my own mistakes, while providing gentle guidance on how to win points with the judges. He was patient and easygoing."</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-purple-600 font-semibold text-sm">RA</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">Rahul Aggarwal</h4>
-                        <span className="text-sm text-gray-500">Attorney</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">Feb 28 • Relationship: Fellow lawyer in community</p>
-                      <p className="text-gray-700 italic">"An excellent lawyer who treats clients with patience, care, understanding, and utmost professionalism - an even better person and I wholeheartedly recommend for future services."</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <button className="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm">
-                View more endorsements
-              </button>
+              ) : (
+                <p className="text-gray-500 text-center py-8">No endorsements yet.</p>
+              )}
             </div>
           </div>
 
@@ -835,6 +911,22 @@ export default function LawyerProfile() {
         onClose={() => setShowPaymentModal(false)}
         lawyer={displayLawyer}
         user={user}
+      />
+      
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        lawyerId={id}
+        lawyerName={lawyer?.name}
+      />
+      
+      {/* Endorsement Modal */}
+      <EndorsementModal
+        isOpen={showEndorsementModal}
+        onClose={() => setShowEndorsementModal(false)}
+        lawyerId={id}
+        lawyerName={lawyer?.name}
       />
     </div>
   );

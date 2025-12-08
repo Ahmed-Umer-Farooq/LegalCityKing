@@ -333,6 +333,10 @@ app.use('/api/chat', chatRoutes);
 const qaRoutes = require('./routes/qa');
 app.use('/api/qa', qaRoutes);
 
+// Review and Endorsement routes
+const reviewRoutes = require('./routes/reviews');
+app.use('/api', reviewRoutes);
+
 // Store active users
 const activeUsers = new Map();
 

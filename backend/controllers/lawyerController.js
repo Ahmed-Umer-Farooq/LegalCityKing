@@ -157,15 +157,21 @@ const deleteAccount = async (req, res) => {
 const getLawyersDirectory = async (req, res) => {
   try {
     const lawyers = await db('lawyers')
+      .leftJoin('lawyer_reviews', 'lawyers.id', 'lawyer_reviews.lawyer_id')
       .select(
-        'secure_id', 'name', 'email', 'address', 'rating', 'experience', 'speciality', 
-        'description', 'profile_image', 'registration_id', 'law_firm', 
-        'is_verified', 'lawyer_verified'
+        'lawyers.id', 'lawyers.secure_id', 'lawyers.name', 'lawyers.email', 'lawyers.address', 
+        'lawyers.rating', 'lawyers.experience', 'lawyers.speciality', 'lawyers.description', 
+        'lawyers.profile_image', 'lawyers.registration_id', 'lawyers.law_firm', 
+        'lawyers.is_verified', 'lawyers.lawyer_verified',
+        db.raw('COUNT(lawyer_reviews.id) as total_reviews'),
+        db.raw('AVG(lawyer_reviews.rating) as average_rating')
       )
-      .where('is_verified', 1);
+      .where('lawyers.is_verified', 1)
+      .groupBy('lawyers.id');
 
     const processedLawyers = lawyers.map(lawyer => {
-      const reviewCount = Math.floor(Math.random() * 50) + 5;
+      const totalReviews = parseInt(lawyer.total_reviews) || 0;
+      const averageRating = lawyer.average_rating ? parseFloat(lawyer.average_rating).toFixed(1) : '0.0';
       const yearsLicensed = parseInt(lawyer.experience?.replace(/\D/g, '')) || 10;
       
       return {
@@ -174,10 +180,11 @@ const getLawyersDirectory = async (req, res) => {
         email: lawyer.email,
         location: lawyer.address,
         address: lawyer.address,
-        rating: parseFloat(lawyer.rating) || 5,
-        reviewCount: reviewCount,
-        reviews_count: reviewCount,
-        reviewScore: parseFloat((Math.random() * 2 + 8).toFixed(1)),
+        rating: parseFloat(averageRating),
+        reviewCount: totalReviews,
+        reviews: totalReviews,
+        reviews_count: totalReviews,
+        reviewScore: parseFloat(averageRating),
         yearsLicensed: yearsLicensed,
         practiceAreas: lawyer.speciality ? [lawyer.speciality] : ['General Practice'],
         practice_areas: lawyer.speciality || 'General Practice',
@@ -219,7 +226,17 @@ const getLawyerById = async (req, res) => {
       return res.status(404).json({ message: 'Lawyer not found' });
     }
 
-    const reviewCount = Math.floor(Math.random() * 50) + 5;
+    // Get real review data
+    const reviewStats = await db('lawyer_reviews')
+      .where('lawyer_id', lawyer.id)
+      .select(
+        db.raw('COUNT(*) as total_reviews'),
+        db.raw('AVG(rating) as average_rating')
+      )
+      .first();
+
+    const totalReviews = parseInt(reviewStats.total_reviews) || 0;
+    const averageRating = reviewStats.average_rating ? parseFloat(reviewStats.average_rating).toFixed(1) : '0.0';
     const yearsLicensed = parseInt(lawyer.experience?.replace(/\D/g, '')) || 10;
 
     const processedLawyer = {
@@ -227,8 +244,9 @@ const getLawyerById = async (req, res) => {
       name: lawyer.name,
       email: lawyer.email,
       location: lawyer.address,
-      rating: parseFloat(lawyer.rating) || 5,
-      reviewCount: reviewCount,
+      rating: parseFloat(averageRating),
+      reviews: totalReviews,
+      reviewCount: totalReviews,
       yearsLicensed: yearsLicensed,
       practiceAreas: lawyer.speciality ? [lawyer.speciality] : ['General Practice'],
       description: lawyer.description || 'Experienced attorney providing quality legal services.',
