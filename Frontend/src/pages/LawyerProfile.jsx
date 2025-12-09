@@ -113,12 +113,12 @@ export default function LawyerProfile() {
   
   const handleChatWithLawyer = () => {
     if (!lawyer) return;
-    console.log('Chat button clicked for lawyer:', { id, name: lawyer.name });
+    console.log('Chat button clicked for lawyer:', { id, secure_id: lawyer.secure_id, name: lawyer.name });
     
     if (!user) {
       // Store lawyer info for after login
       const chatData = {
-        partner_id: id,
+        partner_id: id, // Use route param (secure_id)
         partner_type: 'lawyer',
         partner_name: lawyer.name
       };
@@ -132,7 +132,7 @@ export default function LawyerProfile() {
     
     // Set up chat and navigate
     const chatData = {
-      partner_id: id,
+      partner_id: id, // Use route param (secure_id)
       partner_type: 'lawyer',
       partner_name: lawyer.name
     };

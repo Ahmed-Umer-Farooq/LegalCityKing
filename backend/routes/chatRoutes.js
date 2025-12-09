@@ -71,17 +71,19 @@ router.get('/conversations', authenticateToken, async (req, res) => {
     }
 
     const conversationsWithDetails = await Promise.all(
-      conversations.map(async (conv) => {
+      conversations
+        .filter(conv => conv.partner_id > 0) // Skip invalid IDs
+        .map(async (conv) => {
         const table = conv.partner_type === 'lawyer' ? 'lawyers' : 'users';
         let partner = await db(table)
           .select('id', 'name', 'email')
           .where('id', conv.partner_id)
           .first();
         
-        // If partner not found, it might be a data inconsistency - log it
+        // If partner not found, skip this conversation
         if (!partner) {
-          console.warn(`⚠️ Partner not found: ID ${conv.partner_id} in ${table} table`);
-          partner = { id: conv.partner_id, name: 'Unknown User', email: null };
+          console.warn(`⚠️ Partner not found: ID ${conv.partner_id} in ${table} table - skipping`);
+          return null;
         }
 
         const lastMessage = await db('chat_messages')
@@ -114,7 +116,9 @@ router.get('/conversations', authenticateToken, async (req, res) => {
       })
     );
 
-    res.json(conversationsWithDetails);
+    // Filter out null entries (conversations with missing partners)
+    const validConversations = conversationsWithDetails.filter(conv => conv !== null);
+    res.json(validConversations);
   } catch (error) {
     console.error('Error fetching conversations:', error);
     console.error('Error stack:', error.stack);
@@ -127,8 +131,21 @@ router.get('/messages/:partnerId/:partnerType', authenticateToken, async (req, r
   try {
     const { id: userId } = req.user;
     const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
-    const { partnerId, partnerType } = req.params;
+    let { partnerId, partnerType } = req.params;
     const { limit = 50, offset = 0 } = req.query;
+
+    // Convert secure_id to actual id if needed
+    if (partnerType === 'lawyer' && isNaN(partnerId)) {
+      const lawyer = await db('lawyers').where('secure_id', partnerId).first();
+      if (lawyer) {
+        partnerId = lawyer.id;
+      }
+    } else if (partnerType === 'user' && isNaN(partnerId)) {
+      const user = await db('users').where('secure_id', partnerId).first();
+      if (user) {
+        partnerId = user.id;
+      }
+    }
 
     console.log(`Fetching messages between user ${userId} (${userType}) and partner ${partnerId} (${partnerType})`);
 
@@ -163,7 +180,20 @@ router.put('/messages/read/:partnerId/:partnerType', authenticateToken, async (r
   try {
     const { id: userId } = req.user;
     const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
-    const { partnerId, partnerType } = req.params;
+    let { partnerId, partnerType } = req.params;
+
+    // Convert secure_id to actual id if needed
+    if (partnerType === 'lawyer' && isNaN(partnerId)) {
+      const lawyer = await db('lawyers').where('secure_id', partnerId).first();
+      if (lawyer) {
+        partnerId = lawyer.id;
+      }
+    } else if (partnerType === 'user' && isNaN(partnerId)) {
+      const user = await db('users').where('secure_id', partnerId).first();
+      if (user) {
+        partnerId = user.id;
+      }
+    }
 
     console.log(`Marking messages as read for user ${userId} (${userType}) from partner ${partnerId} (${partnerType})`);
 
@@ -272,7 +302,24 @@ router.post('/upload', authenticateToken, async (req, res) => {
 // Send message via API (fallback)
 router.post('/send', authenticateToken, async (req, res) => {
   try {
-    const { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = req.body;
+    let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = req.body;
+    
+    // Convert secure_id to actual id if needed
+    if (receiver_type === 'lawyer' && isNaN(receiver_id)) {
+      const lawyer = await db('lawyers').where('secure_id', receiver_id).first();
+      if (lawyer) {
+        receiver_id = lawyer.id;
+      } else {
+        return res.status(404).json({ error: 'Lawyer not found' });
+      }
+    } else if (receiver_type === 'user' && isNaN(receiver_id)) {
+      const user = await db('users').where('secure_id', receiver_id).first();
+      if (user) {
+        receiver_id = user.id;
+      } else {
+        return res.status(404).json({ error: 'User not found' });
+      }
+    }
     
     const [messageId] = await db('chat_messages').insert({
       sender_id,

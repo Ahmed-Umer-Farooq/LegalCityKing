@@ -109,8 +109,18 @@ const Chat = ({ currentUser }) => {
       content: newMessage.trim()
     };
 
-    chatService.sendMessage(messageData);
+    // Add message to UI immediately (optimistic update)
+    const tempMessage = {
+      id: Date.now(),
+      ...messageData,
+      created_at: new Date().toISOString(),
+      read_status: false
+    };
+    setMessages(prev => [...prev, tempMessage]);
     setNewMessage('');
+    
+    // Send via socket
+    chatService.sendMessage(messageData);
   };
 
   const handleTyping = (e) => {

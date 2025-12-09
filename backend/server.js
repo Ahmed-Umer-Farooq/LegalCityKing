@@ -385,7 +385,26 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', async (data) => {
     try {
-      const { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = data;
+      let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = data;
+      
+      // Convert secure_id to actual id if needed
+      if (receiver_type === 'lawyer' && isNaN(receiver_id)) {
+        const lawyer = await db('lawyers').where('secure_id', receiver_id).first();
+        if (lawyer) {
+          receiver_id = lawyer.id;
+        } else {
+          socket.emit('message_error', { error: 'Lawyer not found' });
+          return;
+        }
+      } else if (receiver_type === 'user' && isNaN(receiver_id)) {
+        const user = await db('users').where('secure_id', receiver_id).first();
+        if (user) {
+          receiver_id = user.id;
+        } else {
+          socket.emit('message_error', { error: 'User not found' });
+          return;
+        }
+      }
       
       const [messageId] = await db('chat_messages').insert({
         sender_id,

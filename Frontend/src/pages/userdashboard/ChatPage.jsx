@@ -74,24 +74,60 @@ const ChatPage = () => {
     if (chatPartner) {
       const partner = JSON.parse(chatPartner);
       console.log('🎯 Auto-selecting conversation from chatPartner:', partner);
-      setSelectedConversation({
-        partner_id: partner.partner_id,
-        partner_type: partner.partner_type,
-        partner_name: partner.partner_name,
-        last_message: null,
-        unread_count: 0
-      });
+      
+      // Convert secure_id to actual id if needed
+      let partnerId = partner.partner_id;
+      if (partner.partner_type === 'lawyer' && isNaN(partnerId)) {
+        // Fetch actual lawyer id from secure_id
+        fetch(`/api/lawyers/${partnerId}`)
+          .then(res => res.json())
+          .then(lawyer => {
+            setSelectedConversation({
+              partner_id: lawyer.id,
+              partner_type: partner.partner_type,
+              partner_name: partner.partner_name || lawyer.name,
+              last_message: null,
+              unread_count: 0
+            });
+          });
+      } else {
+        setSelectedConversation({
+          partner_id: partnerId,
+          partner_type: partner.partner_type,
+          partner_name: partner.partner_name,
+          last_message: null,
+          unread_count: 0
+        });
+      }
       localStorage.removeItem('chatPartner'); // Clear after use
     } else if (pendingChat) {
       const partner = JSON.parse(pendingChat);
       console.log('🎯 Auto-selecting conversation from pendingChat:', partner);
-      setSelectedConversation({
-        partner_id: partner.partner_id,
-        partner_type: partner.partner_type,
-        partner_name: partner.partner_name,
-        last_message: null,
-        unread_count: 0
-      });
+      
+      // Convert secure_id to actual id if needed
+      let partnerId = partner.partner_id;
+      if (partner.partner_type === 'lawyer' && isNaN(partnerId)) {
+        // Fetch actual lawyer id from secure_id
+        fetch(`/api/lawyers/${partnerId}`)
+          .then(res => res.json())
+          .then(lawyer => {
+            setSelectedConversation({
+              partner_id: lawyer.id,
+              partner_type: partner.partner_type,
+              partner_name: partner.partner_name || lawyer.name,
+              last_message: null,
+              unread_count: 0
+            });
+          });
+      } else {
+        setSelectedConversation({
+          partner_id: partnerId,
+          partner_type: partner.partner_type,
+          partner_name: partner.partner_name,
+          last_message: null,
+          unread_count: 0
+        });
+      }
       localStorage.removeItem('pendingChat'); // Clear after use
     }
 
@@ -131,7 +167,7 @@ const ChatPage = () => {
         selectedConversation.partner_id,
         selectedConversation.partner_type
       );
-      setMessages(messages || []);
+      setMessages(Array.isArray(messages) ? messages : []);
       
       // Mark as read
       await chatService.markAsRead(
@@ -141,6 +177,7 @@ const ChatPage = () => {
       loadConversations();
     } catch (error) {
       console.error('Error loading messages:', error);
+      setMessages([]); // Set empty array on error
     }
   };
 
@@ -176,7 +213,15 @@ const ChatPage = () => {
         const filtered = prev.filter(msg => !msg.id.toString().startsWith('temp-'));
         return [...filtered, { ...message, status: 'sent' }];
       });
+      setSending(false);
       loadConversations();
+    });
+    
+    chatService.onMessageError((error) => {
+      console.error('❌ Message error:', error);
+      setSending(false);
+      // Remove temp message on error
+      setMessages(prev => prev.filter(msg => !msg.id.toString().startsWith('temp-')));
     });
 
     chatService.onUserStatus(({ userId, status }) => {
@@ -324,16 +369,25 @@ const ChatPage = () => {
       created_at: new Date().toISOString(),
       status: 'sending'
     };
-    setMessages(prev => [...prev, tempMessage]);
+    console.log('Adding temp message to UI:', tempMessage);
+    setMessages(prev => {
+      const updated = [...prev, tempMessage];
+      console.log('Messages after adding temp:', updated.length);
+      return updated;
+    });
     
     try {
       chatService.sendMessage(messageData);
       setNewMessage('');
       setSelectedFile(null);
       stopTyping();
+      
+      // Auto-clear sending state after 2 seconds if no response
+      setTimeout(() => {
+        setSending(false);
+      }, 2000);
     } catch (error) {
       console.error('Failed to send message:', error);
-    } finally {
       setSending(false);
     }
   };
