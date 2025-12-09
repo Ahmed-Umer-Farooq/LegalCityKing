@@ -6,7 +6,13 @@ import api from '../utils/api';
 export default function LegalForms() {
   const navigate = useNavigate();
   const [approvedForms, setApprovedForms] = useState([]);
+  const [filteredForms, setFilteredForms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    practiceArea: '',
+    price: '',
+    sortBy: ''
+  });
 
   useEffect(() => {
     fetchApprovedForms();
@@ -15,13 +21,55 @@ export default function LegalForms() {
   const fetchApprovedForms = async () => {
     try {
       const response = await api.get('/forms/public');
-      setApprovedForms(response.data.forms || []);
+      const forms = response.data.forms || [];
+      setApprovedForms(forms);
+      setFilteredForms(forms);
     } catch (error) {
       console.error('Error fetching forms:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    let filtered = [...approvedForms];
+
+    if (filters.practiceArea) {
+      filtered = filtered.filter(form => 
+        (form.category || form.practice_area || '').toLowerCase().includes(filters.practiceArea.toLowerCase())
+      );
+    }
+
+    if (filters.price === 'free') {
+      filtered = filtered.filter(form => form.is_free);
+    } else if (filters.price === 'paid') {
+      filtered = filtered.filter(form => !form.is_free);
+    }
+
+    if (filters.sortBy === 'newest') {
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (filters.sortBy === 'price-low') {
+      filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (filters.sortBy === 'price-high') {
+      filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+    }
+
+    setFilteredForms(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({ practiceArea: '', price: '', sortBy: '' });
+    setFilteredForms(approvedForms);
+  };
+
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+  };
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, approvedForms]);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -92,63 +140,114 @@ export default function LegalForms() {
 
 
 
-      {/* Trust Indicators - Simplified */}
-      <section className="py-12 bg-white border-y border-gray-100">
+      {/* Filters Section */}
+      <section className="py-8 bg-gray-50 border-b">
         <div className="max-w-[1200px] mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-gray-900">50,000+</div>
-              <div className="text-sm text-gray-600">Verified Attorneys</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-gray-900">4.9/5</div>
-              <div className="text-sm text-gray-600">Average Rating</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-gray-900">&lt; 2hrs</div>
-              <div className="text-sm text-gray-600">Response Time</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl font-bold text-gray-900">$5.2B+</div>
-              <div className="text-sm text-gray-600">Cases Won</div>
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <h3 className="text-lg font-semibold text-gray-900">Filter Forms:</h3>
+              
+              <select 
+                value={filters.practiceArea}
+                onChange={(e) => handleFilterChange('practiceArea', e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Practice Areas</option>
+                <option value="business">Business Law</option>
+                <option value="family">Family Law</option>
+                <option value="real-estate">Real Estate</option>
+                <option value="estate-planning">Estate Planning</option>
+                <option value="personal-injury">Personal Injury</option>
+              </select>
+              
+              <select 
+                value={filters.price}
+                onChange={(e) => handleFilterChange('price', e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Prices</option>
+                <option value="free">Free Forms</option>
+                <option value="paid">Premium Forms</option>
+              </select>
+              
+              <select 
+                value={filters.sortBy}
+                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Sort By</option>
+                <option value="newest">Newest First</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </select>
+              
+              <button 
+                onClick={clearFilters}
+                className="px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Approved Forms from Database */}
-      {!loading && approvedForms.length > 0 && (
+      {!loading && filteredForms.length > 0 && (
         <section className="bg-white py-16 border-b">
           <div className="max-w-[1200px] mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-[#111827] mb-4">Available Legal Forms</h2>
               <p className="text-lg text-[#4B5563]">Download professional legal documents created by verified attorneys.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {approvedForms.map((form) => (
-                <div key={form.id} className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:border-blue-500 hover:shadow-lg transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">{form.title}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${form.is_free ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                      {form.is_free ? 'Free' : `$${form.price}`}
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredForms.map((form) => (
+                <div key={form.id} className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl hover:border-blue-300 transition-all duration-300 group flex flex-col h-full">
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{form.title}</h3>
+                        <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                          {form.category || form.practice_area}
+                        </span>
+                      </div>
+                      <div className={`px-4 py-2 rounded-full text-sm font-bold ${form.is_free ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                        {form.is_free ? 'FREE' : `$${form.price}`}
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-6 leading-relaxed flex-1">{form.description}</p>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 0a1 1 0 100 2h.01a1 1 0 100-2H9z" clipRule="evenodd" />
+                        </svg>
+                        PDF Document
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Verified
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4">{form.description}</p>
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span className="bg-gray-100 px-3 py-1 rounded">{form.category || form.practice_area}</span>
+                  
+                  <div className="p-6 pt-0">
+                    <button 
+                      onClick={() => {
+                        if (form.file_url) {
+                          window.open(`http://localhost:5001${form.file_url}`, '_blank');
+                        } else {
+                          alert('Form file not available');
+                        }
+                      }}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    >
+                      Download Form
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => {
-                      if (form.file_url) {
-                        window.open(`http://localhost:5001${form.file_url}`, '_blank');
-                      } else {
-                        alert('Form file not available');
-                      }
-                    }}
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    Download Form
-                  </button>
                 </div>
               ))}
             </div>
@@ -156,208 +255,7 @@ export default function LegalForms() {
         </section>
       )}
 
-      {/* Legal Forms by Practice Area */}
-      <section className="bg-[#F9FAFB] py-16">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#111827] mb-4">Legal Forms by Practice Area</h2>
-            <p className="text-lg text-[#4B5563]">Professional legal documents organized by specialty areas.</p>
-          </div>
-          
-          <div className="space-y-12">
-            {/* Business Law Forms */}
-            <div className="bg-white rounded-xl shadow-sm border p-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-6 border-b border-gray-200 pb-3">Business Law</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">LLC Operating Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Establish business structure and operations</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">Partnership Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Define partnership terms and responsibilities</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">Non-Disclosure Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Protect confidential business information</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">Employment Contract</div>
-                  <div className="text-sm text-gray-600 mt-1">Standard employee agreement template</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">Independent Contractor Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Freelancer and contractor terms</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#2973FF]">Business Purchase Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Buy or sell business assets</div>
-                </button>
-              </div>
-            </div>
 
-            {/* Family Law Forms */}
-            <div className="bg-white rounded-xl shadow-sm border p-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-6 border-b border-gray-200 pb-3">Family Law</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Divorce Petition</div>
-                  <div className="text-sm text-gray-600 mt-1">Initiate divorce proceedings</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Child Custody Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Establish custody arrangements</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Child Support Modification</div>
-                  <div className="text-sm text-gray-600 mt-1">Request support amount changes</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Prenuptial Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Pre-marriage financial protection</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Adoption Papers</div>
-                  <div className="text-sm text-gray-600 mt-1">Legal adoption documentation</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#7C3AED]">Separation Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Legal separation terms</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Real Estate Forms */}
-            <div className="bg-white rounded-xl shadow-sm border p-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-6 border-b border-gray-200 pb-3">Real Estate</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Residential Lease Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Standard rental property lease</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Commercial Lease</div>
-                  <div className="text-sm text-gray-600 mt-1">Business property rental agreement</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Purchase Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Property buying contract</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Eviction Notice</div>
-                  <div className="text-sm text-gray-600 mt-1">Tenant removal documentation</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Property Deed Transfer</div>
-                  <div className="text-sm text-gray-600 mt-1">Transfer property ownership</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#10B981]">Landlord-Tenant Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Rental terms and conditions</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Estate Planning Forms */}
-            <div className="bg-white rounded-xl shadow-sm border p-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-6 border-b border-gray-200 pb-3">Estate Planning</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Last Will and Testament</div>
-                  <div className="text-sm text-gray-600 mt-1">Distribute assets after death</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Living Trust</div>
-                  <div className="text-sm text-gray-600 mt-1">Manage assets during lifetime</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Power of Attorney</div>
-                  <div className="text-sm text-gray-600 mt-1">Authorize legal decision-making</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Healthcare Directive</div>
-                  <div className="text-sm text-gray-600 mt-1">Medical treatment preferences</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Guardianship Papers</div>
-                  <div className="text-sm text-gray-600 mt-1">Legal guardianship documentation</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#F59E0B]">Estate Inventory</div>
-                  <div className="text-sm text-gray-600 mt-1">List and value estate assets</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Personal Injury Forms */}
-            <div className="bg-white rounded-xl shadow-sm border p-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-6 border-b border-gray-200 pb-3">Personal Injury</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Accident Report Form</div>
-                  <div className="text-sm text-gray-600 mt-1">Document incident details</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Medical Records Request</div>
-                  <div className="text-sm text-gray-600 mt-1">Obtain medical documentation</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Insurance Claim Form</div>
-                  <div className="text-sm text-gray-600 mt-1">File insurance compensation claim</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Settlement Agreement</div>
-                  <div className="text-sm text-gray-600 mt-1">Finalize injury compensation</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Witness Statement</div>
-                  <div className="text-sm text-gray-600 mt-1">Record witness testimony</div>
-                </button>
-                <button className="text-left p-4 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
-                  <div className="font-semibold text-[#EF4444]">Demand Letter</div>
-                  <div className="text-sm text-gray-600 mt-1">Request compensation payment</div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services - Simplified */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Legal Services</h2>
-            <p className="text-lg text-gray-600">Connect with the right legal expertise for your needs.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Legal Consultation</h3>
-              <p className="text-gray-600 mb-4">Get expert advice from qualified attorneys.</p>
-              <button className="w-full bg-[#2973FF] hover:bg-[#1F5AD1] text-white font-semibold py-3 rounded-lg transition-colors">
-                Schedule Consultation
-              </button>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Document Review</h3>
-              <p className="text-gray-600 mb-4">Professional review of legal documents.</p>
-              <button className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-semibold py-3 rounded-lg transition-colors">
-                Upload Document
-              </button>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Legal Representation</h3>
-              <p className="text-gray-600 mb-4">Full representation for complex matters.</p>
-              <button className="w-full bg-[#7C3AED] hover:bg-[#5B21B6] text-white font-semibold py-3 rounded-lg transition-colors">
-                Find Attorney
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Practice Areas */}
       <section className="py-16">
