@@ -337,6 +337,10 @@ app.use('/api/qa', qaRoutes);
 const reviewRoutes = require('./routes/reviews');
 app.use('/api', reviewRoutes);
 
+// Legal Forms routes
+const formsRoutes = require('./routes/forms');
+app.use('/api/forms', formsRoutes);
+
 // Store active users
 const activeUsers = new Map();
 

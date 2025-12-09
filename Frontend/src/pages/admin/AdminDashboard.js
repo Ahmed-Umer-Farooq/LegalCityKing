@@ -12,6 +12,7 @@ import {
 // Lazy load components
 const BlogReports = React.lazy(() => import('./BlogReports'));
 const QAManagement = React.lazy(() => import('./QAManagement'));
+const FormsManagement = React.lazy(() => import('./FormsManagement'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -1855,6 +1856,19 @@ const AdminDashboard = () => {
               </div>
             </button>
             <button
+              onClick={() => setActiveTab('forms')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'forms'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <FileText className="w-4 h-4" />
+                <span>Forms</span>
+              </div>
+            </button>
+            <button
               onClick={() => {
                 setActiveTab('reports');
                 // Refresh count when clicking reports tab
@@ -1889,6 +1903,11 @@ const AdminDashboard = () => {
         {activeTab === 'messages' && renderMessages()}
         {activeTab === 'activity' && renderActivityLogs()}
         {activeTab === 'calls' && renderCallTracking()}
+        {activeTab === 'forms' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <FormsManagement />
+          </Suspense>
+        )}
         {activeTab === 'qa' && (
           <Suspense fallback={<LoadingSpinner />}>
             <QAManagement />

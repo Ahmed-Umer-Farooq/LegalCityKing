@@ -130,16 +130,17 @@ const requireAuth = async (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  // Check both lawyers and users tables
-  let user = await db('lawyers').where('id', decoded.id).first();
+  // Check users table first (for admin)
+  let user = await db('users').where('id', decoded.id).first();
   if (user) {
-    user.role = 'lawyer';
-    user.is_verified = user.is_verified || 0;
-    user.lawyer_verified = user.lawyer_verified || 0;
+    user.role = user.role || 'user';
   } else {
-    user = await db('users').where('id', decoded.id).first();
+    // Then check lawyers table
+    user = await db('lawyers').where('id', decoded.id).first();
     if (user) {
-      user.role = user.role || 'user';
+      user.role = 'lawyer';
+      user.is_verified = user.is_verified || 0;
+      user.lawyer_verified = user.lawyer_verified || 0;
     }
   }
 
@@ -190,7 +191,13 @@ const requireAdmin = (req, res, next) => {
     return res.status(401).json({ message: 'Authentication required' });
   }
 
-  if (req.user.role !== 'admin') {
+  console.log('🔍 RequireAdmin Debug:', {
+    user_id: req.user.id,
+    role: req.user.role,
+    is_admin: req.user.is_admin
+  });
+
+  if (req.user.role !== 'admin' && !req.user.is_admin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
 

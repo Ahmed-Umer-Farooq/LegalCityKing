@@ -24,6 +24,7 @@ const DocumentsPage = React.lazy(() => import('./DocumentsPage').catch(() => ({ 
 const BlogManagement = React.lazy(() => import('./BlogManagement').catch(() => ({ default: () => <div>Blog Management coming soon...</div> })));
 const ChatPage = React.lazy(() => import('../../pages/userdashboard/ChatPage').catch(() => ({ default: () => <div>Chat coming soon...</div> })));
 const QAAnswers = React.lazy(() => import('./QAAnswers').catch(() => ({ default: () => <div>Q&A coming soon...</div> })));
+const FormsManagement = React.lazy(() => import('./FormsManagement').catch(() => ({ default: () => <div>Forms coming soon...</div> })));
 
 export default function LawyerDashboard() {
   const [showCaseForm, setShowCaseForm] = useState(false);
@@ -229,6 +230,7 @@ export default function LawyerDashboard() {
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); } },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); } },
                 { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
@@ -355,6 +357,7 @@ export default function LawyerDashboard() {
         {activeNavItem === 'reports' && <ReportsPage />}
         {activeNavItem === 'tasks' && <TasksPage />}
         {activeNavItem === 'documents' && <DocumentsPage />}
+        {activeNavItem === 'forms' && <FormsManagement />}
         {activeNavItem === 'blogs' && <BlogManagement />}
         {activeNavItem === 'messages' && <ChatPage key="lawyer-chat" />}
         {activeNavItem === 'qa' && <QAAnswers />}

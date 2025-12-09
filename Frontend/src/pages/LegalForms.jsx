@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SEOHead from '../components/SEOHead';
+import api from '../utils/api';
 
 export default function LegalForms() {
   const navigate = useNavigate();
+  const [approvedForms, setApprovedForms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApprovedForms();
+  }, []);
+
+  const fetchApprovedForms = async () => {
+    try {
+      const response = await api.get('/forms/public');
+      setApprovedForms(response.data.forms || []);
+    } catch (error) {
+      console.error('Error fetching forms:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -97,6 +115,46 @@ export default function LegalForms() {
           </div>
         </div>
       </section>
+
+      {/* Approved Forms from Database */}
+      {!loading && approvedForms.length > 0 && (
+        <section className="bg-white py-16 border-b">
+          <div className="max-w-[1200px] mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#111827] mb-4">Available Legal Forms</h2>
+              <p className="text-lg text-[#4B5563]">Download professional legal documents created by verified attorneys.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {approvedForms.map((form) => (
+                <div key={form.id} className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:border-blue-500 hover:shadow-lg transition-all">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-lg font-bold text-gray-900">{form.title}</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${form.is_free ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                      {form.is_free ? 'Free' : `$${form.price}`}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">{form.description}</p>
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <span className="bg-gray-100 px-3 py-1 rounded">{form.category || form.practice_area}</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      if (form.file_url) {
+                        window.open(`http://localhost:5001${form.file_url}`, '_blank');
+                      } else {
+                        alert('Form file not available');
+                      }
+                    }}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                  >
+                    Download Form
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Legal Forms by Practice Area */}
       <section className="bg-[#F9FAFB] py-16">
