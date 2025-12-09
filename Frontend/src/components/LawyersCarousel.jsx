@@ -33,27 +33,14 @@ export default function LawyersCarousel() {
         ? lawyersWithProfiles.slice(0, 6)
         : allLawyers.slice(0, 6);
       
-      const getPlaceholderImage = (speciality, lawyerId) => {
-        const seeds = {
-          'Corporate Law': 'lawyer-corporate',
-          'Family Law': 'lawyer-family',
-          'Criminal Law': 'lawyer-criminal',
-          'Real Estate Law': 'lawyer-realestate',
-          'Immigration Law': 'lawyer-immigration',
-          'Tax Law': 'lawyer-tax',
-          'Employment Law': 'lawyer-employment',
-          'Intellectual Property': 'lawyer-ip',
-          'Personal Injury': 'lawyer-injury',
-          'Estate Planning': 'lawyer-estate'
-        };
-        const seed = seeds[speciality] || 'lawyer-professional';
-        return `https://picsum.photos/200/200?seed=${seed}${lawyerId}`;
+      const getPlaceholderImage = (lawyerName, lawyerId) => {
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(lawyerName)}&backgroundColor=b6e3f4&size=200`;
       };
       
       const lawyersData = selectedLawyers.map(lawyer => {
         const imageUrl = lawyer.profile_image && lawyer.profile_image !== 'null' && lawyer.profile_image.trim() !== ''
           ? (lawyer.profile_image.startsWith('http') ? lawyer.profile_image : `http://localhost:5001${lawyer.profile_image}`)
-          : getPlaceholderImage(lawyer.speciality, lawyer.id);
+          : getPlaceholderImage(lawyer.name, lawyer.id);
         
         return {
           id: lawyer.secure_id || lawyer.id,

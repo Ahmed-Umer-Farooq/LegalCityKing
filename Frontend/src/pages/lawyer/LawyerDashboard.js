@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Calendar, FileText, Phone, Mail, Clock, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, PieChart, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle } from 'lucide-react';
+import { Search, User, Calendar, FileText, Phone, Mail, Clock, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, PieChart, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
 import api from '../../utils/api';
+import { toast } from 'sonner';
 
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
@@ -52,6 +53,26 @@ export default function LawyerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    mobile_number: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    country: '',
+    date_of_birth: '',
+    bio: '',
+    registration_id: '',
+    law_firm: '',
+    speciality: '',
+    profile_image: null,
+    social_links: { linkedin: '', twitter: '', facebook: '', website: '' }
+  });
+  const [imagePreview, setImagePreview] = useState(null);
+  const [activeProfileTab, setActiveProfileTab] = useState('personal');
 
   // Prevent browser back button
   useEffect(() => {
@@ -144,9 +165,28 @@ export default function LawyerDashboard() {
     try {
       const response = await api.get('/lawyer-dashboard/profile');
       setCurrentUser(response.data);
+      setProfileData({
+        name: response.data.name || '',
+        email: response.data.email || '',
+        mobile_number: response.data.mobile_number || '',
+        address: response.data.address || '',
+        city: response.data.city || '',
+        state: response.data.state || '',
+        zip_code: response.data.zip_code || '',
+        country: response.data.country || '',
+        date_of_birth: response.data.date_of_birth || '',
+        bio: response.data.bio || '',
+        registration_id: response.data.registration_id || '',
+        law_firm: response.data.law_firm || '',
+        speciality: response.data.speciality || '',
+        profile_image: response.data.profile_image || null,
+        social_links: response.data.social_links ? (typeof response.data.social_links === 'string' ? JSON.parse(response.data.social_links) : response.data.social_links) : { linkedin: '', twitter: '', facebook: '', website: '' }
+      });
+      if (response.data.profile_image) {
+        setImagePreview(`http://localhost:5001${response.data.profile_image}`);
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Fallback to localStorage if API fails
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       setCurrentUser(user);
     }
@@ -322,17 +362,17 @@ export default function LawyerDashboard() {
                       </div>
                     )}
                   </div>
-                  <a href="#profile" className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                  <button onClick={() => { setActiveNavItem('profile'); setActiveProfileTab('personal'); }} className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors w-full text-left">
                     <User className="w-4 h-4" />
                     Profile Settings
-                  </a>
-                  <a href="#account" className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                  </button>
+                  <button onClick={() => { setActiveNavItem('profile'); setActiveProfileTab('professional'); }} className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors w-full text-left">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Account Settings
-                  </a>
+                  </button>
                   <hr className="my-2 border-[#E5E7EB]" />
                   <button 
                     onClick={handleLogout}
@@ -361,6 +401,355 @@ export default function LawyerDashboard() {
         {activeNavItem === 'blogs' && <BlogManagement />}
         {activeNavItem === 'messages' && <ChatPage key="lawyer-chat" />}
         {activeNavItem === 'qa' && <QAAnswers />}
+        
+        {activeNavItem === 'profile' && (
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+                    <p className="text-sm text-gray-600">Manage your account information and preferences</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-1">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+                    <div className="p-6 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                      <div className="relative text-center">
+                        <div className="relative inline-block mb-4">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center overflow-hidden border border-white/30">
+                            {imagePreview ? (
+                              <img src={imagePreview} alt="Profile" className="w-full h-full object-cover rounded-2xl" />
+                            ) : (
+                              <User className="w-8 h-8 text-white" />
+                            )}
+                          </div>
+                          <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer shadow-lg">
+                            <Camera className="w-3 h-3 text-blue-600" />
+                            <input type="file" accept="image/*" onChange={async (e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                const formData = new FormData();
+                                formData.append('profileImage', file);
+                                try {
+                                  const response = await api.post('/auth/profile/upload-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                  setImagePreview(`http://localhost:5001${response.data.imageUrl}`);
+                                  toast.success('Profile image updated!');
+                                  fetchUserProfile();
+                                } catch (error) {
+                                  toast.error('Failed to upload image');
+                                }
+                              }
+                            }} className="hidden" />
+                          </label>
+                        </div>
+                        <h3 className="font-semibold text-base">{profileData.name || 'Your Name'}</h3>
+                        <p className="text-blue-100 text-xs opacity-90">{profileData.email}</p>
+                      </div>
+                    </div>
+
+                    <nav className="p-3 space-y-1">
+                      {[
+                        { id: 'personal', label: 'Personal Info', icon: User },
+                        { id: 'contact', label: 'Contact', icon: Phone },
+                        { id: 'professional', label: 'Professional', icon: Briefcase },
+                        { id: 'social', label: 'Social Links', icon: Globe }
+                      ].map((tab) => (
+                        <button key={tab.id} onClick={() => setActiveProfileTab(tab.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 group ${activeProfileTab === tab.id ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+                          <tab.icon className={`w-4 h-4 transition-colors ${activeProfileTab === tab.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                          <span className="text-sm font-medium">{tab.label}</span>
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+                    <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          {activeProfileTab === 'personal' && <User className="w-4 h-4 text-blue-600" />}
+                          {activeProfileTab === 'contact' && <Phone className="w-4 h-4 text-blue-600" />}
+                          {activeProfileTab === 'professional' && <Briefcase className="w-4 h-4 text-blue-600" />}
+                          {activeProfileTab === 'social' && <Globe className="w-4 h-4 text-blue-600" />}
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {activeProfileTab === 'personal' && 'Personal Info'}
+                          {activeProfileTab === 'contact' && 'Contact'}
+                          {activeProfileTab === 'professional' && 'Professional'}
+                          {activeProfileTab === 'social' && 'Social Links'}
+                        </h2>
+                      </div>
+                      <div className="flex gap-2">
+                        {!isEditing ? (
+                          <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-sm font-medium">Edit</span>
+                          </button>
+                        ) : (
+                          <>
+                            <button onClick={async () => {
+                              try {
+                                await api.put('/auth/me', profileData);
+                                toast.success('Profile updated!');
+                                setIsEditing(false);
+                                fetchUserProfile();
+                              } catch (error) {
+                                toast.error('Failed to update profile');
+                              }
+                            }} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                              <Save className="w-4 h-4" />
+                              <span className="text-sm font-medium">Save</span>
+                            </button>
+                            <button onClick={() => { setIsEditing(false); fetchUserProfile(); }} className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all duration-200 shadow-sm hover:shadow-md">
+                              <X className="w-4 h-4" />
+                              <span className="text-sm font-medium">Cancel</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      {activeProfileTab === 'personal' && (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Full Name *</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your full name" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <User className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.name || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Email Address</label>
+                              <div className="flex items-center gap-3 px-4 py-3 bg-blue-50/80 rounded-xl border border-blue-100">
+                                <Mail className="w-4 h-4 text-blue-500" />
+                                <span className="text-gray-900 font-medium flex-1">{profileData.email}</span>
+                                <Lock className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <p className="text-xs text-gray-500">Email cannot be changed</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Date of Birth</label>
+                              {isEditing ? (
+                                <input type="date" value={profileData.date_of_birth} onChange={(e) => setProfileData({...profileData, date_of_birth: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Calendar className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.date_of_birth ? new Date(profileData.date_of_birth).toLocaleDateString() : 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-gray-700">Bio</label>
+                            {isEditing ? (
+                              <textarea value={profileData.bio} onChange={(e) => setProfileData({...profileData, bio: e.target.value})} rows={4} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm resize-none" placeholder="Tell us about yourself..." />
+                            ) : (
+                              <div className="px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100 min-h-[100px]">
+                                <p className="text-gray-900 leading-relaxed">{profileData.bio || 'No bio provided'}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeProfileTab === 'contact' && (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Phone Number *</label>
+                              {isEditing ? (
+                                <input type="tel" value={profileData.mobile_number} onChange={(e) => setProfileData({...profileData, mobile_number: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your phone number" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Phone className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.mobile_number || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Address</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.address} onChange={(e) => setProfileData({...profileData, address: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your address" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.address || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">City</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.city} onChange={(e) => setProfileData({...profileData, city: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your city" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.city || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">State</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.state} onChange={(e) => setProfileData({...profileData, state: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your state" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.state || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">ZIP Code</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.zip_code} onChange={(e) => setProfileData({...profileData, zip_code: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your ZIP code" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.zip_code || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Country</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.country} onChange={(e) => setProfileData({...profileData, country: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter your country" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.country || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeProfileTab === 'professional' && (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Registration ID</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.registration_id} onChange={(e) => setProfileData({...profileData, registration_id: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter registration ID" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Briefcase className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.registration_id || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Law Firm</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.law_firm} onChange={(e) => setProfileData({...profileData, law_firm: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter law firm" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Building className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.law_firm || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="block text-sm font-semibold text-gray-700">Speciality</label>
+                              {isEditing ? (
+                                <input type="text" value={profileData.speciality} onChange={(e) => setProfileData({...profileData, speciality: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="Enter speciality" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Briefcase className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.speciality || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeProfileTab === 'social' && (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">LinkedIn</label>
+                              {isEditing ? (
+                                <input type="url" value={profileData.social_links.linkedin} onChange={(e) => setProfileData({...profileData, social_links: {...profileData.social_links, linkedin: e.target.value}})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="https://linkedin.com/in/username" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.social_links.linkedin || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Twitter</label>
+                              {isEditing ? (
+                                <input type="url" value={profileData.social_links.twitter} onChange={(e) => setProfileData({...profileData, social_links: {...profileData.social_links, twitter: e.target.value}})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="https://twitter.com/username" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.social_links.twitter || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Facebook</label>
+                              {isEditing ? (
+                                <input type="url" value={profileData.social_links.facebook} onChange={(e) => setProfileData({...profileData, social_links: {...profileData.social_links, facebook: e.target.value}})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="https://facebook.com/username" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.social_links.facebook || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-gray-700">Website</label>
+                              {isEditing ? (
+                                <input type="url" value={profileData.social_links.website} onChange={(e) => setProfileData({...profileData, social_links: {...profileData.social_links, website: e.target.value}})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm" placeholder="https://yourwebsite.com" />
+                              ) : (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-900 font-medium">{profileData.social_links.website || 'Not provided'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {activeNavItem === 'home' && (
         <>
