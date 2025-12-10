@@ -43,10 +43,10 @@ router.get('/public', formsController.getForms);
 router.get('/public/:id', formsController.getForm);
 
 // Lawyer routes
-router.get('/my-forms', requireAuth, requireLawyer, formsController.getMyForms);
-router.post('/create', requireAuth, requireLawyer, upload.single('file'), formsController.createForm);
-router.put('/:id', requireAuth, requireLawyer, upload.single('file'), formsController.updateForm);
-router.delete('/:id', requireAuth, requireLawyer, formsController.deleteForm);
+router.get('/my-forms', requireAuth, formsController.getMyForms);
+router.post('/create', requireAuth, upload.single('file'), formsController.createForm);
+router.put('/:id', requireAuth, upload.single('file'), formsController.updateForm);
+router.delete('/:id', requireAuth, formsController.deleteForm);
 
 // Admin routes
 router.get('/admin/all', requireAuth, requireAdmin, formsController.getAllForms);

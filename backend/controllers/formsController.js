@@ -77,10 +77,14 @@ const getForm = async (req, res) => {
 const createForm = async (req, res) => {
   try {
     const { title, description, category_id, practice_area, price, is_free } = req.body;
-    const file_path = req.file ? `/uploads/forms/${req.file.filename}` : null;
+    const file_url = req.file ? `/uploads/forms/${req.file.filename}` : null;
 
     if (!title || !category_id) {
       return res.status(400).json({ error: 'Title and category are required' });
+    }
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -89,11 +93,10 @@ const createForm = async (req, res) => {
       title,
       slug: `${slug}-${Date.now()}`,
       description,
-      category: practice_area || 'General',
       category_id,
-      practice_area,
-      file_url: file_path,
-      price: (is_free === 'true' || is_free === true) ? 0 : price,
+      practice_area: practice_area || 'General',
+      file_url,
+      price: (is_free === 'true' || is_free === true) ? 0 : (price || 0),
       is_free: (is_free === 'true' || is_free === true) ? 1 : 0,
       created_by: req.user.id,
       created_by_type: req.user.role === 'lawyer' ? 'lawyer' : 'admin',
@@ -103,7 +106,7 @@ const createForm = async (req, res) => {
     res.status(201).json({ message: 'Form created successfully', formId });
   } catch (error) {
     console.error('Error creating form:', error);
-    res.status(500).json({ error: 'Failed to create form' });
+    res.status(500).json({ error: 'Failed to create form', details: error.message });
   }
 };
 
