@@ -21,14 +21,17 @@ const getUserAppointments = async (req, res) => {
     const appointments = await query.orderBy('start_time');
     
     // Format for frontend
-    const formattedAppointments = appointments.map(apt => ({
-      ...apt,
-      secure_id: apt.id.toString(),
-      appointment_date: apt.start_time.split(' ')[0],
-      appointment_time: apt.start_time.split(' ')[1].substring(0, 5),
-      appointment_type: apt.meeting_type,
-      lawyer_name: 'TBD'
-    }));
+    const formattedAppointments = appointments.map(apt => {
+      const startTime = new Date(apt.start_time);
+      return {
+        ...apt,
+        secure_id: apt.id.toString(),
+        appointment_date: startTime.toISOString().split('T')[0],
+        appointment_time: startTime.toTimeString().substring(0, 5),
+        appointment_type: apt.meeting_type,
+        lawyer_name: 'TBD'
+      };
+    });
     
     res.json({ success: true, data: formattedAppointments });
   } catch (error) {
