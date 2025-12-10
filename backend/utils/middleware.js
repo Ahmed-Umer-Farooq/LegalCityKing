@@ -116,6 +116,40 @@ const authenticateLawyer = async (req, res, next) => {
   next();
 };
 
+// Specific middleware for lawyer-only routes that prioritizes lawyers table
+const authenticateLawyerSpecific = async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  // Always check lawyers table first for lawyer-specific routes
+  let user = await db('lawyers').where('id', decoded.id).first();
+  if (user) {
+    user.role = 'lawyer';
+    user.is_verified = user.is_verified || 0;
+    user.lawyer_verified = user.lawyer_verified || 0;
+    req.user = user;
+    return next();
+  }
+
+  // Check users table for users with lawyer role
+  user = await db('users').where('id', decoded.id).first();
+  if (user && user.role === 'lawyer') {
+    req.user = user;
+    return next();
+  }
+
+  return res.status(403).json({ message: 'Only lawyers can access this resource' });
+};
+
 // Role-based authentication for blogs
 const requireAuth = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -130,17 +164,40 @@ const requireAuth = async (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  // Check users table first (for admin)
-  let user = await db('users').where('id', decoded.id).first();
-  if (user) {
-    user.role = user.role || 'user';
-  } else {
-    // Then check lawyers table
+  // Check if this is a lawyer-specific route
+  const isLawyerRoute = req.path.includes('/lawyer') || req.path.includes('/analytics') || 
+                       req.method === 'POST' && req.path === '/' || // blog creation
+                       req.method === 'PUT' || req.method === 'DELETE'; // blog modification
+
+  let user;
+  
+  if (isLawyerRoute) {
+    // For lawyer routes, check lawyers table first
     user = await db('lawyers').where('id', decoded.id).first();
     if (user) {
       user.role = 'lawyer';
       user.is_verified = user.is_verified || 0;
       user.lawyer_verified = user.lawyer_verified || 0;
+    } else {
+      // Fallback to users table for users with lawyer role
+      user = await db('users').where('id', decoded.id).first();
+      if (user) {
+        user.role = user.role || 'user';
+      }
+    }
+  } else {
+    // For general routes, check users table first
+    user = await db('users').where('id', decoded.id).first();
+    if (user) {
+      user.role = user.role || 'user';
+    } else {
+      // Then check lawyers table
+      user = await db('lawyers').where('id', decoded.id).first();
+      if (user) {
+        user.role = 'lawyer';
+        user.is_verified = user.is_verified || 0;
+        user.lawyer_verified = user.lawyer_verified || 0;
+      }
     }
   }
 
@@ -280,6 +337,7 @@ module.exports = {
   verifyAdmin, 
   rateLimit, 
   authenticateLawyer,
+  authenticateLawyerSpecific,
   requireAuth,
   requireLawyer,
   requireVerifiedLawyer,

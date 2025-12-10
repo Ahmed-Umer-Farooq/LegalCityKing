@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const router = express.Router();
 const blogController = require('../controllers/blogController');
-const { requireAuth, requireLawyer, requireVerifiedLawyer, checkBlogOwnership } = require('../utils/middleware');
+const { requireAuth, requireLawyer, requireVerifiedLawyer, checkBlogOwnership, authenticateLawyerSpecific } = require('../utils/middleware');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -29,13 +29,13 @@ const upload = multer({
 
 // SPECIFIC ROUTES (must be before dynamic routes)
 // GET /api/blogs/analytics - Get lawyer's blog analytics (lawyers only)
-router.get('/analytics', requireAuth, requireVerifiedLawyer, blogController.getLawyerBlogAnalytics);
+router.get('/analytics', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getLawyerBlogAnalytics);
 
 // GET /api/blogs/lawyer-blogs - Get lawyer's own blogs with secure_id (lawyers only)
-router.get('/lawyer-blogs', requireAuth, requireVerifiedLawyer, blogController.getLawyerBlogs);
+router.get('/lawyer-blogs', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getLawyerBlogs);
 
 // GET /api/blogs/engagement-count - Get engagement count for notifications
-router.get('/engagement-count', requireAuth, requireVerifiedLawyer, blogController.getEngagementCount);
+router.get('/engagement-count', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getEngagementCount);
 
 // GET /api/blogs/categories - Get blog categories
 router.get('/categories', blogController.getBlogCategories);
@@ -67,19 +67,19 @@ router.get('/reports', requireAuth, (req, res, next) => {
 
 // LAWYER ROUTES
 // POST /api/blogs - Create new blog (lawyers only)
-router.post('/', requireAuth, requireVerifiedLawyer, upload.single('image'), blogController.createBlog);
+router.post('/', authenticateLawyerSpecific, requireVerifiedLawyer, upload.single('image'), blogController.createBlog);
 
 // PUT /api/blogs/:id - Update own blog (author only)
-router.put('/:identifier', requireAuth, requireVerifiedLawyer, checkBlogOwnership, blogController.updateBlog);
+router.put('/:identifier', authenticateLawyerSpecific, requireVerifiedLawyer, checkBlogOwnership, blogController.updateBlog);
 
 // DELETE /api/blogs/:id - Delete own blog (author only)
-router.delete('/:identifier', requireAuth, requireVerifiedLawyer, checkBlogOwnership, blogController.deleteBlog);
+router.delete('/:identifier', authenticateLawyerSpecific, requireVerifiedLawyer, checkBlogOwnership, blogController.deleteBlog);
 
 // GET /api/blogs/:blog_id/analytics - Get detailed analytics for specific blog
-router.get('/:blog_id/analytics', requireAuth, requireVerifiedLawyer, blogController.getBlogDetailedAnalytics);
+router.get('/:blog_id/analytics', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getBlogDetailedAnalytics);
 
 // DELETE /api/blogs/comments/:comment_id/moderate - Delete comment as blog author
-router.delete('/comments/:comment_id/moderate', requireAuth, requireVerifiedLawyer, blogController.deleteBlogCommentByAuthor);
+router.delete('/comments/:comment_id/moderate', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.deleteBlogCommentByAuthor);
 
 // PUBLIC ROUTES (no auth required)
 // GET /api/blogs - Get all published blogs

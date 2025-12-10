@@ -264,7 +264,7 @@ const getLawyerQuestions = async (req, res) => {
 
     const totalCount = await db('qa_questions')
       .leftJoin('qa_answers', function() {
-        this.on('qa_questions.id', '=', 'qa_questions.question_id')
+        this.on('qa_questions.id', '=', 'qa_answers.question_id')
             .andOn('qa_answers.lawyer_id', '=', db.raw('?', [lawyer_id]));
       })
       .where('qa_questions.status', status)
