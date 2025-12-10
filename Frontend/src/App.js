@@ -25,6 +25,7 @@ import BlogPosts from './pages/userdashboard/BlogPosts';
 import Messages from './pages/userdashboard/Messages';
 import Directory from './pages/userdashboard/Directory';
 import Forms from './pages/userdashboard/Forms';
+import UserLegalForms from './pages/userdashboard/LegalForms';
 import SocialMedia from './pages/userdashboard/SocialMedia';
 import Tasks from './pages/userdashboard/Tasks';
 import Cases from './pages/userdashboard/Cases';
@@ -98,7 +99,7 @@ function App() {
           <Route path="/user/messages" element={<Messages />} />
           <Route path="/user/chat" element={<Messages />} />
           <Route path="/user/lawyer-directory" element={<Directory />} />
-          <Route path="/user/legal-forms" element={<Forms />} />
+          <Route path="/user/legal-forms" element={<UserLegalForms />} />
           <Route path="/user/social-media-management" element={<SocialMedia />} />
           <Route path="/user/legal-tasks" element={<Tasks />} />
           <Route path="/user/legal-cases" element={<Cases />} />
