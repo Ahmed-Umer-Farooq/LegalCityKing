@@ -14,12 +14,12 @@ const generateCaseNumber = async () => {
 
 const getUserCases = async (req, res) => {
   try {
-    const userSecureId = req.user.secure_id;
+    const userId = req.user.id;
     const { status, search } = req.query;
 
     let query = db('user_cases')
-      .select('secure_id', 'case_number', 'title', 'description', 'lawyer_name', 'status', 'priority', 'next_hearing', 'notes', 'documents', 'timeline', 'created_at', 'updated_at')
-      .where('user_secure_id', userSecureId);
+      .select('*')
+      .where('user_id', userId);
 
     if (status && status !== 'all') {
       query = query.where('status', status);
@@ -28,18 +28,21 @@ const getUserCases = async (req, res) => {
     if (search) {
       query = query.where(function() {
         this.where('title', 'like', `%${search}%`)
-            .orWhere('case_number', 'like', `%${search}%`);
+            .orWhere('case_type', 'like', `%${search}%`);
       });
     }
 
     const cases = await query.orderBy('created_at', 'desc');
     
+    // Format for frontend
     const formattedCases = cases.map(caseItem => ({
       ...caseItem,
-      documents: caseItem.documents ? JSON.parse(caseItem.documents) : [],
-      timeline: caseItem.timeline ? JSON.parse(caseItem.timeline) : []
+      secure_id: caseItem.id.toString(),
+      case_number: `CS-${new Date().getFullYear()}-${String(caseItem.id).padStart(3, '0')}`,
+      lawyer_name: 'TBD',
+      priority: 'medium'
     }));
-
+    
     res.json({ success: true, data: formattedCases });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -48,45 +51,35 @@ const getUserCases = async (req, res) => {
 
 const createUserCase = async (req, res) => {
   try {
-    const userSecureId = req.user.secure_id;
+    const userId = req.user.id;
     const { title, description, lawyer_name, priority } = req.body;
 
     if (!title || !lawyer_name) {
       return res.status(400).json({ success: false, error: 'Title and lawyer name are required' });
     }
 
-    const caseNumber = await generateCaseNumber();
-    const timeline = [{
-      date: new Date().toISOString().split('T')[0],
-      event: 'Case opened'
-    }];
-
     const caseData = {
-      secure_id: generateSecureId(),
-      case_number: caseNumber,
       title,
       description: description || '',
-      user_secure_id: userSecureId,
-      lawyer_name,
-      priority: priority || 'medium',
+      case_type: 'general',
+      user_id: userId,
       status: 'pending',
-      timeline: JSON.stringify(timeline),
-      documents: JSON.stringify([])
+      start_date: new Date().toISOString().split('T')[0]
     };
 
     const [caseId] = await db('user_cases').insert(caseData);
-    const newCase = await db('user_cases')
-      .select('secure_id', 'case_number', 'title', 'description', 'lawyer_name', 'status', 'priority', 'next_hearing', 'notes', 'documents', 'timeline', 'created_at', 'updated_at')
-      .where({ id: caseId }).first();
+    const newCase = await db('user_cases').where({ id: caseId }).first();
+    
+    // Format response for frontend
+    const response = {
+      ...newCase,
+      secure_id: newCase.id.toString(),
+      case_number: `CS-${new Date().getFullYear()}-${String(newCase.id).padStart(3, '0')}`,
+      lawyer_name: lawyer_name,
+      priority: priority || 'medium'
+    };
 
-    res.status(201).json({ 
-      success: true, 
-      data: {
-        ...newCase,
-        documents: JSON.parse(newCase.documents || '[]'),
-        timeline: JSON.parse(newCase.timeline || '[]')
-      }
-    });
+    res.status(201).json({ success: true, data: response });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -95,35 +88,25 @@ const createUserCase = async (req, res) => {
 const updateUserCase = async (req, res) => {
   try {
     const { secure_id } = req.params;
-    const userSecureId = req.user.secure_id;
-    const { status, priority, next_hearing, notes } = req.body;
+    const userId = req.user.id;
+    const { status, case_type, description } = req.body;
 
     let updateData = {};
     if (status) updateData.status = status;
-    if (priority) updateData.priority = priority;
-    if (next_hearing) updateData.next_hearing = next_hearing;
-    if (notes) updateData.notes = notes;
+    if (case_type) updateData.case_type = case_type;
+    if (description) updateData.description = description;
 
     const updated = await db('user_cases')
-      .where({ secure_id, user_secure_id: userSecureId })
+      .where({ id: secure_id, user_id: userId })
       .update({ ...updateData, updated_at: new Date() });
 
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Case not found' });
     }
 
-    const updatedCase = await db('user_cases')
-      .select('secure_id', 'case_number', 'title', 'description', 'lawyer_name', 'status', 'priority', 'next_hearing', 'notes', 'documents', 'timeline', 'created_at', 'updated_at')
-      .where({ secure_id }).first();
-
-    res.json({ 
-      success: true, 
-      data: {
-        ...updatedCase,
-        documents: JSON.parse(updatedCase.documents || '[]'),
-        timeline: JSON.parse(updatedCase.timeline || '[]')
-      }
-    });
+    const updatedCase = await db('user_cases').where({ id: secure_id }).first();
+    updatedCase.secure_id = updatedCase.id.toString();
+    res.json({ success: true, data: updatedCase });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -132,7 +115,7 @@ const updateUserCase = async (req, res) => {
 const addCaseDocument = async (req, res) => {
   try {
     const { secure_id } = req.params;
-    const userSecureId = req.user.secure_id;
+    const userId = req.user.id;
     const { document_name } = req.body;
 
     if (!document_name) {
@@ -140,32 +123,19 @@ const addCaseDocument = async (req, res) => {
     }
 
     const caseItem = await db('user_cases')
-      .where({ secure_id, user_secure_id: userSecureId })
+      .where({ id: secure_id, user_id: userId })
       .first();
 
     if (!caseItem) {
       return res.status(404).json({ success: false, error: 'Case not found' });
     }
 
-    const documents = JSON.parse(caseItem.documents || '[]');
-    const timeline = JSON.parse(caseItem.timeline || '[]');
+    const updatedDescription = `${caseItem.description || ''}\n\nDocument added: ${document_name} on ${new Date().toISOString().split('T')[0]}`;
     
-    documents.push({
-      name: document_name,
-      added_date: new Date().toISOString().split('T')[0],
-      type: 'document'
-    });
-    
-    timeline.push({
-      date: new Date().toISOString().split('T')[0],
-      event: `Document added: ${document_name}`
-    });
-
     await db('user_cases')
-      .where({ secure_id, user_secure_id: userSecureId })
+      .where({ id: secure_id, user_id: userId })
       .update({ 
-        documents: JSON.stringify(documents),
-        timeline: JSON.stringify(timeline),
+        description: updatedDescription,
         updated_at: new Date() 
       });
 
@@ -178,7 +148,7 @@ const addCaseDocument = async (req, res) => {
 const addCaseMeeting = async (req, res) => {
   try {
     const { secure_id } = req.params;
-    const userSecureId = req.user.secure_id;
+    const userId = req.user.id;
     const { meeting_title, meeting_date, meeting_time } = req.body;
 
     if (!meeting_title || !meeting_date || !meeting_time) {
@@ -186,26 +156,19 @@ const addCaseMeeting = async (req, res) => {
     }
 
     const caseItem = await db('user_cases')
-      .where({ secure_id, user_secure_id: userSecureId })
+      .where({ id: secure_id, user_id: userId })
       .first();
 
     if (!caseItem) {
       return res.status(404).json({ success: false, error: 'Case not found' });
     }
 
-    const timeline = JSON.parse(caseItem.timeline || '[]');
+    const updatedDescription = `${caseItem.description || ''}\n\nMeeting scheduled: ${meeting_title} on ${meeting_date} at ${meeting_time}`;
     
-    timeline.push({
-      date: meeting_date,
-      event: `Meeting scheduled: ${meeting_title} at ${meeting_time}`,
-      type: 'meeting',
-      meeting_data: { title: meeting_title, date: meeting_date, time: meeting_time }
-    });
-
     await db('user_cases')
-      .where({ secure_id, user_secure_id: userSecureId })
+      .where({ id: secure_id, user_id: userId })
       .update({ 
-        timeline: JSON.stringify(timeline),
+        description: updatedDescription,
         updated_at: new Date() 
       });
 
@@ -217,13 +180,13 @@ const addCaseMeeting = async (req, res) => {
 
 const getCaseStats = async (req, res) => {
   try {
-    const userSecureId = req.user.secure_id;
+    const userId = req.user.id;
 
     const [total, active, pending, closed] = await Promise.all([
-      db('user_cases').where('user_secure_id', userSecureId).count('id as count').first(),
-      db('user_cases').where({ user_secure_id: userSecureId, status: 'active' }).count('id as count').first(),
-      db('user_cases').where({ user_secure_id: userSecureId, status: 'pending' }).count('id as count').first(),
-      db('user_cases').where({ user_secure_id: userSecureId, status: 'closed' }).count('id as count').first()
+      db('user_cases').where('user_id', userId).count('id as count').first(),
+      db('user_cases').where({ user_id: userId, status: 'active' }).count('id as count').first(),
+      db('user_cases').where({ user_id: userId, status: 'pending' }).count('id as count').first(),
+      db('user_cases').where({ user_id: userId, status: 'closed' }).count('id as count').first()
     ]);
 
     res.json({
