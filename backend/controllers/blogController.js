@@ -480,6 +480,8 @@ const blogController = {
       const { blog_id } = req.params;
       const { comment_text, parent_comment_id } = req.body;
       
+      console.log('Creating comment:', { blog_id, comment_text, parent_comment_id, user: req.user });
+      
       if (!comment_text || comment_text.trim().length === 0) {
         return res.status(400).json({ message: 'Comment text is required' });
       }
@@ -490,38 +492,82 @@ const blogController = {
         .where(function() {
           this.where('secure_id', blog_id)
               .orWhere('slug', blog_id)
-              .orWhere('id', blog_id); // fallback for internal ID
+              .orWhere('id', blog_id);
         })
         .first();
+      
+      console.log('Found blog:', blog);
       
       if (!blog) {
         return res.status(404).json({ message: 'Blog not found' });
       }
 
-      const [commentId] = await db('blog_comments').insert({
+      // For lawyers, we need to handle the user_id differently since they're in lawyers table
+      let actualUserId = req.user.id;
+      
+      // If user is a lawyer, we need to find or create a corresponding user record
+      if (req.user.role === 'lawyer') {
+        // Check if there's already a user record for this lawyer
+        let userRecord = await db('users').where('email', req.user.email).first();
+        
+        if (!userRecord) {
+          // Create a user record for the lawyer
+          const [newUserId] = await db('users').insert({
+            name: req.user.name,
+            email: req.user.email,
+            role: 'lawyer',
+            is_verified: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+          actualUserId = newUserId;
+        } else {
+          actualUserId = userRecord.id;
+        }
+      }
+      
+      const insertData = {
         blog_id: blog.id,
-        user_id: req.user.id,
+        user_id: actualUserId,
         comment_text: comment_text.trim(),
         parent_comment_id: parent_comment_id || null
-      });
+      };
+      
+      console.log('Inserting comment data:', insertData);
+      
+      const [commentId] = await db('blog_comments').insert(insertData);
+      
+      console.log('Created comment with ID:', commentId);
 
-      const newComment = await db('blog_comments')
-        .select(
-          'blog_comments.id',
-          'blog_comments.comment_text',
-          'blog_comments.created_at',
-          'blog_comments.parent_comment_id',
-          'users.name as user_name',
-          'users.role as user_role'
-        )
-        .leftJoin('users', 'blog_comments.user_id', 'users.id')
-        .where('blog_comments.id', commentId)
-        .first();
+      // Get user name
+      let userName = 'Unknown User';
+      let userRole = 'user';
+      
+      if (req.user.role === 'lawyer') {
+        const lawyer = await db('lawyers').select('name').where('id', req.user.id).first();
+        userName = lawyer?.name || 'Unknown Lawyer';
+        userRole = 'lawyer';
+      } else {
+        const user = await db('users').select('name', 'role').where('id', req.user.id).first();
+        userName = user?.name || 'Unknown User';
+        userRole = user?.role || 'user';
+      }
+      
+      const response = {
+        id: commentId,
+        comment_text: comment_text.trim(),
+        created_at: new Date(),
+        parent_comment_id: parent_comment_id || null,
+        user_name: userName,
+        user_role: userRole
+      };
+      
+      console.log('Sending response:', response);
 
-      res.status(201).json(newComment);
+      res.status(201).json(response);
     } catch (error) {
       console.error('Error creating blog comment:', error);
-      res.status(500).json({ message: 'Failed to create comment' });
+      res.status(500).json({ message: 'Failed to create comment', error: error.message });
     }
   },
 

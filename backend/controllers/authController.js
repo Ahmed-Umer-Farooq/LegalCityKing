@@ -40,19 +40,27 @@ const login = async (req, res) => {
     let user;
     let role;
 
-    // Check users table first if email provided
-    if (email) {
-      user = await db('users').where({ email }).first();
-      if (user) {
-        role = 'user';
-      }
-    }
-
-    // If not found in users and registration_id provided, check lawyers table
-    if (!user && registration_id) {
+    // If registration_id provided, check lawyers table first
+    if (registration_id) {
       user = await db('lawyers').where({ registration_id }).first();
       if (user) {
         role = 'lawyer';
+      }
+    }
+
+    // If email provided and no user found yet, check lawyers table first
+    if (!user && email) {
+      user = await db('lawyers').where({ email }).first();
+      if (user) {
+        role = 'lawyer';
+      }
+    }
+
+    // If still not found, check users table
+    if (!user && email) {
+      user = await db('users').where({ email }).first();
+      if (user) {
+        role = 'user';
       }
     }
 

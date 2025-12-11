@@ -17,6 +17,8 @@ const BlogManagement = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageUploadType, setImageUploadType] = useState('file'); // 'file' or 'url'
+  const [replyText, setReplyText] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
 
   useEffect(() => {
     fetchBlogs();
@@ -42,11 +44,8 @@ const BlogManagement = () => {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/blogs');
-      const blogsData = response.data?.data || response.data || [];
-      // Use lawyer-specific endpoint that includes secure_id
-      const lawyerResponse = await api.get('/blogs/lawyer-blogs');
-      const userBlogs = lawyerResponse.data?.blogs || [];
+      const lawyerResponse = await api.get('/blogs/analytics');
+      const userBlogs = lawyerResponse.data?.data || [];
       setBlogs(Array.isArray(userBlogs) ? userBlogs : []);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -119,11 +118,29 @@ const BlogManagement = () => {
     if (window.confirm('Delete this comment?')) {
       try {
         await api.delete(`/blogs/comments/${commentId}/moderate`);
-        fetchBlogAnalytics(selectedBlog.id);
+        fetchBlogAnalytics(selectedBlog.secure_id);
         alert('Comment deleted!');
       } catch (error) {
         alert('Failed to delete comment');
       }
+    }
+  };
+
+  const handleReplyToComment = async (commentId) => {
+    const text = replyText[commentId];
+    if (!text?.trim()) return;
+    try {
+      await api.post(`/blogs/${selectedBlog.secure_id}/comments`, {
+        comment_text: text,
+        parent_comment_id: commentId
+      });
+      setReplyText(prev => ({...prev, [commentId]: ''}));
+      setReplyingTo(null);
+      fetchBlogAnalytics(selectedBlog.secure_id);
+      alert('Reply posted!');
+    } catch (error) {
+      console.error('Reply error:', error);
+      alert('Failed to post reply: ' + (error.response?.data?.message || 'Unknown error'));
     }
   };
 
@@ -731,6 +748,12 @@ const BlogManagement = () => {
                                       {formatTimeAgo(comment.created_at)}
                                     </span>
                                     <button
+                                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                                      className="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded text-xs font-medium"
+                                    >
+                                      Reply
+                                    </button>
+                                    <button
                                       onClick={() => handleDeleteComment(comment.id)}
                                       className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
                                     >
@@ -738,7 +761,49 @@ const BlogManagement = () => {
                                     </button>
                                   </div>
                                 </div>
-                                <p className="text-slate-700 text-sm">{comment.comment_text}</p>
+                                <p className="text-slate-700 text-sm mb-3">{comment.comment_text}</p>
+                                
+                                {replyingTo === comment.id && (
+                                  <div className="mt-3 p-3 bg-white rounded-lg border">
+                                    <textarea
+                                      key={`reply-${comment.id}`}
+                                      value={replyText[comment.id] || ''}
+                                      onChange={(e) => setReplyText(prev => ({...prev, [comment.id]: e.target.value}))}
+                                      placeholder="Write your reply..."
+                                      rows={3}
+                                      autoFocus
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    />
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={() => handleReplyToComment(comment.id)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                                      >
+                                        Post Reply
+                                      </button>
+                                      <button
+                                        onClick={() => { setReplyingTo(null); setReplyText(prev => ({...prev, [comment.id]: ''})); }}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {comment.replies && comment.replies.length > 0 && (
+                                  <div className="mt-3 ml-4 space-y-2">
+                                    {comment.replies.map((reply) => (
+                                      <div key={reply.id} className="bg-white rounded-lg p-3 border-l-4 border-blue-200">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <p className="font-medium text-slate-800 text-sm">{reply.user_name}</p>
+                                          <span className="text-xs text-slate-500">{formatTimeAgo(reply.created_at)}</span>
+                                        </div>
+                                        <p className="text-slate-600 text-sm">{reply.reply_text}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>

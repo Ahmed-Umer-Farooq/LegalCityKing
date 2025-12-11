@@ -7,11 +7,16 @@ const Accounting = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [newTransaction, setNewTransaction] = useState({ description: '', amount: '', category: '', lawyer: '' });
   const [transactions, setTransactions] = useState([
-    { id: 1, type: 'income', description: 'Legal Consultation Fee', amount: 500, date: '2024-12-15', category: 'Services' },
-    { id: 2, type: 'expense', description: 'Court Filing Fee', amount: 150, date: '2024-12-14', category: 'Legal Fees' },
-    { id: 3, type: 'income', description: 'Document Review', amount: 300, date: '2024-12-12', category: 'Services' },
-    { id: 4, type: 'expense', description: 'Legal Research Tools', amount: 89, date: '2024-12-10', category: 'Software' },
-    { id: 5, type: 'income', description: 'Case Settlement', amount: 2500, date: '2024-12-08', category: 'Settlement' }
+    { id: 1, type: 'expense', description: 'Payment to Ahmad Umer (Lawyer)', amount: 150, date: '2024-12-15', category: 'Lawyer Fees', status: 'Paid', lawyer: 'Ahmad Umer' },
+    { id: 2, type: 'expense', description: 'Divorce Filing Fee - Family Court', amount: 435, date: '2024-12-14', category: 'Court Fees' },
+    { id: 3, type: 'expense', description: 'Legal Consultation - Family Law', amount: 300, date: '2024-12-12', category: 'Lawyer Fees', status: 'Paid', lawyer: 'John Smith' },
+    { id: 4, type: 'expense', description: 'Process Server Fee', amount: 75, date: '2024-12-11', category: 'Legal Services' },
+    { id: 5, type: 'expense', description: 'Document Notarization', amount: 25, date: '2024-12-10', category: 'Legal Services' },
+    { id: 6, type: 'expense', description: 'Certified Copy of Marriage Certificate', amount: 15, date: '2024-12-09', category: 'Document Fees' },
+    { id: 7, type: 'expense', description: 'Mediation Session Fee', amount: 200, date: '2024-12-08', category: 'Legal Services' },
+    { id: 8, type: 'expense', description: 'Background Check Fee', amount: 50, date: '2024-12-07', category: 'Investigation' },
+    { id: 9, type: 'expense', description: 'Legal Document Preparation', amount: 125, date: '2024-12-06', category: 'Lawyer Fees', status: 'Paid', lawyer: 'Sarah Johnson' },
+    { id: 10, type: 'expense', description: 'Court Reporter Fee', amount: 180, date: '2024-12-05', category: 'Court Services' }
   ]);
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -130,6 +135,14 @@ const Accounting = () => {
                     <span>{new Date(transaction.date).toLocaleDateString()}</span>
                     <span>•</span>
                     <span>{transaction.category}</span>
+                    {transaction.status && (
+                      <>
+                        <span>•</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                          {transaction.status}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -174,9 +187,10 @@ const Accounting = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Expense Categories</h3>
           <div className="space-y-3">
             {[
-              { category: 'Lawyer Fees', amount: 1930, percentage: 88 },
-              { category: 'Court Fees', amount: 150, percentage: 7 },
-              { category: 'Research & Other', amount: 114, percentage: 5 }
+              { category: 'Lawyer Fees', amount: 575, percentage: 38 },
+              { category: 'Court Fees', amount: 435, percentage: 29 },
+              { category: 'Legal Services', amount: 300, percentage: 20 },
+              { category: 'Document & Other Fees', amount: 245, percentage: 13 }
             ].map((item, index) => (
               <div key={index}>
                 <div className="flex justify-between text-sm mb-1">
@@ -231,8 +245,13 @@ const Accounting = () => {
                   <option value="">Select category</option>
                   <option value="Lawyer Fees">Lawyer Fees</option>
                   <option value="Court Fees">Court Fees</option>
+                  <option value="Legal Services">Legal Services</option>
+                  <option value="Document Fees">Document Fees</option>
+                  <option value="Court Services">Court Services</option>
+                  <option value="Investigation">Investigation</option>
                   <option value="Retainer">Retainer</option>
-                  <option value="Research">Research</option>
+                  <option value="Expert Witness">Expert Witness</option>
+                  <option value="Travel Expenses">Travel Expenses</option>
                   <option value="Other">Other</option>
                 </select>
               </div>

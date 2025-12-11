@@ -130,8 +130,18 @@ const authenticateLawyerSpecific = async (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  // Always check lawyers table first for lawyer-specific routes
-  let user = await db('lawyers').where('id', decoded.id).first();
+  // Check if this is a lawyer by email first
+  let user = await db('lawyers').where('email', decoded.email).first();
+  if (user) {
+    user.role = 'lawyer';
+    user.is_verified = user.is_verified || 0;
+    user.lawyer_verified = user.lawyer_verified || 0;
+    req.user = user;
+    return next();
+  }
+
+  // Fallback to ID check in lawyers table
+  user = await db('lawyers').where('id', decoded.id).first();
   if (user) {
     user.role = 'lawyer';
     user.is_verified = user.is_verified || 0;
@@ -216,9 +226,9 @@ const requireVerifiedLawyer = (req, res, next) => {
     return res.status(403).json({ message: 'Only lawyers can access this resource' });
   }
 
-  // Check if lawyer is verified
-  if (!req.user.is_verified || !req.user.lawyer_verified) {
-    return res.status(403).json({ message: 'Only verified lawyers can create blogs' });
+  // Check if lawyer is verified (either field being true is sufficient)
+  if (!req.user.is_verified && !req.user.lawyer_verified) {
+    return res.status(403).json({ message: 'Please verify your account to access this feature' });
   }
 
   next();
