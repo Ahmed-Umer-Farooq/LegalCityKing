@@ -1,52 +1,166 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, FileText, Calendar, Plus, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import api from '../../api';
 
 const Accounting = () => {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [newTransaction, setNewTransaction] = useState({ description: '', amount: '', category: '', lawyer: '' });
-  const [transactions, setTransactions] = useState([
-    { id: 1, type: 'expense', description: 'Payment to Ahmad Umer (Lawyer)', amount: 150, date: '2024-12-15', category: 'Lawyer Fees', status: 'Paid', lawyer: 'Ahmad Umer' },
-    { id: 2, type: 'expense', description: 'Divorce Filing Fee - Family Court', amount: 435, date: '2024-12-14', category: 'Court Fees' },
-    { id: 3, type: 'expense', description: 'Legal Consultation - Family Law', amount: 300, date: '2024-12-12', category: 'Lawyer Fees', status: 'Paid', lawyer: 'John Smith' },
-    { id: 4, type: 'expense', description: 'Process Server Fee', amount: 75, date: '2024-12-11', category: 'Legal Services' },
-    { id: 5, type: 'expense', description: 'Document Notarization', amount: 25, date: '2024-12-10', category: 'Legal Services' },
-    { id: 6, type: 'expense', description: 'Certified Copy of Marriage Certificate', amount: 15, date: '2024-12-09', category: 'Document Fees' },
-    { id: 7, type: 'expense', description: 'Mediation Session Fee', amount: 200, date: '2024-12-08', category: 'Legal Services' },
-    { id: 8, type: 'expense', description: 'Background Check Fee', amount: 50, date: '2024-12-07', category: 'Investigation' },
-    { id: 9, type: 'expense', description: 'Legal Document Preparation', amount: 125, date: '2024-12-06', category: 'Lawyer Fees', status: 'Paid', lawyer: 'Sarah Johnson' },
-    { id: 10, type: 'expense', description: 'Court Reporter Fee', amount: 180, date: '2024-12-05', category: 'Court Services' }
-  ]);
+  const [filter, setFilter] = useState('All');
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Force refresh on component mount
+  useEffect(() => {
+    // Clear any cached data
+    setTransactions([]);
+    fetchTransactions();
+  }, []);
 
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-  const netProfit = totalIncome - totalExpenses;
+  // Fetch user's payment transactions
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Please log in to view transactions');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching transactions with token:', token.substring(0, 20) + '...');
+      
+      // Fetch user's transactions from the backend
+      const response = await api.get('/user/transactions', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log('API Response:', response.data);
+
+      if (response.data.success) {
+        // Transform backend data to match frontend format
+        const transformedTransactions = response.data.data.map(tx => ({
+          id: tx.id,
+          type: 'expense',
+          description: tx.description || `Payment to ${tx.lawyer_name || 'Lawyer'}`,
+          amount: parseFloat(tx.amount),
+          date: tx.date || tx.created_at,
+          category: 'Lawyer Fees',
+          status: tx.status === 'completed' ? 'Paid' : tx.status,
+          lawyer: tx.lawyer_name
+        }));
+        
+        console.log('Transformed transactions:', transformedTransactions);
+        setTransactions(transformedTransactions);
+      } else {
+        console.error('API returned error:', response.data);
+        setError('Failed to fetch transactions');
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      if (error.response?.status === 401) {
+        setError('Please log in again');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } else {
+        setError('Failed to load payment data: ' + (error.response?.data?.error || error.message));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const capturePayments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await api.post('/capture/capture-now', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        alert(`Captured ${response.data.captured} new payments!`);
+        fetchTransactions(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Capture error:', error);
+      alert('Failed to capture payments');
+    }
+  };
+
+  const lawyerPayments = transactions.filter(t => t.type === 'expense' && t.category === 'Lawyer Fees');
+  const totalPaidToLawyers = lawyerPayments.reduce((sum, t) => sum + t.amount, 0);
+  const activeLawyers = [...new Set(lawyerPayments.filter(t => t.lawyer).map(t => t.lawyer))].length;
+
+  const filteredTransactions = filter === 'All' ? transactions : transactions.filter(t => t.category === filter);
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Legal City - Transaction Report', pageWidth / 2, 20, { align: 'center' });
+    
+    // Date and filter info
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 35);
+    doc.text(`Filter: ${filter}`, 20, 42);
+    doc.text(`Total Records: ${filteredTransactions.length}`, 20, 49);
+    
+    // Summary stats
+    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    doc.setFontSize(12);
+    doc.setTextColor(40, 40, 40);
+    doc.text(`Total Amount: $${totalAmount.toLocaleString()}`, pageWidth - 20, 42, { align: 'right' });
+    
+    // Table
+    autoTable(doc, {
+      startY: 60,
+      head: [['Date', 'Description', 'Category', 'Amount', 'Status']],
+      body: filteredTransactions.map(t => [
+        new Date(t.date).toLocaleDateString(),
+        t.description.length > 40 ? t.description.substring(0, 40) + '...' : t.description,
+        t.category,
+        `$${t.amount.toLocaleString()}`,
+        t.status || 'N/A'
+      ]),
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 70 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 25, halign: 'right' },
+        4: { cellWidth: 25, halign: 'center' }
+      }
+    });
+    
+    doc.save(`transactions_${filter}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Accounting</h1>
-          <p className="text-gray-600">Manage your legal finances and track expenses</p>
-        </div>
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Transaction
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Lawyer Payments</h1>
+        <p className="text-gray-600">Manage payments to your lawyers and track legal expenses</p>
       </div>
 
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Lawyer Payment Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { label: 'Total Income', value: `$${totalIncome.toLocaleString()}`, icon: TrendingUp, color: 'bg-green-500', change: '+12%' },
-          { label: 'Total Expenses', value: `$${totalExpenses.toLocaleString()}`, icon: TrendingDown, color: 'bg-red-500', change: '-5%' },
-          { label: 'Net Profit', value: `$${netProfit.toLocaleString()}`, icon: DollarSign, color: 'bg-blue-500', change: '+18%' },
-          { label: 'Pending Invoices', value: '3', icon: FileText, color: 'bg-orange-500', change: '2 overdue' }
+          { label: 'Total Paid to Lawyers', value: `$${totalPaidToLawyers.toLocaleString()}`, icon: DollarSign, color: 'bg-blue-500', change: 'This month' },
+          { label: 'Active Lawyers', value: activeLawyers.toString(), icon: TrendingUp, color: 'bg-green-500', change: 'Working with' }
         ].map((stat, index) => {
           const IconComponent = stat.icon;
           return (
@@ -64,37 +178,7 @@ const Accounting = () => {
         })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Create Invoice', icon: FileText, color: 'bg-blue-600' },
-            { label: 'Record Payment', icon: CreditCard, color: 'bg-green-600' },
-            { label: 'Add Expense', icon: TrendingDown, color: 'bg-red-600' },
-            { label: 'Generate Report', icon: Download, color: 'bg-purple-600' }
-          ].map((action, index) => {
-            const IconComponent = action.icon;
-            return (
-              <button 
-                key={index} 
-                onClick={() => {
-                  if (action.label === 'Create Invoice') setShowInvoiceModal(true);
-                  else if (action.label === 'Record Payment') setShowPaymentModal(true);
-                  else if (action.label === 'Add Expense') setShowAddModal(true);
-                  else if (action.label === 'Generate Report') alert('Generating financial report...');
-                }}
-                className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all"
-              >
-                <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mb-3`}>
-                  <IconComponent className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+
 
       {/* Recent Transactions */}
       <div className="bg-white rounded-lg border border-gray-100">
@@ -102,21 +186,63 @@ const Accounting = () => {
           <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
           <div className="flex gap-2">
             <button 
-              onClick={() => alert('Filter options: All, Lawyer Fees, Court Fees, Other')}
-              className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              onClick={fetchTransactions}
+              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
             >
-              Filter
+              Refresh
             </button>
             <button 
-              onClick={() => alert('Exporting transactions to CSV...')}
+              onClick={capturePayments}
               className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Export
+              Capture Payments
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <select 
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <option value="All">All</option>
+              <option value="Lawyer Fees">Lawyer Fees</option>
+              <option value="Court Fees">Court Fees</option>
+              <option value="Legal Services">Legal Services</option>
+              <option value="Document Fees">Document Fees</option>
+              <option value="Investigation">Investigation</option>
+              <option value="Court Services">Court Services</option>
+            </select>
+            <button 
+              onClick={exportToPDF}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Export PDF
             </button>
           </div>
         </div>
         <div className="divide-y divide-gray-100">
-          {transactions.map(transaction => (
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-500">Loading transactions...</p>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <p className="text-red-600">{error}</p>
+              <button 
+                onClick={fetchTransactions}
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">No transactions found</p>
+              <p className="text-sm text-gray-400 mt-1">Your payment history will appear here</p>
+            </div>
+          ) : (
+            filteredTransactions.map(transaction => (
             <div key={transaction.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -155,162 +281,35 @@ const Accounting = () => {
                 <p className="text-sm text-gray-500 capitalize">{transaction.type}</p>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </div>
 
-      {/* Monthly Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Summary</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Income</span>
-              <span className="font-semibold text-green-600">+${totalIncome.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Expenses</span>
-              <span className="font-semibold text-red-600">-${totalExpenses.toLocaleString()}</span>
-            </div>
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">Total Spent</span>
-                <span className="font-bold text-lg text-red-600">
-                  ${totalExpenses.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Expense Categories</h3>
-          <div className="space-y-3">
-            {[
-              { category: 'Lawyer Fees', amount: 575, percentage: 38 },
-              { category: 'Court Fees', amount: 435, percentage: 29 },
-              { category: 'Legal Services', amount: 300, percentage: 20 },
-              { category: 'Document & Other Fees', amount: 245, percentage: 13 }
-            ].map((item, index) => (
-              <div key={index}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{item.category}</span>
-                  <span className="font-medium">${item.amount}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full" 
-                    style={{ width: `${item.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Add Transaction Modal */}
-      {showAddModal && (
+
+
+      {/* Pay Lawyer Modal */}
+      {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Expense</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pay Lawyer</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lawyer Name</label>
                 <input
                   type="text"
-                  value={newTransaction.description}
-                  onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Consultation fee, court filing, etc."
+                  placeholder="Enter lawyer name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
                 <input
                   type="number"
-                  value={newTransaction.amount}
-                  onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={newTransaction.category}
-                  onChange={(e) => setNewTransaction({...newTransaction, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select category</option>
-                  <option value="Lawyer Fees">Lawyer Fees</option>
-                  <option value="Court Fees">Court Fees</option>
-                  <option value="Legal Services">Legal Services</option>
-                  <option value="Document Fees">Document Fees</option>
-                  <option value="Court Services">Court Services</option>
-                  <option value="Investigation">Investigation</option>
-                  <option value="Retainer">Retainer</option>
-                  <option value="Expert Witness">Expert Witness</option>
-                  <option value="Travel Expenses">Travel Expenses</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lawyer (Optional)</label>
-                <input
-                  type="text"
-                  value={newTransaction.lawyer}
-                  onChange={(e) => setNewTransaction({...newTransaction, lawyer: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Lawyer name"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (newTransaction.description && newTransaction.amount && newTransaction.category) {
-                    const transaction = {
-                      id: Date.now(),
-                      type: 'expense',
-                      description: newTransaction.description,
-                      amount: parseFloat(newTransaction.amount),
-                      date: new Date().toISOString().split('T')[0],
-                      category: newTransaction.category,
-                      lawyer: newTransaction.lawyer || null
-                    };
-                    setTransactions([transaction, ...transactions]);
-                    setNewTransaction({ description: '', amount: '', category: '', lawyer: '' });
-                    setShowAddModal(false);
-                  }
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Add Expense
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Invoice Modal */}
-      {showInvoiceModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Invoice</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter client name"
                 />
               </div>
               <div>
@@ -318,84 +317,17 @@ const Accounting = () => {
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Legal consultation, document review, etc."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowInvoiceModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  alert('Invoice created successfully!');
-                  setShowInvoiceModal(false);
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create Invoice
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Record Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payment From</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Client or payer name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount Received</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
+                  placeholder="Legal consultation, case work, etc."
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="cash">Cash</option>
-                  <option value="check">Check</option>
                   <option value="card">Credit Card</option>
                   <option value="bank">Bank Transfer</option>
+                  <option value="check">Check</option>
+                  <option value="cash">Cash</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Payment notes or reference"
-                />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
@@ -407,12 +339,12 @@ const Accounting = () => {
               </button>
               <button
                 onClick={() => {
-                  alert('Payment recorded successfully!');
+                  alert('Payment to lawyer processed successfully!');
                   setShowPaymentModal(false);
                 }}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                Record Payment
+                Pay Lawyer
               </button>
             </div>
           </div>

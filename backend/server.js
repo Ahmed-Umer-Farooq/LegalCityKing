@@ -398,6 +398,10 @@ const userCasesRoutes = require('./routes/userCases');
 app.use('/api/user/cases', userCasesRoutes);
 const userTasksRoutes = require('./routes/userTasks');
 app.use('/api/user/tasks', userTasksRoutes);
+const userTransactionsRoutes = require('./routes/userTransactions');
+app.use('/api/user/transactions', userTransactionsRoutes);
+const userPaymentsRoutes = require('./routes/userPayments');
+app.use('/api/user/payments', userPaymentsRoutes);
 const blogsRoutes = require('./routes/blogs');
 app.use('/api/blogs', blogsRoutes);
 const uploadRoutes = require('./routes/upload');
@@ -426,6 +430,22 @@ app.use('/api/contact-submissions', contactSubmissionsRoutes);
 // Platform Reviews routes
 const platformReviewsRoutes = require('./routes/platformReviews');
 app.use('/api/platform-reviews', platformReviewsRoutes);
+
+// Test Payment APIs routes
+const testPaymentRoutes = require('./routes/testPayments');
+app.use('/api/test-payments', testPaymentRoutes);
+
+// Payment capture routes
+const capturePaymentRoutes = require('./routes/capturePayment');
+app.use('/api/payment', capturePaymentRoutes);
+
+// Auto-capture routes
+const autoCaptureRoutes = require('./routes/autoCapture');
+app.use('/api/auto-capture', autoCaptureRoutes);
+
+// Simple capture routes
+const simpleCaptureRoutes = require('./routes/simpleCapture');
+app.use('/api/capture', simpleCaptureRoutes);
 
 // Store active users
 const activeUsers = new Map();
