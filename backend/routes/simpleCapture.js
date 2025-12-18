@@ -25,8 +25,9 @@ router.post('/capture-now', async (req, res) => {
           const userEmail = session.customer_details?.email;
           let user = null;
           
-          if (userEmail === 'ahmadumer123123@gmail.com') {
+          if (userEmail) {
             user = await db('users').where('email', userEmail).first();
+            console.log(`Found user: ${user ? user.name + ' (ID: ' + user.id + ')' : 'Not found'} for email: ${userEmail}`);
           }
           
           const amount = session.amount_total / 100;
@@ -34,7 +35,7 @@ router.post('/capture-now', async (req, res) => {
           // Save transaction
           await db('transactions').insert({
             stripe_payment_id: session.payment_intent,
-            user_id: user?.id || 50,
+            user_id: user?.id || null,
             lawyer_id: 48, // Ahmad Umer Farooq
             amount: amount,
             platform_fee: amount * 0.05,

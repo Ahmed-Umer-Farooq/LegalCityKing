@@ -100,7 +100,7 @@ const createConsultationCheckout = async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.APP_URL || 'http://localhost:5001'}/api/auto-capture/success/{CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/lawyer/${lawyerId}`,
       metadata: {
         lawyerId: lawyer.id.toString(),

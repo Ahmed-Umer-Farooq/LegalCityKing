@@ -19,34 +19,9 @@ router.get('/success/:session_id', async (req, res) => {
         .first();
       
       if (!existing) {
-        // Find user by email
-        const userEmail = session.customer_details?.email;
-        let user = null;
-        
-        if (userEmail) {
-          user = await db('users').where('email', userEmail).first();
-        }
-        
-        const amount = session.amount_total / 100;
-        const platformFee = amount * 0.05;
-        const lawyerEarnings = amount - platformFee;
-        
-        // Save transaction
-        const [transactionId] = await db('transactions').insert({
-          stripe_payment_id: session.payment_intent,
-          user_id: user?.id || null,
-          lawyer_id: 48, // Default to Ahmad Umer Farooq
-          amount: amount,
-          platform_fee: platformFee,
-          lawyer_earnings: lawyerEarnings,
-          type: 'consultation',
-          status: 'completed',
-          description: `Auto-captured payment - $${amount}`,
-          created_at: new Date(),
-          updated_at: new Date()
-        });
-        
-        console.log('✅ Auto-captured transaction:', transactionId);
+        console.log('⚠️ Payment not found in database - webhook may have failed');
+      } else {
+        console.log('✅ Payment already processed by webhook');
       }
     }
     
