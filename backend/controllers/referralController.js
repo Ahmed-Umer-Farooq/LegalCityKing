@@ -14,7 +14,6 @@ const getReferralData = async (req, res) => {
     
     // Get or create referral code
     let user = await db('users').where('id', userId).first();
-    console.log('User found:', user ? 'Yes' : 'No', user?.referral_code);
     if (!user || !user.referral_code) {
       const code = generateReferralCode(user.name);
       await db('users').where('id', userId).update({ referral_code: code });
