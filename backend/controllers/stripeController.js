@@ -298,6 +298,12 @@ const handleCheckoutCompleted = async (session) => {
       available_balance = available_balance + ?,
       updated_at = NOW()
     `, [metadata.lawyerId, lawyerEarnings, lawyerEarnings, lawyerEarnings, lawyerEarnings]);
+    
+    // Process referral reward if this is user's first payment
+    if (userId) {
+      const { processReferralReward } = require('./referralController');
+      await processReferralReward(userId);
+    }
   }
 };
 

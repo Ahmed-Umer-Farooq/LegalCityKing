@@ -1,26 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Share2, Copy, Mail, MessageCircle, Users, Gift, DollarSign } from 'lucide-react';
+import api from '../../api';
 
 const Refer = () => {
-  const [referralCode] = useState('LEGAL2024USER');
-  const [referrals] = useState([
-    { id: 1, name: 'John Smith', status: 'Pending', date: '2024-12-10', reward: '$50' },
-    { id: 2, name: 'Sarah Johnson', status: 'Completed', date: '2024-12-08', reward: '$50' },
-    { id: 3, name: 'Mike Wilson', status: 'Completed', date: '2024-12-05', reward: '$50' }
-  ]);
+  const [referralData, setReferralData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    fetchReferralData();
+  }, []);
+
+  const fetchReferralData = async () => {
+    try {
+      const response = await api.get('/referral/data');
+      setReferralData(response.data.data);
+    } catch (error) {
+      console.error('Error fetching referral data:', error);
+      // Fallback to static data if API fails
+      setReferralData({
+        referral_code: 'LOADING...',
+        referral_link: '',
+        stats: { total_referrals: 0, completed_referrals: 0, pending_referrals: 0, total_earnings: 0 },
+        referrals: []
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copyReferralCode = () => {
-    navigator.clipboard.writeText(referralCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (referralData?.referral_code) {
+      navigator.clipboard.writeText(referralData.referral_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const shareReferralLink = () => {
-    const link = `https://legalcity.com/register?ref=${referralCode}`;
-    navigator.clipboard.writeText(link);
-    alert('Referral link copied to clipboard!');
+    if (referralData?.referral_link) {
+      navigator.clipboard.writeText(referralData.referral_link);
+      alert('Referral link copied to clipboard!');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-white rounded-lg border border-gray-100 p-4">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -33,10 +76,10 @@ const Refer = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Referrals', value: referrals.length, icon: Users, color: 'bg-blue-500' },
-          { label: 'Completed', value: referrals.filter(r => r.status === 'Completed').length, icon: Gift, color: 'bg-green-500' },
-          { label: 'Pending', value: referrals.filter(r => r.status === 'Pending').length, icon: MessageCircle, color: 'bg-yellow-500' },
-          { label: 'Total Earned', value: '$100', icon: DollarSign, color: 'bg-purple-500' }
+          { label: 'Total Referrals', value: referralData?.stats?.total_referrals || 0, icon: Users, color: 'bg-blue-500' },
+          { label: 'Completed', value: referralData?.stats?.completed_referrals || 0, icon: Gift, color: 'bg-green-500' },
+          { label: 'Pending', value: referralData?.stats?.pending_referrals || 0, icon: MessageCircle, color: 'bg-yellow-500' },
+          { label: 'Total Earned', value: `$${referralData?.stats?.total_earnings || 0}`, icon: DollarSign, color: 'bg-purple-500' }
         ].map((stat, index) => {
           const IconComponent = stat.icon;
           return (
@@ -79,7 +122,7 @@ const Refer = () => {
                 <Gift className="w-6 h-6" />
               </div>
               <h3 className="font-semibold mb-2">3. Earn Rewards</h3>
-              <p className="text-sm opacity-90">Get $50 for each successful referral</p>
+              <p className="text-sm opacity-90">Get $10 for each successful referral</p>
             </div>
           </div>
         </div>
@@ -93,7 +136,7 @@ const Refer = () => {
           <div className="flex-1 bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-2">Your Referral Code</p>
-              <p className="text-2xl font-bold text-blue-600 tracking-wider">{referralCode}</p>
+              <p className="text-2xl font-bold text-blue-600 tracking-wider">{referralData?.referral_code || 'Loading...'}</p>
             </div>
           </div>
           <button
@@ -132,29 +175,37 @@ const Refer = () => {
           <h3 className="text-lg font-semibold text-gray-900">Referral History</h3>
         </div>
         <div className="divide-y divide-gray-100">
-          {referrals.map(referral => (
-            <div key={referral.id} className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
+          {referralData?.referrals?.length > 0 ? (
+            referralData.referrals.map(referral => (
+              <div key={referral.id} className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{referral.referee_name || referral.referee_email || 'Anonymous'}</h4>
+                    <p className="text-sm text-gray-500">Referred on {new Date(referral.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{referral.name}</h4>
-                  <p className="text-sm text-gray-500">Referred on {new Date(referral.date).toLocaleDateString()}</p>
+                <div className="flex items-center gap-4">
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    referral.status === 'completed' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {referral.status === 'completed' ? 'Completed' : 'Pending'}
+                  </span>
+                  <span className="font-semibold text-gray-900">${referral.reward_amount}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  referral.status === 'Completed' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {referral.status}
-                </span>
-                <span className="font-semibold text-gray-900">{referral.reward}</span>
-              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No referrals yet</p>
+              <p className="text-sm">Start sharing your referral code to earn rewards!</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -162,7 +213,7 @@ const Refer = () => {
       <div className="bg-gray-50 rounded-lg p-4">
         <h4 className="font-medium text-gray-900 mb-2">Terms & Conditions</h4>
         <ul className="text-sm text-gray-600 space-y-1">
-          <li>• Earn $50 for each successful referral who completes registration</li>
+          <li>• Earn $10 for each successful referral who makes their first payment</li>
           <li>• Referral must use your unique code during signup</li>
           <li>• Rewards are processed within 7 business days</li>
           <li>• Self-referrals and duplicate accounts are not eligible</li>

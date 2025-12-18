@@ -26,10 +26,13 @@ const registerUser = async (req, res) => {
       country,
       mobile_number: mobile_number_body,
       mobileNumber,
+      referral_code,
+      ref
     } = req.body;
 
     const zip_code = zip_code_body || zipCode || null;
     const mobile_number = mobile_number_body || mobileNumber || null;
+    const referred_by = referral_code || ref || null;
 
     // Lightweight request log (avoid logging password)
     console.log('Register request received:', { email, name, username });
@@ -52,8 +55,16 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = crypto.randomInt(100000, 999999).toString();
     const secure_id = crypto.randomBytes(16).toString('hex');
+    
+    // Generate referral code for new user
+    const generateReferralCode = (name) => {
+      const prefix = name.substring(0, 3).toUpperCase();
+      const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+      return `${prefix}${random}`;
+    };
+    const user_referral_code = generateReferralCode(name);
 
-    await db('users').insert({
+    const [userId] = await db('users').insert({
       secure_id,
       name,
       username,
@@ -67,8 +78,23 @@ const registerUser = async (req, res) => {
       mobile_number,
       email_verified: 0,
       email_verification_code: verificationCode,
-      is_verified: 0, // Pending until submit later or completion
+      is_verified: 0,
+      referral_code: user_referral_code,
+      referred_by
     });
+    
+    // Create referral record if referred by someone
+    if (referred_by) {
+      const referrer = await db('users').where('referral_code', referred_by).first();
+      if (referrer) {
+        await db('referrals').insert({
+          referrer_id: referrer.id,
+          referee_id: userId,
+          referral_code: referred_by,
+          status: 'pending'
+        });
+      }
+    }
 
     await mockSendVerificationEmail(email, verificationCode);
 

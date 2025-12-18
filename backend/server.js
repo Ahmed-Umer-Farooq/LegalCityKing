@@ -447,6 +447,10 @@ app.use('/api/auto-capture', autoCaptureRoutes);
 const simpleCaptureRoutes = require('./routes/simpleCapture');
 app.use('/api/capture', simpleCaptureRoutes);
 
+// Referral routes
+const referralRoutes = require('./routes/referral');
+app.use('/api/referral', referralRoutes);
+
 // Store active users
 const activeUsers = new Map();
 
