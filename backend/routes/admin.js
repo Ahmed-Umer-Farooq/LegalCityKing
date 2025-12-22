@@ -59,7 +59,7 @@ router.get('/chat-messages', getAllChatMessages);
 router.get('/activity-logs', getActivityLogs);
 
 // Q&A Management
-router.get('/qa/questions', async (req, res) => {
+router.get('/qa/questions', requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20, status = 'all', search = '' } = req.query;
     const offset = (page - 1) * limit;
@@ -74,7 +74,11 @@ router.get('/qa/questions', async (req, res) => {
       );
 
     if (status !== 'all') {
-      query = query.where('qa_questions.status', status);
+      if (status === 'answered') {
+        query = query.where('qa_questions.is_answered', 1);
+      } else if (status === 'pending') {
+        query = query.where('qa_questions.is_answered', 0);
+      }
     }
 
     if (search) {
@@ -96,7 +100,11 @@ router.get('/qa/questions', async (req, res) => {
       .leftJoin('users', 'qa_questions.user_id', 'users.id')
       .modify(function(queryBuilder) {
         if (status !== 'all') {
-          queryBuilder.where('qa_questions.status', status);
+          if (status === 'answered') {
+            queryBuilder.where('qa_questions.is_answered', 1);
+          } else if (status === 'pending') {
+            queryBuilder.where('qa_questions.is_answered', 0);
+          }
         }
         if (search) {
           queryBuilder.where(function() {
@@ -126,14 +134,13 @@ router.get('/qa/questions', async (req, res) => {
   }
 });
 
-router.get('/qa/stats', async (req, res) => {
+router.get('/qa/stats', requireAdmin, async (req, res) => {
   try {
     const db = require('../db');
-    const [totalQuestions, pendingQuestions, answeredQuestions, closedQuestions, totalAnswers] = await Promise.all([
+    const [totalQuestions, pendingQuestions, answeredQuestions, totalAnswers] = await Promise.all([
       db('qa_questions').count('id as count').first(),
-      db('qa_questions').where('status', 'pending').count('id as count').first(),
-      db('qa_questions').where('status', 'answered').count('id as count').first(),
-      db('qa_questions').where('status', 'closed').count('id as count').first(),
+      db('qa_questions').where('is_answered', 0).count('id as count').first(),
+      db('qa_questions').where('is_answered', 1).count('id as count').first(),
       db('qa_answers').count('id as count').first()
     ]);
 
@@ -142,7 +149,7 @@ router.get('/qa/stats', async (req, res) => {
       .select(
         'qa_questions.id',
         'qa_questions.question',
-        'qa_questions.status',
+        'qa_questions.is_answered',
         'qa_questions.created_at',
         'users.name as user_name'
       )
@@ -154,7 +161,7 @@ router.get('/qa/stats', async (req, res) => {
         totalQuestions: totalQuestions.count,
         pendingQuestions: pendingQuestions.count,
         answeredQuestions: answeredQuestions.count,
-        closedQuestions: closedQuestions.count,
+        closedQuestions: 0, // Not applicable with current schema
         totalAnswers: totalAnswers.count
       },
       recentQuestions
@@ -165,19 +172,20 @@ router.get('/qa/stats', async (req, res) => {
   }
 });
 
-router.put('/qa/questions/:id', async (req, res) => {
+router.put('/qa/questions/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, is_public } = req.body;
     const db = require('../db');
 
-    const validStatuses = ['pending', 'answered', 'closed'];
-    if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
     const updateData = {};
-    if (status) updateData.status = status;
+    if (status) {
+      if (status === 'answered') {
+        updateData.is_answered = 1;
+      } else if (status === 'pending') {
+        updateData.is_answered = 0;
+      }
+    }
     if (typeof is_public === 'boolean') updateData.is_public = is_public;
 
     await db('qa_questions').where('id', id).update(updateData);
@@ -194,7 +202,7 @@ router.put('/qa/questions/:id', async (req, res) => {
   }
 });
 
-router.delete('/qa/questions/:id', async (req, res) => {
+router.delete('/qa/questions/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const db = require('../db');

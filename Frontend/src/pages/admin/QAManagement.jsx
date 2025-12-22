@@ -30,7 +30,13 @@ const QAManagement = () => {
         search: filters.search
       });
 
-      const response = await fetch(`http://localhost:5001/api/admin/qa/questions?${queryParams}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5001/api/admin/qa/questions?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
 
       if (response.ok) {
@@ -49,7 +55,13 @@ const QAManagement = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/admin/qa/stats');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5001/api/admin/qa/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
 
       if (response.ok) {
@@ -62,9 +74,11 @@ const QAManagement = () => {
 
   const handleStatusChange = async (questionId, newStatus) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5001/api/admin/qa/questions/${questionId}`, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status: newStatus })
@@ -85,9 +99,11 @@ const QAManagement = () => {
 
   const handleVisibilityToggle = async (questionId, isPublic) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5001/api/admin/qa/questions/${questionId}`, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ is_public: !isPublic })
@@ -111,8 +127,13 @@ const QAManagement = () => {
     }
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5001/api/admin/qa/questions/${questionId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
