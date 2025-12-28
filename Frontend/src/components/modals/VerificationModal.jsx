@@ -37,16 +37,20 @@ export default function VerificationModal({ isOpen, onClose }) {
       const formData = new FormData();
       documents.forEach(doc => formData.append('documents', doc));
 
-      await api.post('/verification/submit', formData, {
+      const response = await api.post('/verification/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       alert('Verification documents submitted successfully!');
       fetchVerificationStatus();
       setDocuments([]);
+      // Reset file input
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
     } catch (error) {
       console.error('Error submitting verification:', error);
-      alert('Failed to submit verification documents');
+      const errorMessage = error.response?.data?.message || 'Failed to submit verification documents';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -101,9 +105,10 @@ export default function VerificationModal({ isOpen, onClose }) {
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={handleFileChange}
                 className="w-full p-2 border rounded-lg"
+                disabled={loading}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Accepted: PDF, JPG, PNG (Max 5 files)
+                Accepted: PDF, JPG, PNG (Max 5 files, 10MB each)
               </p>
             </div>
 
@@ -121,7 +126,7 @@ export default function VerificationModal({ isOpen, onClose }) {
             <button
               onClick={submitVerification}
               disabled={loading || documents.length === 0}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Submitting...' : 'Submit for Verification'}
             </button>

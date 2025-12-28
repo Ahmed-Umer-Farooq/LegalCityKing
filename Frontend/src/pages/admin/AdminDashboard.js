@@ -14,6 +14,7 @@ const BlogReports = React.lazy(() => import('./BlogReports'));
 const QAManagement = React.lazy(() => import('./QAManagement'));
 const FormsManagement = React.lazy(() => import('./FormsManagement'));
 const ContactSubmissions = React.lazy(() => import('./ContactSubmissions'));
+const VerificationManagement = React.lazy(() => import('./VerificationManagement'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -1958,15 +1959,15 @@ const AdminDashboard = () => {
               <span className="text-sm">Contact</span>
             </button>
             <button
-              onClick={() => setActiveTab('reviews')}
+              onClick={() => setActiveTab('verification')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'reviews'
+                activeTab === 'verification'
                   ? 'bg-blue-50 text-blue-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
-              <Star className="w-5 h-5" />
-              <span className="text-sm">Reviews</span>
+              <CheckCircle className="w-5 h-5" />
+              <span className="text-sm">Verification</span>
             </button>
           </nav>
 
@@ -2078,6 +2079,11 @@ const AdminDashboard = () => {
         {activeTab === 'contact' && (
           <Suspense fallback={<LoadingSpinner />}>
             <ContactSubmissions />
+          </Suspense>
+        )}
+        {activeTab === 'verification' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <VerificationManagement />
           </Suspense>
         )}
         {activeTab === 'reviews' && (
