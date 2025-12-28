@@ -342,9 +342,99 @@ const LawyerCarousel = React.memo(function LawyerCarousel() {
   );
 });
 
-/**
- * Footer Component
- */
+const RecentBlogs = React.memo(function RecentBlogs() {
+  const navigate = useNavigate();
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentBlogs = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/blogs?limit=3');
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          setBlogs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching recent blogs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRecentBlogs();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="bg-transparent py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <p className="text-gray-600">Loading recent blogs...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (blogs.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="bg-transparent py-16">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 p-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Recent Legal Insights</h2>
+            <p className="text-gray-600">Stay informed with the latest legal news and expert analysis</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {blogs.map((blog, index) => (
+              <div key={blog.secure_id || blog.id} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden" onClick={() => navigate(`/blog/${blog.secure_id || blog.id}`)}>
+                {blog.featured_image && (
+                  <div className="h-48 overflow-hidden">
+                    <img 
+                      src={blog.featured_image.startsWith('http') ? blog.featured_image : `http://localhost:5001${blog.featured_image}`}
+                      alt={blog.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <div className="mb-4">
+                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
+                      {blog.category || 'Legal News'}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 transition-colors">
+                    {blog.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                    {blog.excerpt || (blog.content && blog.content.substring(0, 120) + '...')}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>By {blog.author_name || 'LegalCity Team'}</span>
+                    <span>{new Date(blog.published_at || blog.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={() => navigate('/legal-blog')}
+              className="px-8 py-3 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+            >
+              View All Articles
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+});
 
 function Footer({ currentLanguage, translations }) {
   const navigate = useNavigate();
@@ -425,46 +515,6 @@ function Footer({ currentLanguage, translations }) {
 export default function UserInterface() {
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState('EN');
-  const [featuredReviews, setFeaturedReviews] = useState([]);
-  const [allReviews, setAllReviews] = useState([]);
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-
-  // Auto-scroll reviews every 5 seconds
-  useEffect(() => {
-    if (allReviews.length > 3) {
-      const interval = setInterval(() => {
-        setCurrentReviewIndex(prev => {
-          const nextIndex = prev + 3;
-          return nextIndex >= allReviews.length ? 0 : nextIndex;
-        });
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [allReviews.length]);
-
-  // Fetch all approved reviews
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch('http://localhost:5001/api/platform-reviews/approved');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.reviews && data.reviews.length > 0) {
-          setAllReviews(data.reviews);
-          setFeaturedReviews(data.reviews.slice(0, 3));
-        }
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      }
-    };
-    
-    fetchReviews();
-  }, []);
 
   // SEO and performance optimization
   useEffect(() => {
@@ -728,96 +778,8 @@ export default function UserInterface() {
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section className="bg-transparent py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 p-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">What Our Clients Say</h2>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-                <span className="text-gray-600 ml-2">4.9/5 from {allReviews.length > 0 ? `${allReviews.length} reviews` : '12,000+ reviews'}</span>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="grid md:grid-cols-3 gap-6">
-                {allReviews.length > 0 ? allReviews.slice(currentReviewIndex, currentReviewIndex + 3).map((review, index) => {
-                const avatarImages = [
-                  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face',
-                  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face',
-                  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face'
-                ];
-                
-                return (
-                  <div key={index} className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 h-64 flex flex-col">
-                    <div className="flex items-center gap-1 mb-3">
-                      {[...Array(review.rating || 5)].map((_, i) => (
-                        <svg key={i} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <blockquote className="text-gray-700 text-sm leading-relaxed mb-4 flex-1 line-clamp-4">
-                      "{review.review_text}"
-                    </blockquote>
-                    <div className="flex items-center gap-3 mt-auto">
-                      <img 
-                        src={avatarImages[index % avatarImages.length]} 
-                        alt={review.client_name} 
-                        className="w-10 h-10 rounded-full border-2 border-gray-200" 
-                      />
-                      <div>
-                        <div className="font-semibold text-gray-900 text-sm">{review.client_name}</div>
-                        <div className="text-xs text-gray-500">{review.client_title}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }) : (
-                <div className="col-span-3 text-center py-8">
-                  <p className="text-gray-500">No reviews available</p>
-                </div>
-                )}
-              </div>
-              {allReviews.length > 3 && (
-                <>
-                  <button
-                    onClick={() => setCurrentReviewIndex(prev => prev === 0 ? Math.max(0, allReviews.length - 3) : Math.max(0, prev - 3))}
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all z-10"
-                  >
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setCurrentReviewIndex(prev => prev + 3 >= allReviews.length ? 0 : prev + 3)}
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all z-10"
-                  >
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  <div className="flex justify-center mt-6 space-x-2">
-                    {Array.from({ length: Math.ceil(allReviews.length / 3) }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentReviewIndex(index * 3)}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          Math.floor(currentReviewIndex / 3) === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Recent Blogs Section */}
+      <RecentBlogs />
 
       {/* Trust Indicators & Awards */}
       <section className="bg-transparent py-16">
