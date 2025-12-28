@@ -8,7 +8,8 @@ const {
   getAppointments,
   getDocuments,
   getInvoices,
-  getProfile
+  getProfile,
+  getUpcomingEvents
 } = require('../controllers/lawyerDashboardController');
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.get('/appointments', getAppointments);
 router.get('/documents', getDocuments);
 router.get('/invoices', getInvoices);
 router.get('/profile', getProfile);
+router.get('/upcoming-events', getUpcomingEvents);
 
 module.exports = router;

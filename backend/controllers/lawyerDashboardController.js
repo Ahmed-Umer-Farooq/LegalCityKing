@@ -3,19 +3,90 @@ const db = require('../db');
 const getDashboardStats = async (req, res) => {
   try {
     const lawyerId = req.user.id;
+    const currentDate = new Date();
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const thisMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     
-    const [totalCases, activeClients, pendingTasks, revenue] = await Promise.all([
-      db('cases').where('lawyer_id', lawyerId).count('id as count').first(),
-      db('cases').where('lawyer_id', lawyerId).countDistinct('client_name as count').first(),
-      db('cases').where({ lawyer_id: lawyerId, status: 'pending' }).count('id as count').first(),
-      db('invoices').where({ lawyer_id: lawyerId, status: 'paid' }).sum('amount as total').first()
+    // Get current month stats
+    const [activeCases, totalClients, monthlyRevenue, upcomingHearings] = await Promise.all([
+      db('cases').where({ lawyer_id: lawyerId, status: 'active' }).count('id as count').first(),
+      db('cases').where('lawyer_id', lawyerId).countDistinct('client_id as count').first(),
+      db('invoices').where({ lawyer_id: lawyerId, status: 'paid' })
+        .whereBetween('created_at', [thisMonth, currentDate])
+        .sum('amount as total').first(),
+      db('events').where('lawyer_id', lawyerId)
+        .where('start_date_time', '>=', currentDate.toISOString())
+        .count('id as count').first()
     ]);
 
+    // Get last month stats for comparison
+    const [lastMonthCases, lastMonthClients, lastMonthRevenue] = await Promise.all([
+      db('cases').where({ lawyer_id: lawyerId, status: 'active' })
+        .whereBetween('created_at', [lastMonth, thisMonth])
+        .count('id as count').first(),
+      db('cases').where('lawyer_id', lawyerId)
+        .whereBetween('created_at', [lastMonth, thisMonth])
+        .countDistinct('client_id as count').first(),
+      db('invoices').where({ lawyer_id: lawyerId, status: 'paid' })
+        .whereBetween('created_at', [lastMonth, thisMonth])
+        .sum('amount as total').first()
+    ]);
+
+    // Calculate percentage changes
+    const calculatePercentage = (current, previous) => {
+      if (!previous || previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
+
+    const currentActiveCases = parseInt(activeCases.count) || 0;
+    const currentTotalClients = parseInt(totalClients.count) || 0;
+    const currentMonthlyRevenue = parseFloat(monthlyRevenue.total) || 0;
+    const currentUpcomingHearings = parseInt(upcomingHearings.count) || 0;
+
+    const lastActiveCases = parseInt(lastMonthCases.count) || 0;
+    const lastTotalClients = parseInt(lastMonthClients.count) || 0;
+    const lastMonthlyRevenue = parseFloat(lastMonthRevenue.total) || 0;
+
+    // Get case distribution by type
+    const caseDistribution = await db('cases')
+      .select('type')
+      .count('id as count')
+      .where('lawyer_id', lawyerId)
+      .groupBy('type');
+
+    // Get monthly revenue data for chart (last 12 months)
+    const monthlyRevenueData = [];
+    for (let i = 11; i >= 0; i--) {
+      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+      
+      const monthRevenue = await db('invoices')
+        .where({ lawyer_id: lawyerId, status: 'paid' })
+        .whereBetween('created_at', [monthStart, monthEnd])
+        .sum('amount as total').first();
+      
+      monthlyRevenueData.push({
+        month: monthStart.toLocaleString('default', { month: 'short' }),
+        revenue: parseFloat(monthRevenue.total) || 0
+      });
+    }
+
     res.json({
-      totalCases: parseInt(totalCases.count) || 0,
-      activeClients: parseInt(activeClients.count) || 0,
-      pendingTasks: parseInt(pendingTasks.count) || 0,
-      revenue: `$${parseFloat(revenue.total) || 0}`
+      activeCases: currentActiveCases,
+      totalClients: currentTotalClients,
+      monthlyRevenue: currentMonthlyRevenue,
+      upcomingHearings: currentUpcomingHearings,
+      percentageChanges: {
+        activeCases: calculatePercentage(currentActiveCases, lastActiveCases),
+        totalClients: calculatePercentage(currentTotalClients, lastTotalClients),
+        monthlyRevenue: calculatePercentage(currentMonthlyRevenue, lastMonthlyRevenue)
+      },
+      caseDistribution: caseDistribution.map(item => ({
+        label: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+        count: parseInt(item.count),
+        type: item.type
+      })),
+      monthlyRevenueData
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
@@ -27,9 +98,9 @@ const getCases = async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const cases = await db('cases')
-      .select('id', 'title', 'type', 'status', 'created_date as date', 'client_name as client', 'description')
+      .select('id', 'title', 'type', 'status', 'created_at', 'client_id', 'description', 'filing_date')
       .where('lawyer_id', lawyerId)
-      .orderBy('created_date', 'desc');
+      .orderBy('created_at', 'desc');
 
     res.json(cases);
   } catch (error) {
@@ -43,18 +114,17 @@ const createCase = async (req, res) => {
     const lawyerId = req.user.id;
     const { title, client, type, description } = req.body;
 
-    if (!title || !client || !type) {
-      return res.status(400).json({ message: 'Title, client, and type are required' });
+    if (!title || !type) {
+      return res.status(400).json({ message: 'Title and type are required' });
     }
 
     const [caseId] = await db('cases').insert({
       lawyer_id: lawyerId,
       title,
-      client_name: client,
       type,
       description: description || '',
       status: 'active',
-      created_date: new Date()
+      filing_date: new Date().toISOString().split('T')[0]
     });
 
     const newCase = await db('cases').where('id', caseId).first();
@@ -70,22 +140,21 @@ const getClients = async (req, res) => {
     const lawyerId = req.user.id;
     const { search } = req.query;
     
+    // Get unique client IDs from cases
     let query = db('cases')
-      .select('client_name as name')
+      .select('client_id')
       .count('id as casesCount')
       .where('lawyer_id', lawyerId)
-      .groupBy('client_name');
+      .whereNotNull('client_id')
+      .groupBy('client_id');
 
-    if (search) {
-      query = query.where('client_name', 'like', `%${search}%`);
-    }
-
-    const clients = await query;
+    const clientCases = await query;
     
-    const processedClients = clients.map((client, index) => ({
-      id: index + 1,
-      name: client.name,
-      email: `${client.name.toLowerCase().replace(' ', '.')}@email.com`,
+    // For now, create mock client data since we don't have actual client records
+    const processedClients = clientCases.map((client, index) => ({
+      id: client.client_id || index + 1,
+      name: `Client ${client.client_id || index + 1}`,
+      email: `client${client.client_id || index + 1}@email.com`,
       phone: `(555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
       cases: parseInt(client.casesCount)
     }));
@@ -150,18 +219,18 @@ const getInvoices = async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const invoices = await db('invoices')
-      .select('id', 'invoice_number', 'client_name', 'amount', 'status', 'created_date')
+      .select('id', 'invoice_number', 'client_id', 'amount', 'status', 'created_at', 'due_date')
       .where('lawyer_id', lawyerId)
-      .orderBy('created_date', 'desc');
+      .orderBy('created_at', 'desc');
 
     const processedInvoices = invoices.map(inv => ({
       id: inv.id,
       invoice_number: inv.invoice_number,
-      client_name: inv.client_name,
+      client_name: `Client ${inv.client_id || 'Unknown'}`,
       amount: inv.amount.toString(),
       status: inv.status,
-      due_date: new Date(new Date(inv.created_date).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      created_at: inv.created_date
+      due_date: inv.due_date,
+      created_at: inv.created_at
     }));
 
     res.json(processedInvoices);
@@ -190,6 +259,44 @@ const getProfile = async (req, res) => {
   }
 };
 
+const getUpcomingEvents = async (req, res) => {
+  try {
+    const lawyerId = req.user.id;
+    const currentDate = new Date();
+    const nextWeek = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const events = await db('events')
+      .select('id', 'title', 'start_date_time', 'event_type')
+      .where('lawyer_id', lawyerId)
+      .whereBetween('start_date_time', [currentDate.toISOString(), nextWeek.toISOString()])
+      .orderBy('start_date_time', 'asc')
+      .limit(5);
+
+    const processedEvents = events.map(event => {
+      const eventDate = new Date(event.start_date_time);
+      return {
+        id: event.id,
+        title: event.title,
+        date: eventDate.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        }),
+        time: eventDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        type: event.event_type || 'meeting'
+      };
+    });
+
+    res.json(processedEvents);
+  } catch (error) {
+    console.error('Get upcoming events error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getCases,
@@ -198,5 +305,6 @@ module.exports = {
   getAppointments,
   getDocuments,
   getInvoices,
-  getProfile
+  getProfile,
+  getUpcomingEvents
 };
