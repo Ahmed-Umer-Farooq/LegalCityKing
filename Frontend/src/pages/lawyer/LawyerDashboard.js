@@ -17,6 +17,7 @@ const TrackTimeModal = React.lazy(() => import('../../components/modals/TrackTim
 const AddExpenseModal = React.lazy(() => import('../../components/modals/AddExpenseModal').catch(() => ({ default: () => null })));
 const CreateInvoiceModal = React.lazy(() => import('../../components/modals/CreateInvoiceModal').catch(() => ({ default: () => null })));
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
+const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
 const CalendarPage = React.lazy(() => import('./CalendarPage').catch(() => ({ default: () => <div>Calendar coming soon...</div> })));
 const ReportsPage = React.lazy(() => import('./ReportsPage').catch(() => ({ default: () => <div>Reports coming soon...</div> })));
@@ -64,9 +65,15 @@ export default function LawyerDashboard() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [currentUser, setCurrentUser] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
+
+  // Subscription feature checks
+  const isProfessional = currentUser?.subscription_tier === 'professional';
+  const isPremium = currentUser?.subscription_tier === 'premium';
+  const hasAdvancedFeatures = isProfessional || isPremium;
 
 
   // Prevent browser back button
@@ -255,26 +262,30 @@ export default function LawyerDashboard() {
                 { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true },
                 { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); } },
                 { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); } },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); } },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
                 { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); } },
-                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount },
+                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
+                const isRestricted = item.restricted;
                 return (
                   <button
                     key={item.id}
-                    onClick={item.action || (() => setActiveNavItem(item.id))}
+                    onClick={isRestricted ? () => alert('Upgrade to Professional/Premium to access this feature') : (item.action || (() => setActiveNavItem(item.id)))}
                     className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                        : isRestricted
+                        ? 'text-gray-400 cursor-not-allowed'
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
+                    {isRestricted && <span className="text-xs bg-orange-100 text-orange-600 px-1 rounded">PRO</span>}
                     {item.showNotification && (
                       item.id === 'messages' ? (
                         unreadCount > 0 && (
@@ -343,6 +354,14 @@ export default function LawyerDashboard() {
                         <span className="text-xs text-green-600 font-medium">Verified Lawyer</span>
                       </div>
                     )}
+                    {isPremium && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-xs text-blue-600 font-medium">Premium Verified</span>
+                      </div>
+                    )}
                     {currentUser?.subscription_tier && currentUser.subscription_tier !== 'free' && (
                       <div className="flex items-center gap-1 mt-1">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -354,6 +373,14 @@ export default function LawyerDashboard() {
                     <User className="w-4 h-4" />
                     Profile Management
                   </button>
+                  {!currentUser?.verified && (
+                    <button onClick={() => setShowVerificationModal(true)} className="flex items-center gap-2 px-4 py-2 text-sm text-[#0086CB] hover:bg-[#F9FAFB] transition-colors w-full text-left">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Get Verified
+                    </button>
+                  )}
                   <hr className="my-2 border-[#E5E7EB]" />
                   <button 
                     onClick={handleLogout}
@@ -741,7 +768,7 @@ export default function LawyerDashboard() {
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border-2 border-[#DCE8FF] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                   <div>
                     <h3 className="text-[#181A2A] text-base font-semibold">{caseItem.title}</h3>
-                    <p className="text-[#737791] text-sm">{caseItem.type} - Filed: {caseItem.filing_date || caseItem.created_at?.split('T')[0]}</p>
+                    <p className="text-[#737791] text-sm">{caseItem.case_number || `Case #${caseItem.id}`} - {caseItem.type} - Filed: {caseItem.filing_date || new Date(caseItem.created_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColors(caseItem.status)}`}>
                     {caseItem.status.charAt(0).toUpperCase() + caseItem.status.slice(1)}
@@ -938,6 +965,10 @@ export default function LawyerDashboard() {
         isOpen={showPaymentModal} 
         onClose={() => setShowPaymentModal(false)} 
         onSuccess={fetchDashboardData}
+      />
+      <VerificationModal 
+        isOpen={showVerificationModal} 
+        onClose={() => setShowVerificationModal(false)}
       />
     </div>
   );

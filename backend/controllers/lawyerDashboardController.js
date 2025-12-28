@@ -98,7 +98,7 @@ const getCases = async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const cases = await db('cases')
-      .select('id', 'title', 'type', 'status', 'created_at', 'client_id', 'description', 'filing_date')
+      .select('id', 'case_number', 'title', 'type', 'status', 'created_at', 'client_id', 'description', 'filing_date')
       .where('lawyer_id', lawyerId)
       .orderBy('created_at', 'desc');
 
@@ -118,10 +118,18 @@ const createCase = async (req, res) => {
       return res.status(400).json({ message: 'Title and type are required' });
     }
 
+    // Generate special case ID
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const caseCount = await db('cases').where('lawyer_id', lawyerId).count('id as count').first();
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const caseNumber = `LC-${type.substring(0, 3).toUpperCase()}-${year}${month}-${String(parseInt(caseCount.count) + 1).padStart(3, '0')}-${randomSuffix}`;
+
     const [caseId] = await db('cases').insert({
       lawyer_id: lawyerId,
       title,
       type,
+      case_number: caseNumber,
       description: description || '',
       status: 'active',
       filing_date: new Date().toISOString().split('T')[0]
