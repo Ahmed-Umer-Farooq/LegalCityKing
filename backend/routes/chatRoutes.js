@@ -82,7 +82,7 @@ router.get('/conversations', authenticateToken, async (req, res) => {
         
         // If partner not found, skip this conversation
         if (!partner) {
-          console.warn(`⚠️ Partner not found: ID ${conv.partner_id} in ${table} table - skipping`);
+          // console.warn(`⚠️ Partner not found: ID ${conv.partner_id} in ${table} table - skipping`);
           return null;
         }
 
