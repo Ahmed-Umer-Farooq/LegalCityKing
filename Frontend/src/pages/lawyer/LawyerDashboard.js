@@ -74,6 +74,7 @@ export default function LawyerDashboard() {
   const isProfessional = currentUser?.subscription_tier === 'professional';
   const isPremium = currentUser?.subscription_tier === 'premium';
   const hasAdvancedFeatures = isProfessional || isPremium;
+  const isVerified = currentUser?.is_verified || currentUser?.lawyer_verified;
 
 
   // Prevent browser back button
@@ -259,15 +260,15 @@ export default function LawyerDashboard() {
             <nav className="hidden lg:flex items-center gap-4">
               {[
                 { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); window.scrollTo(0, 0); } },
-                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true },
-                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); } },
-                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); } },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures },
-                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
-                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); }, restricted: !isPremium },
-                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); }, restricted: !isPremium },
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true, restricted: !isVerified },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); }, restricted: !isVerified },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); }, restricted: !isVerified },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures || !isVerified },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); }, restricted: !isVerified },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); }, restricted: !isVerified },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); }, restricted: !isPremium || !isVerified },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures || !isVerified },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); }, restricted: !isPremium || !isVerified },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
@@ -276,7 +277,9 @@ export default function LawyerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={isRestricted ? () => { window.location.href = '/lawyer-dashboard/subscription'; } : (item.action || (() => setActiveNavItem(item.id)))}
+                    onClick={isRestricted ? (
+                      !isVerified ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }
+                    ) : (item.action || (() => setActiveNavItem(item.id)))}
                     className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
@@ -286,9 +289,13 @@ export default function LawyerDashboard() {
                     <Icon className="w-4 h-4" />
                     <span className="hidden xl:block">{item.label}</span>
                     {isRestricted && (
-                      <svg className="w-2 h-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
+                      !isVerified ? (
+                        <svg className="w-2 h-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <span className="text-xs font-bold text-orange-500">P</span>
+                      )
                     )}
                     {item.showNotification && (
                       item.id === 'messages' ? (

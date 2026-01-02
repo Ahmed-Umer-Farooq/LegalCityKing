@@ -1,6 +1,13 @@
+const fs = require('fs');
 const db = require('../db');
 const multer = require('multer');
 const path = require('path');
+
+// Ensure upload directory exists
+const uploadDir = 'uploads/verification/';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure multer for verification documents
 const storage = multer.diskStorage({

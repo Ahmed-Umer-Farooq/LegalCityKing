@@ -52,12 +52,19 @@ const login = async (req, res) => {
     if (!user && email) {
       user = await db('lawyers').where({ email }).first();
       if (user) {
-        role = 'lawyer';
+        // For lawyers, require both email AND registration_id to match
+        if (registration_id && user.registration_id === registration_id) {
+          role = 'lawyer';
+        } else if (!registration_id) {
+          return res.status(400).json({ message: 'Registration ID is required for lawyer login' });
+        } else {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
       }
     }
 
     // If still not found, check users table
-    if (!user && email) {
+    if (!user && email && !registration_id) {
       user = await db('users').where({ email }).first();
       if (user) {
         role = 'user';
@@ -156,7 +163,6 @@ const verifyEmail = async (req, res) => {
         email_verified: 1,
         email_verification_code: null,
         is_verified: 1,
-        lawyer_verified: 1,
       });
       return res.json({ message: 'Email verified successfully' });
     }
@@ -679,7 +685,6 @@ const verifyOtp = async (req, res) => {
           email_verified: 1,
           email_verification_code: null,
           is_verified: 1,
-          lawyer_verified: 1,
         });
       }
     }

@@ -50,8 +50,8 @@ const registerLawyer = async (req, res) => {
       mobile_number,
       email_verified: 0,
       email_verification_code: verificationCode,
-      is_verified: 1, // Lawyers are automatically verified upon registration
-      lawyer_verified: 1, // Lawyers are automatically verified upon registration
+      is_verified: 0,
+      lawyer_verified: 0,
     });
 
     await mockSendVerificationEmail(email, verificationCode);

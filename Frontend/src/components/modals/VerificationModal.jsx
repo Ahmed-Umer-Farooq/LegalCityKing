@@ -23,7 +23,16 @@ export default function VerificationModal({ isOpen, onClose }) {
   };
 
   const handleFileChange = (e) => {
-    setDocuments([...e.target.files]);
+    const newFiles = [...e.target.files];
+    const existingFiles = [...documents];
+    const combinedFiles = [...existingFiles, ...newFiles];
+    
+    if (combinedFiles.length > 5) {
+      alert('Maximum 5 files allowed. Please remove some files first.');
+      return;
+    }
+    
+    setDocuments(combinedFiles);
   };
 
   const submitVerification = async () => {
@@ -68,67 +77,93 @@ export default function VerificationModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Lawyer Verification</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">Professional Verification</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         {verificationStatus && (
-          <div className="mb-4 p-3 border rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-3 mb-2">
               {getStatusIcon(verificationStatus.verification_status)}
-              <span className="font-medium capitalize">
-                {verificationStatus.verification_status || 'Not Started'}
+              <span className="font-semibold text-slate-800 capitalize">
+                Status: {verificationStatus.verification_status === 'pending' ? 'Under Review' : verificationStatus.verification_status || 'Not Submitted'}
               </span>
             </div>
             {verificationStatus.verification_notes && (
-              <p className="text-sm text-gray-600">{verificationStatus.verification_notes}</p>
+              <p className="text-sm text-slate-600 mt-2 pl-8">{verificationStatus.verification_notes}</p>
             )}
           </div>
         )}
 
         {(!verificationStatus?.verification_status || verificationStatus.verification_status === 'pending' || verificationStatus.verification_status === 'rejected') && (
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              Upload your bar license, professional certificates, and ID to get verified.
-            </p>
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h3 className="font-semibold text-blue-900 mb-2">Required Documents</h3>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• State Bar License Certificate</li>
+                <li>• Professional ID or Driver's License</li>
+                <li>• Law Degree Certificate (optional)</li>
+                <li>• Professional Liability Insurance (optional)</li>
+              </ul>
+            </div>
             
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Upload Documents</label>
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileChange}
-                className="w-full p-2 border rounded-lg"
-                disabled={loading}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Accepted: PDF, JPG, PNG (Max 5 files, 10MB each)
-              </p>
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-700">Document Upload</label>
+              <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={loading}
+                />
+                <div className="text-center">
+                  <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                  <p className="text-lg font-medium text-slate-700 mb-1">Click to upload or drag and drop</p>
+                  <p className="text-sm text-slate-500">PDF, JPG, PNG files only</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>Maximum 5 files allowed</span>
+                <span>10MB per file limit</span>
+              </div>
             </div>
 
             {documents.length > 0 && (
-              <div className="mb-4">
-                <p className="text-sm font-medium mb-2">Selected Files:</p>
-                {Array.from(documents).map((doc, index) => (
-                  <div key={index} className="text-sm text-gray-600">
-                    • {doc.name}
-                  </div>
-                ))}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <h4 className="font-semibold text-green-900 mb-2">Selected Files ({documents.length})</h4>
+                <div className="space-y-2">
+                  {Array.from(documents).map((doc, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm text-green-800">
+                      <FileText className="w-4 h-4" />
+                      <span>{doc.name}</span>
+                      <span className="text-xs text-green-600">({(doc.size / 1024 / 1024).toFixed(1)}MB)</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             <button
               onClick={submitVerification}
               disabled={loading || documents.length === 0}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              {loading ? 'Submitting...' : 'Submit for Verification'}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Processing Documents...
+                </div>
+              ) : (
+                'Submit for Professional Review'
+              )}
             </button>
           </div>
         )}
@@ -150,6 +185,7 @@ export default function VerificationModal({ isOpen, onClose }) {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
