@@ -245,15 +245,18 @@ export default function BrowseLawyers() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 md:gap-x-[92px] gap-y-5">
             {cities.map((column, columnIndex) => (
               <div key={columnIndex} className="flex flex-col gap-[19px]">
-                {column.map((item, itemIndex) => (
-                  <Link
-                    key={itemIndex}
-                    to="#"
-                    className="text-lawyer-cyan font-inter text-sm font-normal leading-[15.66px] hover:underline"
-                  >
-                    {item}
-                  </Link>
-                ))}
+                {column.map((item, itemIndex) => {
+                  const city = item.replace(' Lawyers', '');
+                  return (
+                    <Link
+                      key={itemIndex}
+                      to={`/lawyers?city=${encodeURIComponent(city)}`}
+                      className="text-lawyer-cyan font-inter text-sm font-normal leading-[15.66px] hover:underline"
+                    >
+                      {item}
+                    </Link>
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -266,15 +269,18 @@ export default function BrowseLawyers() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 md:gap-x-[68px] gap-y-5">
             {states.map((column, columnIndex) => (
               <div key={columnIndex} className="flex flex-col gap-[19px]">
-                {column.map((item, itemIndex) => (
-                  <Link
-                    key={itemIndex}
-                    to="#"
-                    className="text-lawyer-cyan font-inter text-sm font-normal leading-[15.66px] hover:underline"
-                  >
-                    {item}
-                  </Link>
-                ))}
+                {column.map((item, itemIndex) => {
+                  const state = item.replace(' Lawyers', '');
+                  return (
+                    <Link
+                      key={itemIndex}
+                      to={`/lawyers?state=${encodeURIComponent(state)}`}
+                      className="text-lawyer-cyan font-inter text-sm font-normal leading-[15.66px] hover:underline"
+                    >
+                      {item}
+                    </Link>
+                  );
+                })}
               </div>
             ))}
           </div>
