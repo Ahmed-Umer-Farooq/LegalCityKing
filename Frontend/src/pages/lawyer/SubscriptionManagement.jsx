@@ -265,192 +265,190 @@ const SubscriptionManagement = () => {
         </div>
 
         {/* Subscription Plans */}
-        {(!lawyer?.subscription_tier || lawyer?.subscription_tier === 'free') && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-3">Upgrade Your Practice</h2>
-              <p className="text-slate-600 text-lg">Choose a plan that fits your needs</p>
-            </div>
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-3">Subscription Plans</h2>
+            <p className="text-slate-600 text-lg">Choose a plan that fits your needs</p>
+          </div>
 
-            {/* Billing Toggle */}
-            <div className="flex justify-center mb-8">
-              <div className="bg-slate-100 p-1 rounded-xl">
-                <button
-                  onClick={() => setBillingCycle('monthly')}
-                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                    billingCycle === 'monthly'
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setBillingCycle('yearly')}
-                  className={`px-6 py-2 rounded-lg font-medium transition-all relative ${
-                    billingCycle === 'yearly'
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
-                  }`}
-                >
-                  Yearly
-                  <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs px-2 py-1 rounded-full">
-                    15% OFF
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Plans */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {/* Professional Plan */}
-              <div className="relative bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-                <div className="text-center mb-8">
-                  <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
-                  <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
-                    ${billingCycle === 'monthly' ? '49.00' : '41.65'}
-                    <span className="text-xl text-slate-600">/month</span>
-                  </div>
-                  {billingCycle === 'yearly' && (
-                    <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
-                  )}
-                </div>
-                
-                <ul className="space-y-5 mb-8 flex-grow">
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-slate-800 font-medium">Enhanced profile management</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-slate-800 font-medium">Unlimited client messaging</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-slate-800 font-medium">Blog management system</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-slate-800 font-medium">Advanced reports & analytics</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-slate-800 font-medium">Email support</span>
-                  </li>
-                </ul>
-                
-                <button
-                  onClick={() => handleUpgrade('professional')}
-                  disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
-                  className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                    lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'
-                      ? 'bg-emerald-500 text-white cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
-                  }`}
-                >
-                  {lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Professional'}
-                </button>
-              </div>
-
-              {/* Premium Plan */}
-              <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 text-slate-800 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                    Most Popular
-                  </div>
-                </div>
-                
-                <div className="text-center mb-8 mt-4">
-                  <h3 className="text-3xl font-bold mb-4">Premium</h3>
-                  <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                    ${billingCycle === 'monthly' ? '99.00' : '84.15'}
-                    <span className="text-xl text-slate-600">/month</span>
-                  </div>
-                  {billingCycle === 'yearly' && (
-                    <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
-                  )}
-                </div>
-                
-                <ul className="space-y-5 mb-8 flex-grow">
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">All Professional features</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Q&A answer management</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Verification badge system</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Forms management system</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Client management tools</span>
-                  </li>
-                  <li className="flex items-center gap-4">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Check className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Priority phone support</span>
-                  </li>
-                </ul>
-                
-                <button
-                  onClick={() => handleUpgrade('premium')}
-                  disabled={lawyer?.subscription_tier === 'premium'}
-                  className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                    lawyer?.subscription_tier === 'premium'
-                      ? 'bg-emerald-500 text-white cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                  }`}
-                >
-                  {lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Premium'}
-                </button>
-              </div>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="flex justify-center items-center gap-8 mt-8 pt-8 border-t border-slate-200">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Shield className="w-5 h-5 text-emerald-500" />
-                <span className="font-medium">Secure Payment</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Zap className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Cancel Anytime</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Award className="w-5 h-5 text-purple-500" />
-                <span className="font-medium">Instant Activation</span>
-              </div>
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-slate-100 p-1 rounded-xl">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                  billingCycle === 'monthly'
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-6 py-2 rounded-lg font-medium transition-all relative ${
+                  billingCycle === 'yearly'
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                Yearly
+                <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs px-2 py-1 rounded-full">
+                  15% OFF
+                </span>
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Plans */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Professional Plan */}
+            <div className="relative bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
+                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
+                  ${billingCycle === 'monthly' ? '49.00' : '41.65'}
+                  <span className="text-xl text-slate-600">/month</span>
+                </div>
+                {billingCycle === 'yearly' && (
+                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
+                )}
+              </div>
+              
+              <ul className="space-y-5 mb-8 flex-grow">
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Check className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-slate-800 font-medium">Enhanced profile management</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Check className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-slate-800 font-medium">Unlimited client messaging</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Check className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-slate-800 font-medium">Blog management system</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Check className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-slate-800 font-medium">Advanced reports & analytics</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Check className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-slate-800 font-medium">Email support</span>
+                </li>
+              </ul>
+              
+              <button
+                onClick={() => handleUpgrade('professional')}
+                disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
+                className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                  lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'
+                    ? 'bg-emerald-500 text-white cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                }`}
+              >
+                {lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Professional'}
+              </button>
+            </div>
+
+            {/* Premium Plan */}
+            <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 text-slate-800 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                  Most Popular
+                </div>
+              </div>
+              
+              <div className="text-center mb-8 mt-4">
+                <h3 className="text-3xl font-bold mb-4">Premium</h3>
+                <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                  ${billingCycle === 'monthly' ? '99.00' : '84.15'}
+                  <span className="text-xl text-slate-600">/month</span>
+                </div>
+                {billingCycle === 'yearly' && (
+                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
+                )}
+              </div>
+              
+              <ul className="space-y-5 mb-8 flex-grow">
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">All Professional features</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Q&A answer management</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Verification badge system</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Forms management system</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Client management tools</span>
+                </li>
+                <li className="flex items-center gap-4">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Check className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="font-medium">Priority phone support</span>
+                </li>
+              </ul>
+              
+              <button
+                onClick={() => handleUpgrade('premium')}
+                disabled={lawyer?.subscription_tier === 'premium'}
+                className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                  lawyer?.subscription_tier === 'premium'
+                    ? 'bg-emerald-500 text-white cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                }`}
+              >
+                {lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Premium'}
+              </button>
+            </div>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="flex justify-center items-center gap-8 mt-8 pt-8 border-t border-slate-200">
+            <div className="flex items-center gap-2 text-slate-600">
+              <Shield className="w-5 h-5 text-emerald-500" />
+              <span className="font-medium">Secure Payment</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <Zap className="w-5 h-5 text-blue-500" />
+              <span className="font-medium">Cancel Anytime</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <Award className="w-5 h-5 text-purple-500" />
+              <span className="font-medium">Instant Activation</span>
+            </div>
+          </div>
+        </div>
 
         {/* Recent Transactions */}
         {earnings?.recentTransactions && earnings.recentTransactions.length > 0 && (
