@@ -126,7 +126,7 @@ const approveVerification = async (req, res) => {
     await db('lawyers')
       .where('id', lawyerId)
       .update({
-        verification_status: 'verified',
+        verification_status: 'approved',
         is_verified: true,
         verification_notes: notes,
         verification_approved_at: new Date(),

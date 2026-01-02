@@ -260,7 +260,15 @@ const getProfile = async (req, res) => {
       return res.status(404).json({ message: 'Lawyer not found' });
     }
 
-    res.json(lawyer);
+    // Determine verification status - only approved status counts as verified
+    const isVerified = lawyer.verification_status === 'approved';
+    
+    res.json({
+      ...lawyer,
+      is_verified: isVerified,
+      lawyer_verified: isVerified,
+      verified: isVerified
+    });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Server error' });

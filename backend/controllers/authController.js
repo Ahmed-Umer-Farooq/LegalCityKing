@@ -55,10 +55,8 @@ const login = async (req, res) => {
         // For lawyers, require both email AND registration_id to match
         if (registration_id && user.registration_id === registration_id) {
           role = 'lawyer';
-        } else if (!registration_id) {
-          return res.status(400).json({ message: 'Registration ID is required for lawyer login' });
         } else {
-          return res.status(401).json({ message: 'Invalid credentials' });
+          return res.status(400).json({ message: 'Registration ID is required for lawyer login' });
         }
       }
     }
@@ -352,7 +350,8 @@ const getProfile = async (req, res) => {
       'id', 'name', 'username', 'email', 'registration_id', 'law_firm', 'speciality', 
       'address', 'zip_code', 'city', 'state', 'country', 'mobile_number', 
       'date_of_birth', 'bio', 'profile_image', 'social_links', 'interests', 'privacy_settings',
-      'is_verified', 'lawyer_verified', 'profile_completed', 'profile_completion_percentage', 'google_id'
+      'is_verified', 'lawyer_verified', 'profile_completed', 'profile_completion_percentage', 'google_id',
+      'verification_status'
     ).first();
     
     if (user) {
@@ -368,7 +367,8 @@ const getProfile = async (req, res) => {
         ...user,
         role: 'lawyer',
         is_admin: false,
-        verified: user.profile_completed === 1,
+        verified: user.verification_status === 'approved',
+        is_verified: user.verification_status === 'approved',
         profile_completion_percentage: completionPercentage
       });
     }
@@ -393,7 +393,7 @@ const getProfile = async (req, res) => {
         ...user,
         role: user.role || 'user',
         is_admin: user.is_admin || false,
-        verified: user.profile_completed === 1,
+        verified: user.is_verified === 1,
         profile_completion_percentage: completionPercentage
       });
     }
@@ -706,12 +706,11 @@ const submitLater = async (req, res) => {
     let user = await db('lawyers').where({ id: req.user.id }).first();
     if (user) {
       await db('lawyers').where({ id: req.user.id }).update({ 
-        is_verified: 1,
         profile_completed: 1
       });
       const updated = await db('lawyers').where({ id: req.user.id }).first();
       return res.json({ 
-        message: 'Status updated to Verified', 
+        message: 'Profile completed', 
         user: { 
           ...updated, 
           role: 'lawyer',
@@ -726,12 +725,11 @@ const submitLater = async (req, res) => {
     user = await db('users').where({ id: req.user.id }).first();
     if (user) {
       await db('users').where({ id: req.user.id }).update({ 
-        is_verified: 1,
         profile_completed: 1
       });
       const updated = await db('users').where({ id: req.user.id }).first();
       return res.json({ 
-        message: 'Status updated to Verified', 
+        message: 'Profile completed', 
         user: { 
           ...updated, 
           role: 'user',

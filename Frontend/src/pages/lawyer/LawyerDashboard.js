@@ -74,7 +74,7 @@ export default function LawyerDashboard() {
   const isProfessional = currentUser?.subscription_tier === 'professional';
   const isPremium = currentUser?.subscription_tier === 'premium';
   const hasAdvancedFeatures = isProfessional || isPremium;
-  const isVerified = currentUser?.is_verified || currentUser?.lawyer_verified;
+  const isVerified = currentUser?.verification_status === 'approved';
 
 
   // Prevent browser back button
@@ -178,7 +178,14 @@ export default function LawyerDashboard() {
   const fetchUserProfile = async () => {
     try {
       const response = await api.get('/lawyer/profile');
-      setCurrentUser(response.data);
+      const updatedUser = {
+        ...response.data,
+        is_verified: response.data.verification_status === 'approved',
+        verified: response.data.verification_status === 'approved'
+      };
+      setCurrentUser(updatedUser);
+      // Update localStorage with fresh data
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (error) {
       console.error('Error fetching user profile:', error);
       const user = JSON.parse(localStorage.getItem('user') || '{}');
