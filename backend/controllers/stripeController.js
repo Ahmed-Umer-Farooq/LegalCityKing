@@ -41,7 +41,7 @@ const createSubscriptionCheckout = async (req, res) => {
         quantity: 1,
       }],
       mode: 'subscription',
-      success_url: `${process.env.FRONTEND_URL}/lawyer-dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.FRONTEND_URL}/lawyer-dashboard/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/lawyer-dashboard/subscription`,
       metadata: {
         lawyerId: lawyerId.toString(),
@@ -336,6 +336,46 @@ const handleSubscriptionCanceled = async (subscription) => {
   }
 };
 
+// Update subscription status manually
+const updateSubscriptionStatus = async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const lawyerId = req.user.id;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID required' });
+    }
+    
+    // Retrieve session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (session.metadata?.type === 'subscription' && session.subscription) {
+      const subscription = await stripe.subscriptions.retrieve(session.subscription);
+      const priceId = subscription.items.data[0].price.id;
+      
+      // Find plan in database
+      const plan = await db('subscription_plans').where('stripe_price_id', priceId).first();
+      const tier = plan?.name.toLowerCase() || 'professional';
+      
+      // Update lawyer subscription
+      await db('lawyers').where('id', lawyerId).update({
+        stripe_subscription_id: session.subscription,
+        subscription_tier: tier,
+        subscription_status: 'active',
+        subscription_created_at: new Date()
+      });
+      
+      console.log(`✅ Manually updated lawyer ${lawyerId} to ${tier} tier`);
+      res.json({ success: true, tier });
+    } else {
+      res.status(400).json({ error: 'Invalid session or not a subscription' });
+    }
+  } catch (error) {
+    console.error('Manual subscription update error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createSubscriptionCheckout,
   createConsultationCheckout,
@@ -343,5 +383,6 @@ module.exports = {
   getLawyerEarnings,
   createBillingPortalSession,
   getPaymentReceipt,
-  handleWebhook
+  handleWebhook,
+  updateSubscriptionStatus
 };

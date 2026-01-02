@@ -16,6 +16,7 @@ const SubscriptionManagement = () => {
     monthlyRevenue: 0, 
     upcomingHearings: 0
   });
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState('monthly');
 
@@ -23,6 +24,14 @@ const SubscriptionManagement = () => {
     fetchLawyerData();
     fetchEarnings();
     fetchDashboardStats();
+    fetchSubscriptionPlans();
+    
+    // Check for subscription success from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    if (urlParams.get('success') === 'true' || sessionId) {
+      handleSubscriptionSuccess(sessionId);
+    }
   }, []);
 
   const fetchLawyerData = async () => {
@@ -39,14 +48,27 @@ const SubscriptionManagement = () => {
 
   const handleUpgrade = async (planType) => {
     try {
-      const response = await api.post('/stripe/create-subscription', {
-        planType,
-        billingCycle
+      const plan = subscriptionPlans.find(p => 
+        p.name.toLowerCase() === planType && 
+        p.billing_cycle === billingCycle
+      );
+      
+      if (!plan || !plan.stripe_price_id) {
+        throw new Error(`No price ID found for ${planType} ${billingCycle} plan`);
+      }
+      
+      const response = await api.post('/stripe/create-subscription-checkout', {
+        priceId: plan.stripe_price_id
       });
-      window.location.href = response.data.url;
+      
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (error) {
       console.error('Error creating subscription:', error);
-      toast.error('Failed to start subscription process');
+      toast.error(`Subscription error: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -62,6 +84,41 @@ const SubscriptionManagement = () => {
         pending_balance: '0.00',
         recentTransactions: []
       });
+    }
+  };
+
+  const handleSubscriptionSuccess = async (sessionId) => {
+    try {
+      console.log('🔄 Processing subscription success with sessionId:', sessionId);
+      
+      // Update subscription status manually
+      if (sessionId) {
+        console.log('📡 Calling update-subscription-status API...');
+        const updateResponse = await api.post('/stripe/update-subscription-status', { sessionId });
+        console.log('✅ Update response:', updateResponse.data);
+      }
+      
+      toast.success('Subscription activated successfully!');
+      
+      // Refresh user data immediately
+      console.log('🔄 Refreshing lawyer data...');
+      await fetchLawyerData();
+      console.log('✅ Lawyer data refreshed, new tier:', lawyer?.subscription_tier);
+      
+      // Clean URL without redirecting
+      window.history.replaceState({}, document.title, '/lawyer-dashboard/subscription');
+    } catch (error) {
+      console.error('❌ Error handling subscription success:', error);
+      toast.error('Subscription activated but there was an issue updating your account. Please refresh the page.');
+    }
+  };
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const response = await api.get('/stripe/subscription-plans');
+      setSubscriptionPlans(response.data || []);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
     }
   };
 
@@ -294,9 +351,14 @@ const SubscriptionManagement = () => {
                 
                 <button
                   onClick={() => handleUpgrade('professional')}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto"
+                  disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
+                  className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                    lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'
+                      ? 'bg-emerald-500 text-white cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                  }`}
                 >
-                  Get Professional
+                  {lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Professional'}
                 </button>
               </div>
 
@@ -360,9 +422,14 @@ const SubscriptionManagement = () => {
                 
                 <button
                   onClick={() => handleUpgrade('premium')}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto"
+                  disabled={lawyer?.subscription_tier === 'premium'}
+                  className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                    lawyer?.subscription_tier === 'premium'
+                      ? 'bg-emerald-500 text-white cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                  }`}
                 >
-                  Get Premium
+                  {lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Premium'}
                 </button>
               </div>
             </div>

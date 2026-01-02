@@ -28,9 +28,19 @@ const PaymentSuccess = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleRedirect = () => {
+  const handleRedirect = async () => {
+    // Update subscription status if this is a subscription payment
+    if (sessionId && user?.role === 'lawyer') {
+      try {
+        await api.post('/stripe/update-subscription-status', { sessionId });
+        toast.success('Subscription activated successfully!');
+      } catch (error) {
+        console.error('Error updating subscription:', error);
+      }
+    }
+    
     if (user?.role === 'lawyer') {
-      navigate('/lawyer-dashboard');
+      navigate('/lawyer-dashboard/subscription');
     } else {
       navigate('/user-dashboard');
     }

@@ -276,12 +276,10 @@ export default function LawyerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={isRestricted ? () => alert('Upgrade to Professional/Premium to access this feature') : (item.action || (() => setActiveNavItem(item.id)))}
+                    onClick={isRestricted ? () => { window.location.href = '/lawyer-dashboard/subscription'; } : (item.action || (() => setActiveNavItem(item.id)))}
                     className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
-                        : isRestricted
-                        ? 'text-gray-400 cursor-not-allowed'
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
                     }`}
                   >

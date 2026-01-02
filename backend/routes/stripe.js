@@ -8,7 +8,8 @@ const {
   getLawyerEarnings,
   createBillingPortalSession,
   getPaymentReceipt,
-  handleWebhook
+  handleWebhook,
+  updateSubscriptionStatus
 } = require('../controllers/stripeController');
 
 // Public routes
@@ -20,6 +21,7 @@ router.post('/create-subscription-checkout', authenticateToken, createSubscripti
 router.post('/create-consultation-checkout', createConsultationCheckout);
 router.get('/lawyer-earnings', authenticateToken, getLawyerEarnings);
 router.post('/create-billing-portal-session', authenticateToken, createBillingPortalSession);
+router.post('/update-subscription-status', authenticateToken, updateSubscriptionStatus);
 
 // Webhook (raw body needed)
 router.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook);
