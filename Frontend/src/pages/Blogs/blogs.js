@@ -227,6 +227,7 @@ const CategoriesWidget = ({ onCategoryClick, selectedCategory }) => {
 
 // Top Authors Widget
 const TopAuthorsWidget = () => {
+  const navigate = useNavigate();
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -248,6 +249,11 @@ const TopAuthorsWidget = () => {
 
     fetchTopAuthors();
   }, []);
+
+  const handleAuthorClick = (authorName) => {
+    // Navigate to author's profile or filter blogs by author
+    navigate(`/legal-blog?author=${encodeURIComponent(authorName)}`);
+  };
 
   if (loading) {
     return (
@@ -280,7 +286,11 @@ const TopAuthorsWidget = () => {
       <div className="p-6">
         <div className="space-y-6">
           {authors.map((author) => (
-            <div key={author.name} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+            <div 
+              key={author.name} 
+              onClick={() => handleAuthorClick(author.name)}
+              className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
+            >
               {author.profile_image ? (
                 <img 
                   src={author.profile_image} 
@@ -297,7 +307,7 @@ const TopAuthorsWidget = () => {
                 <span className="text-white text-lg font-bold">{author.name?.charAt(0) || 'A'}</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-[#181A2A] font-bold text-lg capitalize mb-1">{author.name}</h3>
+                <h3 className="text-[#181A2A] font-bold text-lg capitalize mb-1 group-hover:text-[#0071BC] transition-colors">{author.name}</h3>
                 <p className="text-[#666] text-sm mb-3">
                   {author.bio || `${author.post_count} articles published`}
                 </p>
@@ -392,6 +402,8 @@ const TagsWidget = ({ onTagClick, selectedTag }) => {
 
 // Popular Posts Widget
 const PopularPostsWidget = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -413,6 +425,18 @@ const PopularPostsWidget = () => {
 
     fetchPopularPosts();
   }, []);
+
+  const handlePostClick = (post) => {
+    const blogUrl = `${post.slug}/${post.secure_id}`;
+    const fromUserDashboard = location.pathname === '/user/legal-blog';
+    const isAuthenticated = !!localStorage.getItem('token');
+    
+    if (fromUserDashboard && isAuthenticated) {
+      navigate(`/user/legal-blog/${blogUrl}`, { state: { from: 'user-dashboard' } });
+    } else {
+      navigate(`/legal-blog/${blogUrl}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -446,7 +470,11 @@ const PopularPostsWidget = () => {
       <div className="p-6">
         <div className="space-y-6">
           {posts.map((post) => (
-            <div key={post.secure_id} className="group cursor-pointer hover:bg-gray-50 p-4 rounded-xl transition-all">
+            <div 
+              key={post.secure_id} 
+              onClick={() => handlePostClick(post)}
+              className="group cursor-pointer hover:bg-gray-50 p-4 rounded-xl transition-all"
+            >
               <div className="flex gap-4">
                 <img 
                   src={post.featured_image && post.featured_image.trim() !== '' 
@@ -491,6 +519,7 @@ const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [selectedAuthor, setSelectedAuthor] = useState('');
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -506,6 +535,15 @@ const Blog = () => {
   // Check if user is logged in
   const isLoggedIn = !!localStorage.getItem('token');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  // Handle URL parameters for author filtering
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const authorParam = urlParams.get('author');
+    if (authorParam) {
+      setSelectedAuthor(decodeURIComponent(authorParam));
+    }
+  }, [location.search]);
 
   // SEO Meta Tags
   useEffect(() => {
@@ -612,9 +650,9 @@ const Blog = () => {
 
   const currentBlogPosts = blogPosts;
 
-  // Filter posts based on search term and category
+  // Filter posts based on search term, category, and author
   useEffect(() => {
-    console.log('🔍 Filtering posts with:', { searchTerm, selectedCategory, totalPosts: currentBlogPosts.length });
+    console.log('🔍 Filtering posts with:', { searchTerm, selectedCategory, selectedAuthor, totalPosts: currentBlogPosts.length });
     let filtered = currentBlogPosts;
     
     if (searchTerm) {
@@ -633,10 +671,17 @@ const Blog = () => {
       console.log('📁 After category filter:', filtered.length, 'posts');
     }
     
+    if (selectedAuthor) {
+      filtered = filtered.filter(post => 
+        post.author.toLowerCase() === selectedAuthor.toLowerCase()
+      );
+      console.log('👤 After author filter:', filtered.length, 'posts');
+    }
+    
     console.log('✅ Final filtered posts:', filtered.length);
     setFilteredPosts(filtered);
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, currentBlogPosts]);
+  }, [searchTerm, selectedCategory, selectedAuthor, currentBlogPosts]);
 
   const handleSearch = () => {
     console.log('🔍 Search button clicked, current term:', searchTerm);
@@ -796,8 +841,24 @@ const Blog = () => {
             {/* Blog Posts */}
             <div className="flex-1 max-w-4xl">
               <div className="mb-12">
-                <h2 className="text-[#181A2A] text-3xl font-bold mb-2">Latest Blogs</h2>
-                <p className="text-gray-600">Stay updated with expert legal insights and analysis</p>
+                <h2 className="text-[#181A2A] text-3xl font-bold mb-2">
+                  {selectedAuthor ? `Blogs by ${selectedAuthor}` : 'Latest Blogs'}
+                </h2>
+                <p className="text-gray-600">
+                  {selectedAuthor ? `All articles written by ${selectedAuthor}` : 'Stay updated with expert legal insights and analysis'}
+                </p>
+                {selectedAuthor && (
+                  <button
+                    onClick={() => {
+                      setSelectedAuthor('');
+                      navigate('/legal-blog');
+                    }}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Show All Blogs
+                  </button>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
