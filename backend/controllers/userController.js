@@ -49,7 +49,7 @@ const registerUser = async (req, res) => {
     // Cross-table uniqueness: prevent same email in lawyers table
     const existingLawyerWithSameEmail = await db('lawyers').where({ email }).first();
     if (existingLawyerWithSameEmail) {
-      return res.status(400).json({ message: 'This email is already registered as a lawyer. Please sign in as a lawyer.' });
+      return res.status(400).json({ message: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
