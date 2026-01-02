@@ -40,36 +40,27 @@ const login = async (req, res) => {
     let user;
     let role;
 
-    // If registration_id provided, check lawyers table first
+    // For lawyer login, BOTH email AND registration_id must be provided and match
     if (registration_id) {
-      user = await db('lawyers').where({ registration_id }).first();
+      user = await db('lawyers').where({ 
+        email: email,
+        registration_id: registration_id 
+      }).first();
+      
       if (user) {
         role = 'lawyer';
+      } else {
+        return res.status(401).json({ message: 'Invalid email or registration ID' });
       }
     }
-
-    // If email provided and no user found yet, check lawyers table first
-    if (!user && email) {
-      user = await db('lawyers').where({ email }).first();
-      if (user) {
-        // For lawyers, require both email AND registration_id to match
-        if (registration_id && user.registration_id === registration_id) {
-          role = 'lawyer';
-        } else {
-          return res.status(400).json({ message: 'Registration ID is required for lawyer login' });
-        }
-      }
-    }
-
-    // If still not found, check users table
+    
+    // For regular user login (no registration_id provided)
     if (!user && email && !registration_id) {
       user = await db('users').where({ email }).first();
       if (user) {
         role = 'user';
       }
     }
-
-    // Removed fallback: do not allow lawyer login by email in unified login
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });

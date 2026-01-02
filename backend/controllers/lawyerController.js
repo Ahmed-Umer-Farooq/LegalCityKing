@@ -23,6 +23,18 @@ const registerLawyer = async (req, res) => {
     if (existingLawyer) {
       return res.status(400).json({ message: 'Email already registered' });
     }
+    
+    // Check for existing username
+    const existingUsername = await db('lawyers').where({ username }).first();
+    if (existingUsername) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    
+    // Check for existing registration ID
+    const existingRegId = await db('lawyers').where({ registration_id }).first();
+    if (existingRegId) {
+      return res.status(400).json({ message: 'Registration ID already exists' });
+    }
     // Cross-table uniqueness: prevent same email in users table
     const existingUserWithSameEmail = await db('users').where({ email }).first();
     if (existingUserWithSameEmail) {
