@@ -451,6 +451,10 @@ app.use('/api/capture', simpleCaptureRoutes);
 const referralRoutes = require('./routes/referral');
 app.use('/api/referral', referralRoutes);
 
+// Verification routes
+const verificationRoutes = require('./routes/verification');
+app.use('/api/verification', verificationRoutes);
+
 // Store active users
 const activeUsers = new Map();
 

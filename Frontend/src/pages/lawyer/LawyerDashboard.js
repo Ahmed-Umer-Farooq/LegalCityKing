@@ -17,6 +17,7 @@ const TrackTimeModal = React.lazy(() => import('../../components/modals/TrackTim
 const AddExpenseModal = React.lazy(() => import('../../components/modals/AddExpenseModal').catch(() => ({ default: () => null })));
 const CreateInvoiceModal = React.lazy(() => import('../../components/modals/CreateInvoiceModal').catch(() => ({ default: () => null })));
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
+const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
 const CalendarPage = React.lazy(() => import('./CalendarPage').catch(() => ({ default: () => <div>Calendar coming soon...</div> })));
 const ReportsPage = React.lazy(() => import('./ReportsPage').catch(() => ({ default: () => <div>Reports coming soon...</div> })));
@@ -34,7 +35,19 @@ export default function LawyerDashboard() {
   const [caseType, setCaseType] = useState('civil');
   const [caseClient, setCaseClient] = useState('');
   const [cases, setCases] = useState([]);
-  const [stats, setStats] = useState({ activeCases: 0, totalClients: 0, monthlyRevenue: 0, upcomingHearings: 0 });
+  const [stats, setStats] = useState({ 
+    activeCases: 0, 
+    totalClients: 0, 
+    monthlyRevenue: 0, 
+    upcomingHearings: 0,
+    percentageChanges: {
+      activeCases: 0,
+      totalClients: 0,
+      monthlyRevenue: 0
+    },
+    caseDistribution: [],
+    monthlyRevenueData: []
+  });
   const [clients, setClients] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +65,15 @@ export default function LawyerDashboard() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [currentUser, setCurrentUser] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
+
+  // Subscription feature checks
+  const isProfessional = currentUser?.subscription_tier === 'professional';
+  const isPremium = currentUser?.subscription_tier === 'premium';
+  const hasAdvancedFeatures = isProfessional || isPremium;
 
 
   // Prevent browser back button
@@ -122,16 +142,27 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes] = await Promise.all([
-        api.get('/dashboard/overview'),
-        api.get('/cases?page=1&limit=10'),
-        api.get('/clients?page=1&limit=3'),
-        api.get('/invoices?page=1&limit=3')
+      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes] = await Promise.all([
+        api.get('/lawyer/dashboard/stats'),
+        api.get('/lawyer/cases?page=1&limit=10'),
+        api.get('/lawyer/clients?page=1&limit=3'),
+        api.get('/lawyer/invoices?page=1&limit=3'),
+        api.get('/lawyer/upcoming-events')
       ]);
-      setStats(statsRes.data?.data || { activeCases: 0, totalClients: 0, monthlyRevenue: 0, upcomingHearings: 0 });
-      setCases(Array.isArray(casesRes.data?.data) ? casesRes.data.data : []);
-      setClients(Array.isArray(clientsRes.data?.data) ? clientsRes.data.data : []);
-      setInvoices(Array.isArray(invoicesRes.data?.data) ? invoicesRes.data.data : []);
+      
+      setStats(statsRes.data || { 
+        activeCases: 0, 
+        totalClients: 0, 
+        monthlyRevenue: 0, 
+        upcomingHearings: 0,
+        percentageChanges: { activeCases: 0, totalClients: 0, monthlyRevenue: 0 },
+        caseDistribution: [],
+        monthlyRevenueData: []
+      });
+      setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
+      setClients(Array.isArray(clientsRes.data) ? clientsRes.data : []);
+      setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
+      setUpcomingEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       if (error.response?.status === 401) {
@@ -158,22 +189,24 @@ export default function LawyerDashboard() {
     if (!caseTitle.trim()) return;
 
     try {
-      const response = await api.post('/cases', {
+      const response = await api.post('/lawyer/cases', {
         title: caseTitle.trim(),
         type: caseType,
-        description: caseClient.trim() ? `Case for ${caseClient.trim()}` : '',
-        filing_date: new Date().toISOString().split('T')[0]
+        client: caseClient.trim() || 'Unknown Client',
+        description: caseClient.trim() ? `Case for ${caseClient.trim()}` : ''
       });
       
-      if (response.data?.success) {
+      if (response.data?.message) {
         setShowCaseForm(false);
         setCaseTitle('');
         setCaseClient('');
         setCaseType('civil');
         fetchDashboardData();
+        toast.success('Case created successfully');
       }
     } catch (error) {
       console.error('Error adding case:', error);
+      toast.error('Failed to create case');
     }
   };
 
@@ -229,26 +262,30 @@ export default function LawyerDashboard() {
                 { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true },
                 { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); } },
                 { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); } },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); } },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
                 { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); } },
-                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount },
+                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
+                const isRestricted = item.restricted;
                 return (
                   <button
                     key={item.id}
-                    onClick={item.action || (() => setActiveNavItem(item.id))}
+                    onClick={isRestricted ? () => alert('Upgrade to Professional/Premium to access this feature') : (item.action || (() => setActiveNavItem(item.id)))}
                     className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                        : isRestricted
+                        ? 'text-gray-400 cursor-not-allowed'
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
+                    {isRestricted && <span className="text-xs bg-orange-100 text-orange-600 px-1 rounded">PRO</span>}
                     {item.showNotification && (
                       item.id === 'messages' ? (
                         unreadCount > 0 && (
@@ -317,6 +354,14 @@ export default function LawyerDashboard() {
                         <span className="text-xs text-green-600 font-medium">Verified Lawyer</span>
                       </div>
                     )}
+                    {isPremium && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-xs text-blue-600 font-medium">Premium Verified</span>
+                      </div>
+                    )}
                     {currentUser?.subscription_tier && currentUser.subscription_tier !== 'free' && (
                       <div className="flex items-center gap-1 mt-1">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -328,6 +373,22 @@ export default function LawyerDashboard() {
                     <User className="w-4 h-4" />
                     Profile Management
                   </button>
+                  {!currentUser?.is_verified && (
+                    <button onClick={() => setShowVerificationModal(true)} className="flex items-center gap-2 px-4 py-2 text-sm text-[#0086CB] hover:bg-[#F9FAFB] transition-colors w-full text-left">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Get Verified
+                    </button>
+                  )}
+                  {currentUser?.is_verified && (
+                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-green-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Verified
+                    </div>
+                  )}
                   <hr className="my-2 border-[#E5E7EB]" />
                   <button 
                     onClick={handleLogout}
@@ -378,9 +439,13 @@ export default function LawyerDashboard() {
                 <FileText className="w-4 h-4 text-white" />
               </div>
               <h3 className="text-[#03498B] text-xl font-semibold mb-2">Active Cases</h3>
-              <p className="text-[#03498B] text-2xl font-bold mb-1">{stats.activeCases || 12}</p>
+              <p className="text-[#03498B] text-2xl font-bold mb-1">{stats.activeCases}</p>
               <div className="flex items-center text-xs">
-                <span className="text-green-600 font-medium">+8%</span>
+                <span className={`font-medium ${
+                  stats.percentageChanges?.activeCases >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stats.percentageChanges?.activeCases >= 0 ? '+' : ''}{stats.percentageChanges?.activeCases || 0}%
+                </span>
                 <span className="text-[#737791] ml-1">from last month</span>
               </div>
               <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#007EF4]/10 rounded-full -mr-8 -mb-8"></div>
@@ -390,9 +455,13 @@ export default function LawyerDashboard() {
                 <Users className="w-4 h-4 text-white" />
               </div>
               <h3 className="text-[#1F5632] text-xl font-semibold mb-2">Total Clients</h3>
-              <p className="text-[#1F5632] text-2xl font-bold mb-1">{stats.totalClients || 45}</p>
+              <p className="text-[#1F5632] text-2xl font-bold mb-1">{stats.totalClients}</p>
               <div className="flex items-center text-xs">
-                <span className="text-green-600 font-medium">+15%</span>
+                <span className={`font-medium ${
+                  stats.percentageChanges?.totalClients >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stats.percentageChanges?.totalClients >= 0 ? '+' : ''}{stats.percentageChanges?.totalClients || 0}%
+                </span>
                 <span className="text-[#737791] ml-1">from last month</span>
               </div>
               <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#16D959]/10 rounded-full -mr-8 -mb-8"></div>
@@ -402,9 +471,13 @@ export default function LawyerDashboard() {
                 <DollarSign className="w-4 h-4 text-white" />
               </div>
               <h3 className="text-[#931B12] text-xl font-semibold mb-2">Monthly Revenue</h3>
-              <p className="text-[#931B12] text-2xl font-bold mb-1">${(stats.monthlyRevenue || 28500).toLocaleString()}</p>
+              <p className="text-[#931B12] text-2xl font-bold mb-1">${stats.monthlyRevenue?.toLocaleString() || '0'}</p>
               <div className="flex items-center text-xs">
-                <span className="text-green-600 font-medium">+22%</span>
+                <span className={`font-medium ${
+                  stats.percentageChanges?.monthlyRevenue >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stats.percentageChanges?.monthlyRevenue >= 0 ? '+' : ''}{stats.percentageChanges?.monthlyRevenue || 0}%
+                </span>
                 <span className="text-[#737791] ml-1">from last month</span>
               </div>
               <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#E6372B]/10 rounded-full -mr-8 -mb-8"></div>
@@ -414,9 +487,9 @@ export default function LawyerDashboard() {
                 <Calendar className="w-4 h-4 text-white" />
               </div>
               <h3 className="text-[#654C1F] text-xl font-semibold mb-2">Upcoming Hearings</h3>
-              <p className="text-[#654C1F] text-2xl font-bold mb-1">{stats.upcomingHearings || 7}</p>
+              <p className="text-[#654C1F] text-2xl font-bold mb-1">{stats.upcomingHearings}</p>
               <div className="flex items-center text-xs">
-                <span className="text-orange-600 font-medium">3 this week</span>
+                <span className="text-orange-600 font-medium">{Math.min(stats.upcomingHearings, 7)} this week</span>
               </div>
               <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#F5AB23]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
@@ -438,14 +511,35 @@ export default function LawyerDashboard() {
               </div>
             </div>
             <div className="h-48 flex items-end justify-between gap-2">
-              {[65, 45, 78, 52, 89, 67, 95, 73, 88, 92, 85, 98].map((height, index) => (
-                <div key={index} className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" style={{height: `${height}%`}}></div>
-              ))}
+              {stats.monthlyRevenueData?.length > 0 ? (
+                stats.monthlyRevenueData.map((data, index) => {
+                  const maxRevenue = Math.max(...stats.monthlyRevenueData.map(d => d.revenue));
+                  const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 0;
+                  return (
+                    <div 
+                      key={index} 
+                      className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" 
+                      style={{height: `${Math.max(height, 5)}%`}}
+                      title={`${data.month}: $${data.revenue.toLocaleString()}`}
+                    ></div>
+                  );
+                })
+              ) : (
+                [65, 45, 78, 52, 89, 67, 95, 73, 88, 92, 85, 98].map((height, index) => (
+                  <div key={index} className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" style={{height: `${height}%`}}></div>
+                ))
+              )}
             </div>
             <div className="flex justify-between mt-4 text-xs text-[#737791]">
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
-                <span key={index}>{month}</span>
-              ))}
+              {stats.monthlyRevenueData?.length > 0 ? (
+                stats.monthlyRevenueData.map((data, index) => (
+                  <span key={index}>{data.month}</span>
+                ))
+              ) : (
+                ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
+                  <span key={index}>{month}</span>
+                ))
+              )}
             </div>
           </div>
           
@@ -460,28 +554,43 @@ export default function LawyerDashboard() {
                 <div className="absolute inset-0 rounded-full" style={{background: `conic-gradient(#007EF4 0deg 108deg, #16D959 108deg 180deg, #E6372B 180deg 252deg, #F5AB23 252deg 324deg, #737791 324deg 360deg)`}}></div>
                 <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-[#181A2A]">{stats.activeCases || 12}</div>
+                    <div className="text-xl font-bold text-[#181A2A]">{stats.activeCases}</div>
                     <div className="text-xs text-[#737791]">Total</div>
                   </div>
                 </div>
               </div>
             </div>
             <div className="space-y-3">
-              {[
-                { label: 'Civil', count: 5, color: '#007EF4' },
-                { label: 'Criminal', count: 3, color: '#16D959' },
-                { label: 'Family', count: 2, color: '#E6372B' },
-                { label: 'Corporate', count: 1, color: '#F5AB23' },
-                { label: 'Other', count: 1, color: '#737791' }
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></div>
-                    <span className="text-sm text-[#181A2A]">{item.label}</span>
+              {stats.caseDistribution?.length > 0 ? (
+                stats.caseDistribution.map((item, index) => {
+                  const colors = ['#007EF4', '#16D959', '#E6372B', '#F5AB23', '#737791'];
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{backgroundColor: colors[index % colors.length]}}></div>
+                        <span className="text-sm text-[#181A2A]">{item.label}</span>
+                      </div>
+                      <span className="text-sm font-medium text-[#737791]">{item.count}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                [
+                  { label: 'Civil', count: 5, color: '#007EF4' },
+                  { label: 'Criminal', count: 3, color: '#16D959' },
+                  { label: 'Family', count: 2, color: '#E6372B' },
+                  { label: 'Corporate', count: 1, color: '#F5AB23' },
+                  { label: 'Other', count: 1, color: '#737791' }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></div>
+                      <span className="text-sm text-[#181A2A]">{item.label}</span>
+                    </div>
+                    <span className="text-sm font-medium text-[#737791]">{item.count}</span>
                   </div>
-                  <span className="text-sm font-medium text-[#737791]">{item.count}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -502,8 +611,8 @@ export default function LawyerDashboard() {
                 <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
               </button>
               <div className="text-center">
-                <h2 className="text-[#181A2A] text-lg font-semibold">December 2024</h2>
-                <p className="text-[#737791] text-sm">Today: Dec 15, 2024</p>
+                <h2 className="text-[#181A2A] text-lg font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+                <p className="text-[#737791] text-sm">Today: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
               <button className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors">
                 <ChevronRight className="w-5 h-5 text-[#6B7280]" />
@@ -522,68 +631,83 @@ export default function LawyerDashboard() {
               </div>
               
               {/* Calendar Days */}
-              {[
-                [25, 26, 27, 28, 29, 30, 1],
-                [2, 3, 4, 5, 6, 7, 8],
-                [9, 10, 11, 12, 13, 14, 15],
-                [16, 17, 18, 19, 20, 21, 22],
-                [23, 24, 25, 26, 27, 28, 29],
-                [30, 31, 1, 2, 3, 4, 5]
-              ].map((week, weekIndex) => (
-                <div key={weekIndex} className="grid grid-cols-7 gap-1">
-                  {week.map((date, dateIndex) => {
-                    const isToday = date === 15 && weekIndex === 2;
-                    const hasEvent = [3, 7, 12, 18, 24].includes(date) && weekIndex >= 1 && weekIndex <= 4;
-                    const isPrevNext = (weekIndex === 0 && date > 20) || (weekIndex === 5 && date < 10);
-                    
-                    return (
-                      <div key={dateIndex} className="relative">
-                        <button className={`w-full h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-[#F8F9FA] ${
-                          isToday 
-                            ? 'bg-[#007EF4] text-white shadow-md' 
-                            : isPrevNext
-                            ? 'text-[#D1D5DB]'
-                            : 'text-[#374151] hover:text-[#007EF4]'
-                        }`}>
-                          {date}
-                        </button>
-                        {hasEvent && (
-                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-                            <div className="w-1.5 h-1.5 bg-[#16D959] rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+              {(() => {
+                const today = new Date();
+                const currentMonth = today.getMonth();
+                const currentYear = today.getFullYear();
+                const firstDay = new Date(currentYear, currentMonth, 1);
+                const lastDay = new Date(currentYear, currentMonth + 1, 0);
+                const startDate = new Date(firstDay);
+                startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+                
+                const weeks = [];
+                for (let week = 0; week < 6; week++) {
+                  const weekDays = [];
+                  for (let day = 0; day < 7; day++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + (week * 7) + day);
+                    weekDays.push(date.getDate());
+                  }
+                  weeks.push(weekDays);
+                }
+                
+                return weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="grid grid-cols-7 gap-1">
+                    {week.map((date, dateIndex) => {
+                      const currentDate = new Date();
+                      const isToday = date === currentDate.getDate() && 
+                                     currentMonth === currentDate.getMonth() && 
+                                     currentYear === currentDate.getFullYear();
+                      const hasEvent = upcomingEvents.some(event => {
+                        const eventDate = new Date(event.date + ', ' + currentYear);
+                        return eventDate.getDate() === date && eventDate.getMonth() === currentMonth;
+                      });
+                      
+                      return (
+                        <div key={dateIndex} className="relative">
+                          <button className={`w-full h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-[#F8F9FA] ${
+                            isToday 
+                              ? 'bg-[#007EF4] text-white shadow-md' 
+                              : 'text-[#374151] hover:text-[#007EF4]'
+                          }`}>
+                            {date}
+                          </button>
+                          {hasEvent && (
+                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
+                              <div className="w-1.5 h-1.5 bg-[#16D959] rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
             </div>
             
             {/* Upcoming Events */}
             <div className="mt-6 pt-6 border-t border-[#F8F9FA]">
               <h3 className="text-sm font-semibold text-[#374151] mb-3">Upcoming Events</h3>
               <div className="space-y-2">
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                  <div className="w-2 h-2 bg-[#007EF4] rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[#374151]">Client Meeting</p>
-                    <p className="text-xs text-[#6B7280]">Dec 18, 2:00 PM</p>
+                {upcomingEvents.length > 0 ? (
+                  upcomingEvents.slice(0, 3).map((event, index) => {
+                    const colors = ['#007EF4', '#16D959', '#F5AB23'];
+                    return (
+                      <div key={event.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
+                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: colors[index % colors.length]}}></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-[#374151]">{event.title}</p>
+                          <p className="text-xs text-[#6B7280]">{event.date}, {event.time}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center text-[#737791] text-sm py-4">
+                    <p>No upcoming events</p>
+                    <p className="text-xs mt-1">Events from database will appear here</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                  <div className="w-2 h-2 bg-[#16D959] rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[#374151]">Court Hearing</p>
-                    <p className="text-xs text-[#6B7280]">Dec 20, 10:00 AM</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                  <div className="w-2 h-2 bg-[#F5AB23] rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[#374151]">Document Review</p>
-                    <p className="text-xs text-[#6B7280]">Dec 22, 9:00 AM</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -652,7 +776,7 @@ export default function LawyerDashboard() {
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border-2 border-[#DCE8FF] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                   <div>
                     <h3 className="text-[#181A2A] text-base font-semibold">{caseItem.title}</h3>
-                    <p className="text-[#737791] text-sm">{caseItem.type} - Filed: {caseItem.filing_date || caseItem.created_at?.split('T')[0]}</p>
+                    <p className="text-[#737791] text-sm">{caseItem.case_number || `Case #${caseItem.id}`} - {caseItem.type} - Filed: {caseItem.filing_date || new Date(caseItem.created_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColors(caseItem.status)}`}>
                     {caseItem.status.charAt(0).toUpperCase() + caseItem.status.slice(1)}
@@ -849,6 +973,10 @@ export default function LawyerDashboard() {
         isOpen={showPaymentModal} 
         onClose={() => setShowPaymentModal(false)} 
         onSuccess={fetchDashboardData}
+      />
+      <VerificationModal 
+        isOpen={showVerificationModal} 
+        onClose={() => setShowVerificationModal(false)}
       />
     </div>
   );
