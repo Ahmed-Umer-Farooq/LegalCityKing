@@ -256,7 +256,7 @@ export default function LawyerDashboard() {
             </div>
             
             {/* Navigation Sections */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-4">
               {[
                 { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); window.scrollTo(0, 0); } },
                 { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true },
@@ -265,8 +265,9 @@ export default function LawyerDashboard() {
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); } },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); } },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); } },
-                { id: 'blogs', label: 'Blog Management', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); }, restricted: !isPremium },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); }, restricted: !isPremium },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
@@ -276,7 +277,7 @@ export default function LawyerDashboard() {
                   <button
                     key={item.id}
                     onClick={isRestricted ? () => alert('Upgrade to Professional/Premium to access this feature') : (item.action || (() => setActiveNavItem(item.id)))}
-                    className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
                         : isRestricted
@@ -284,19 +285,24 @@ export default function LawyerDashboard() {
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {isRestricted && <span className="text-xs bg-orange-100 text-orange-600 px-1 rounded">PRO</span>}
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden xl:block">{item.label}</span>
+                    {isRestricted && (
+                      <svg className="w-2 h-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
                     {item.showNotification && (
                       item.id === 'messages' ? (
                         unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {unreadCount > 99 ? '99+' : unreadCount}
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                            {unreadCount > 9 ? '9+' : unreadCount}
                           </span>
                         )
                       ) : item.id === 'blogs' ? (
                         blogEngagementCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {blogEngagementCount > 99 ? '99+' : blogEngagementCount}
+                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                            {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
                           </span>
                         )
                       ) : null
@@ -330,7 +336,7 @@ export default function LawyerDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[#E5E7EB] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[#E5E7EB] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
                 <div className="py-2">
                   <div className="px-4 py-3 border-b border-[#E5E7EB]">
                     <div className="flex items-center gap-3 mb-2">

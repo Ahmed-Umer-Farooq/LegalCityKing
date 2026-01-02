@@ -264,25 +264,25 @@ const SubscriptionManagement = () => {
                     <div className="p-2 bg-blue-100 rounded-full">
                       <Check className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-slate-800 font-medium">Enhanced profile with video intro</span>
+                    <span className="text-slate-800 font-medium">Enhanced profile management</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-blue-100 rounded-full">
                       <Check className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-slate-800 font-medium">Unlimited client messages</span>
+                    <span className="text-slate-800 font-medium">Unlimited client messaging</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-blue-100 rounded-full">
                       <Check className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-slate-800 font-medium">Priority placement in search results</span>
+                    <span className="text-slate-800 font-medium">Blog management system</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-blue-100 rounded-full">
                       <Check className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-slate-800 font-medium">Analytics dashboard</span>
+                    <span className="text-slate-800 font-medium">Advanced reports & analytics</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-blue-100 rounded-full">
@@ -330,25 +330,25 @@ const SubscriptionManagement = () => {
                     <div className="p-2 bg-purple-100 rounded-full">
                       <Check className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="font-medium">Featured homepage placement</span>
+                    <span className="font-medium">Q&A answer management</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-purple-100 rounded-full">
                       <Check className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="font-medium">Verified badge</span>
+                    <span className="font-medium">Verification badge system</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-purple-100 rounded-full">
                       <Check className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="font-medium">Lead generation tools</span>
+                    <span className="font-medium">Forms management system</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-purple-100 rounded-full">
                       <Check className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="font-medium">Client CRM integration</span>
+                    <span className="font-medium">Client management tools</span>
                   </li>
                   <li className="flex items-center gap-4">
                     <div className="p-2 bg-purple-100 rounded-full">
