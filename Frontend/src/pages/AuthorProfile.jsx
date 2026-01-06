@@ -20,20 +20,39 @@ const AuthorProfile = () => {
         const authorBlogs = blogsData.filter(blog => blog.author_name === authorName);
         
         // Create author profile from blog data
-        const authorProfile = {
-          name: authorName,
-          title: 'Senior Legal Expert',
-          bio: 'Professional writer and legal expert with extensive experience in various areas of law.',
-          location: 'Legal City',
-          email: 'contact@legalcity.com',
-          phone: '+1 (555) 123-4567',
-          experience: '10+ years',
-          specializations: [...new Set(authorBlogs.map(blog => blog.category))],
-          totalBlogs: authorBlogs.length,
-          totalViews: authorBlogs.reduce((sum, blog) => sum + (blog.views_count || 0), 0)
-        };
-        
-        setAuthor(authorProfile);
+        if (authorBlogs.length > 0) {
+          const firstBlog = authorBlogs[0];
+          const authorProfile = {
+            name: authorName,
+            title: firstBlog.author_title || '',
+            bio: firstBlog.author_bio || '',
+            location: firstBlog.author_location || '',
+            email: firstBlog.author_email || '',
+            phone: firstBlog.author_phone || '',
+            experience: firstBlog.author_experience || '',
+            specializations: [...new Set(authorBlogs.map(blog => blog.category).filter(Boolean))],
+            totalBlogs: authorBlogs.length,
+            totalViews: authorBlogs.reduce((sum, blog) => sum + (blog.views_count || 0), 0)
+          };
+          
+          setAuthor(authorProfile);
+        } else {
+          // If no blogs found, create minimal profile
+          const authorProfile = {
+            name: authorName,
+            title: '',
+            bio: '',
+            location: '',
+            email: '',
+            phone: '',
+            experience: '',
+            specializations: [],
+            totalBlogs: 0,
+            totalViews: 0
+          };
+          
+          setAuthor(authorProfile);
+        }
         setBlogs(authorBlogs);
       } catch (error) {
         console.error('Error fetching author profile:', error);
@@ -100,22 +119,26 @@ const AuthorProfile = () => {
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
               }}></div>
             </div>
-            <div className="relative flex items-start gap-6">
+            <div className="relative flex items-center gap-6">
               <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center shadow-xl">
                 <span className="text-white text-3xl font-bold">{author.name?.charAt(0) || 'L'}</span>
               </div>
               <div className="flex-1 text-white">
                 <h1 className="text-3xl font-bold mb-2">{author.name}</h1>
-                <p className="text-xl text-blue-100 mb-4">{author.title}</p>
-                <div className="flex flex-wrap gap-6 text-blue-100">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{author.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4" />
-                    <span>{author.experience}</span>
-                  </div>
+                {author.title && <p className="text-xl text-blue-100 mb-4">{author.title}</p>}
+                <div className="flex flex-wrap gap-6 text-blue-100 items-center">
+                  {author.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{author.location}</span>
+                    </div>
+                  )}
+                  {author.experience && (
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4" />
+                      <span>{author.experience}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     <span>{author.totalBlogs} Articles</span>
@@ -126,50 +149,70 @@ const AuthorProfile = () => {
           </div>
 
           <div className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* About */}
-              <div className="lg:col-span-2">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
-                <p className="text-gray-600 leading-relaxed mb-6">{author.bio}</p>
+              <div>
+                {author.bio && (
+                  <>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
+                    <p className="text-gray-600 leading-relaxed mb-6">{author.bio}</p>
+                  </>
+                )}
                 
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Specializations</h3>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {author.specializations.map((spec, index) => (
-                    <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                      {spec}
-                    </span>
-                  ))}
+                {author.specializations.length > 0 && (
+                  <>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4">Specializations</h3>
+                    <div className="flex flex-wrap gap-2 mb-8">
+                      {author.specializations.map((spec, index) => (
+                        <span key={index} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Statistics - Full Width */}
+                <div className="p-8 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-blue-100 shadow-sm">
+                  <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    Statistics
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                      <span className="text-gray-700 font-medium text-lg">Total Articles</span>
+                      <span className="text-3xl font-bold text-blue-600">{author.totalBlogs}</span>
+                    </div>
+                    {author.totalViews > 0 && (
+                      <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                        <span className="text-gray-700 font-medium text-lg">Total Views</span>
+                        <span className="text-3xl font-bold text-green-600">{author.totalViews.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Contact Info */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Mail className="w-5 h-5" />
-                    <span>{author.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Phone className="w-5 h-5" />
-                    <span>{author.phone}</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-2">Statistics</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Articles:</span>
-                      <span className="font-medium">{author.totalBlogs}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Views:</span>
-                      <span className="font-medium">{author.totalViews.toLocaleString()}</span>
-                    </div>
+              {(author.email || author.phone) && (
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h3>
+                  <div className="space-y-3">
+                    {author.email && (
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <Mail className="w-5 h-5" />
+                        <span>{author.email}</span>
+                      </div>
+                    )}
+                    {author.phone && (
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <Phone className="w-5 h-5" />
+                        <span>{author.phone}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

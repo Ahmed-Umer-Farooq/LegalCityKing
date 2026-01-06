@@ -5,10 +5,10 @@ const blogController = {
   // Get all published blogs (public endpoint)
   getAllBlogs: async (req, res) => {
     try {
-      const { page = 1, limit = 10, category, search } = req.query;
+      const { page = 1, limit = 100, category, search } = req.query;
       const offset = (page - 1) * limit;
 
-      let query = db('blogs').where('status', 'published');
+      let query = db('blogs');
       
       if (category) query = query.where('category', category);
       if (search) query = query.where('title', 'like', `%${search}%`);
@@ -177,7 +177,7 @@ const blogController = {
         .where('blogs.status', 'published')
         .groupBy('lawyers.name', 'lawyers.email', 'lawyers.profile_image')
         .orderBy('post_count', 'desc')
-        .limit(5);
+        .limit(3);
 
       res.json(authors);
     } catch (error) {
@@ -243,7 +243,7 @@ const blogController = {
         )
         .where('status', 'published')
         .orderBy('views_count', 'desc')
-        .limit(5);
+        .limit(3);
 
       res.json(posts);
     } catch (error) {

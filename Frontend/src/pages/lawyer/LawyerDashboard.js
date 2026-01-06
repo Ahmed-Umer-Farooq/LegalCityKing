@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, User, Calendar, FileText, Phone, Mail, Clock, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, PieChart, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
 import api from '../../utils/api';
 import { toast } from 'sonner';
@@ -63,7 +64,8 @@ export default function LawyerDashboard() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [activeNavItem, setActiveNavItem] = useState('home');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeNavItem, setActiveNavItem] = useState(searchParams.get('tab') || 'home');
   const [currentUser, setCurrentUser] = useState(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -76,6 +78,14 @@ export default function LawyerDashboard() {
   const hasAdvancedFeatures = isProfessional || isPremium;
   const isVerified = currentUser?.verification_status === 'approved';
 
+
+  // Handle URL parameter changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeNavItem) {
+      setActiveNavItem(urlTab);
+    }
+  }, [searchParams, activeNavItem]);
 
   // Prevent browser back button
   useEffect(() => {
@@ -102,6 +112,12 @@ export default function LawyerDashboard() {
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Comprehensive lawyer dashboard for managing cases, clients, invoices, and legal practice operations.');
+    }
+    
+    // Set initial tab from URL
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeNavItem) {
+      setActiveNavItem(urlTab);
     }
     
     fetchDashboardData();
@@ -266,16 +282,16 @@ export default function LawyerDashboard() {
             {/* Navigation Sections */}
             <nav className="hidden lg:flex items-center gap-4">
               {[
-                { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); window.scrollTo(0, 0); } },
-                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); }, showNotification: true, restricted: !isVerified },
-                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); }, restricted: !isVerified },
-                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); }, restricted: !isVerified },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); }, restricted: !hasAdvancedFeatures || !isVerified },
-                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); }, restricted: !isVerified },
-                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); }, restricted: !isVerified },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); }, restricted: !isPremium || !isVerified },
-                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures || !isVerified },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); }, restricted: !isPremium || !isVerified },
+                { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); } },
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, restricted: !isVerified },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, restricted: !isVerified },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, restricted: !isVerified },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, restricted: !hasAdvancedFeatures || !isVerified },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, restricted: !isVerified },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, restricted: !isVerified },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, restricted: !isPremium || !isVerified },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures || !isVerified },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, restricted: !isPremium || !isVerified },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
@@ -286,7 +302,7 @@ export default function LawyerDashboard() {
                     key={item.id}
                     onClick={isRestricted ? (
                       !isVerified ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }
-                    ) : (item.action || (() => setActiveNavItem(item.id)))}
+                    ) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
                     className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
@@ -387,7 +403,7 @@ export default function LawyerDashboard() {
                       </div>
                     )}
                   </div>
-                  <button onClick={() => setActiveNavItem('profile')} className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors w-full text-left">
+                  <button onClick={() => { setActiveNavItem('profile'); setSearchParams({ tab: 'profile' }); }} className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors w-full text-left">
                     <User className="w-4 h-4" />
                     Profile Management
                   </button>

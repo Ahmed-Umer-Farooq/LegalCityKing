@@ -835,16 +835,16 @@ const Blog = () => {
         </div>
       </div>
 
-      <section className="w-full">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12">
-          <div className="flex flex-col lg:flex-row gap-12">
+      <section className="w-full min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 min-h-screen">
+          <div className="flex flex-col lg:flex-row gap-12 min-h-screen">
             {/* Blog Posts */}
-            <div className="flex-1 max-w-4xl">
+            <div className="flex-1 max-w-4xl min-h-screen">
               <div className="mb-12">
-                <h2 className="text-[#181A2A] text-3xl font-bold mb-2">
+                <h2 className="text-[#181A2A] text-3xl font-bold mb-4">
                   {selectedAuthor ? `Blogs by ${selectedAuthor}` : 'Latest Blogs'}
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-lg mb-6">
                   {selectedAuthor ? `All articles written by ${selectedAuthor}` : 'Stay updated with expert legal insights and analysis'}
                 </p>
                 {selectedAuthor && (
@@ -861,25 +861,25 @@ const Blog = () => {
                 )}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
                 {displayPosts.map((post, index) => (
                   <BlogCard key={post.secure_id || index} {...post} onReport={handleReport} />
                 ))}
               </div>
               
               {displayPosts.length === 0 && searchTerm && (
-                <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                  <div className="text-gray-400 mb-4">
+                <div className="text-center py-16 bg-white rounded-xl shadow-sm">
+                  <div className="text-gray-400 mb-6">
                     <Search className="w-16 h-16 mx-auto" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No articles found</h3>
-                  <p className="text-gray-600">No blogs found matching "{searchTerm}"</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">No articles found</h3>
+                  <p className="text-gray-600 text-lg">No blogs found matching "{searchTerm}"</p>
                 </div>
               )}
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-8">
+                <div className="flex justify-center items-center gap-3 mt-12 pt-8 border-t border-gray-200">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
@@ -915,7 +915,7 @@ const Blog = () => {
 
             {/* Right Sidebar */}
             <aside className="w-full lg:w-80 flex-shrink-0">
-              <div className="sticky top-8 space-y-8">
+              <div className="sticky top-8 space-y-10">
                 <CategoriesWidget 
                   onCategoryClick={handleCategoryClick} 
                   selectedCategory={selectedCategory} 
