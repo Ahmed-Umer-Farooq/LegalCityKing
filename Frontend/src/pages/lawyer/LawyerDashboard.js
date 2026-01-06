@@ -30,6 +30,7 @@ const ChatPage = React.lazy(() => import('../../pages/userdashboard/ChatPage').c
 const QAAnswers = React.lazy(() => import('./QAAnswers').catch(() => ({ default: () => <div>Q&A coming soon...</div> })));
 const FormsManagement = React.lazy(() => import('./FormsManagement').catch(() => ({ default: () => <div>Forms coming soon...</div> })));
 const ProfileManagement = React.lazy(() => import('./ProfileManagement').catch(() => ({ default: () => <div>Profile Management loading...</div> })));
+const PaymentRecords = React.lazy(() => import('./PaymentRecords').catch(() => ({ default: () => <div>Payment Records loading...</div> })));
 
 export default function LawyerDashboard() {
   const [showCaseForm, setShowCaseForm] = useState(false);
@@ -306,6 +307,7 @@ export default function LawyerDashboard() {
                 { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, restricted: !isVerified },
                 { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, restricted: !isVerified },
                 { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, restricted: !isVerified },
+                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, restricted: !isVerified },
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, restricted: !hasAdvancedFeatures || !isVerified },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, restricted: !isVerified },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, restricted: !isVerified },
@@ -456,6 +458,11 @@ export default function LawyerDashboard() {
       <main className="w-full px-4 md:px-6 lg:px-8 pb-16 max-w-screen-2xl mx-auto">
         {activeNavItem === 'contacts' && <ContactsPage />}
         {activeNavItem === 'calendar' && <CalendarPage />}
+        {activeNavItem === 'payment-records' && (
+          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+            <PaymentRecords />
+          </React.Suspense>
+        )}
         {activeNavItem === 'reports' && <ReportsPage />}
         {activeNavItem === 'tasks' && <TasksPage />}
         {activeNavItem === 'documents' && <DocumentsPage />}

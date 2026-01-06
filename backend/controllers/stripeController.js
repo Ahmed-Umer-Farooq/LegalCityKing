@@ -169,9 +169,15 @@ const getLawyerEarnings = async (req, res) => {
     }
 
     const recentTransactions = await db('transactions')
-      .where('lawyer_id', lawyerId)
-      .where('status', 'completed')
-      .orderBy('created_at', 'desc')
+      .leftJoin('users', 'transactions.user_id', 'users.id')
+      .select(
+        'transactions.*',
+        'users.name as user_name',
+        'users.email as user_email'
+      )
+      .where('transactions.lawyer_id', lawyerId)
+      .where('transactions.status', 'completed')
+      .orderBy('transactions.created_at', 'desc')
       .limit(10);
 
     res.json({ earnings, recentTransactions });

@@ -459,6 +459,10 @@ app.use('/api/verification', verificationRoutes);
 const paymentAcknowledgmentRoutes = require('./routes/paymentAcknowledgment');
 app.use('/api/payment-acknowledgment', paymentAcknowledgmentRoutes);
 
+// Payment records routes
+const paymentRecordsRoutes = require('./routes/paymentRecords');
+app.use('/api/payment-records', paymentRecordsRoutes);
+
 // Make io available to routes
 app.set('io', io);
 
