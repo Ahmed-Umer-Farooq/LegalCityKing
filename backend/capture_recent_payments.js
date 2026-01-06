@@ -40,16 +40,39 @@ const captureRecentPayments = async () => {
           user = await db('users').where('email', userEmail).first();
         }
         
-        // Get metadata
+        // Get metadata and line items for service description
         const metadata = session.metadata || {};
         const lawyerId = metadata.lawyerId || 48; // Default to Ahmad Umer Farooq
         const amount = session.amount_total / 100;
         const platformFee = amount * 0.05;
         const lawyerEarnings = amount - platformFee;
         
+        // Get service description from line items
+        let serviceDescription = `Payment captured - $${amount}`;
+        try {
+          const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+          if (lineItems.data && lineItems.data.length > 0) {
+            const serviceName = lineItems.data[0].description;
+            if (serviceName) {
+              // Extract service type from description
+              if (serviceName.includes('30-min Consultation') || serviceName.includes('Initial consultation')) {
+                serviceDescription = '30-min Consultation is paid';
+              } else if (serviceName.includes('1 Hour Session') || serviceName.includes('Hourly Legal Service')) {
+                serviceDescription = '1 Hour Session is paid';
+              } else if (serviceName.includes('Document Review')) {
+                serviceDescription = 'Document Review is paid';
+              } else {
+                serviceDescription = `${serviceName} is paid`;
+              }
+            }
+          }
+        } catch (error) {
+          console.log('Could not fetch line items, using default description');
+        }
+        
         // Save to database
         const [transactionId] = await db('transactions').insert({
-          stripe_payment_id: session.payment_intent,
+          stripe_payment_id: session.payment_intent || `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           user_id: user?.id || null,
           lawyer_id: lawyerId,
           amount: amount,
@@ -57,7 +80,7 @@ const captureRecentPayments = async () => {
           lawyer_earnings: lawyerEarnings,
           type: 'consultation',
           status: 'completed',
-          description: `Payment captured from Stripe session ${session.id}`,
+          description: serviceDescription,
           created_at: new Date(session.created * 1000),
           updated_at: new Date()
         });
@@ -85,7 +108,7 @@ const captureRecentPayments = async () => {
     
     console.log(`\n✅ Ahmad Umer now has ${userTransactions.length} transactions:`);
     userTransactions.forEach((tx, i) => {
-      console.log(`${i+1}. $${tx.amount} to ${tx.lawyer_name} - ${new Date(tx.created_at).toLocaleDateString()}`);
+      console.log(`${i+1}. ${tx.description} - ${new Date(tx.created_at).toLocaleDateString()}`);
     });
     
   } catch (error) {

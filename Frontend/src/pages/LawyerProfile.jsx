@@ -336,13 +336,6 @@ export default function LawyerProfile() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={() => window.location.href = `tel:+44-20-8520-1234`}
-                    className="flex items-center justify-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-                  >
-                    <Phone className="w-5 h-5" />
-                    +44-20-8520-1234
-                  </button>
                   {user ? (
                     <button 
                       onClick={handleChatWithLawyer}
@@ -379,6 +372,23 @@ export default function LawyerProfile() {
                     <Award className="w-5 h-5" />
                     {user && user.role === 'lawyer' ? 'Endorse Lawyer' : 'Login to Endorse'}
                   </button>
+                  {user ? (
+                    <button 
+                      onClick={() => setShowPaymentModal(true)}
+                      className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      Pay Now
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => navigate('/login')}
+                      className="flex items-center justify-center gap-3 bg-gray-400 text-white px-8 py-4 rounded-lg font-medium cursor-pointer hover:bg-gray-500 transition-colors"
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      Login to Pay
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -774,15 +784,6 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button 
-                  onClick={() => setShowPaymentModal(true)}
-                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] text-white rounded-xl hover:from-[#1e40af] hover:to-[#1d4ed8] transition-all duration-300 hover:scale-105 hover:shadow-lg border border-[#1e3a8a]"
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  <span className="font-semibold">Pay Now</span>
-                </button>
                 <button className="w-full flex items-center gap-3 p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                   <Calendar className="w-4 h-4" />
                   <span className="font-medium">Schedule Consultation</span>

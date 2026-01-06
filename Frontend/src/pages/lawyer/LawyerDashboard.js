@@ -71,6 +71,8 @@ export default function LawyerDashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
+  const [earnings, setEarnings] = useState({ total_earned: 0, available_balance: 0 });
+  const [recentPayments, setRecentPayments] = useState([]);
 
   // Subscription feature checks
   const isProfessional = currentUser?.subscription_tier === 'professional' || currentUser?.subscription_tier === 'Professional';
@@ -169,12 +171,13 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes] = await Promise.all([
+      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
         api.get('/lawyer/clients?page=1&limit=3'),
         api.get('/lawyer/invoices?page=1&limit=3'),
-        api.get('/lawyer/upcoming-events')
+        api.get('/lawyer/upcoming-events'),
+        api.get('/stripe/lawyer-earnings')
       ]);
       
       setStats(statsRes.data || { 
@@ -190,6 +193,12 @@ export default function LawyerDashboard() {
       setClients(Array.isArray(clientsRes.data) ? clientsRes.data : []);
       setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
       setUpcomingEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
+      
+      // Set earnings data
+      if (earningsRes.data) {
+        setEarnings(earningsRes.data.earnings || { total_earned: 0, available_balance: 0 });
+        setRecentPayments(earningsRes.data.recentTransactions || []);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       if (error.response?.status === 401) {
@@ -506,15 +515,10 @@ export default function LawyerDashboard() {
               <div className="w-[34px] h-[34px] bg-[#E6372B] rounded-full mb-3 flex items-center justify-center">
                 <DollarSign className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-[#931B12] text-xl font-semibold mb-2">Monthly Revenue</h3>
-              <p className="text-[#931B12] text-2xl font-bold mb-1">${stats.monthlyRevenue?.toLocaleString() || '0'}</p>
+              <h3 className="text-[#931B12] text-xl font-semibold mb-2">Total Earnings</h3>
+              <p className="text-[#931B12] text-2xl font-bold mb-1">${Number(earnings.total_earned || 0).toFixed(2)}</p>
               <div className="flex items-center text-xs">
-                <span className={`font-medium ${
-                  stats.percentageChanges?.monthlyRevenue >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stats.percentageChanges?.monthlyRevenue >= 0 ? '+' : ''}{stats.percentageChanges?.monthlyRevenue || 0}%
-                </span>
-                <span className="text-[#737791] ml-1">from last month</span>
+                <span className="text-green-600 font-medium">Available: ${Number(earnings.available_balance || 0).toFixed(2)}</span>
               </div>
               <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#E6372B]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
@@ -823,8 +827,8 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Clients & Invoices */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Recent Clients & Recent Payments */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Clients</h2>
             <div className="space-y-3">
@@ -852,26 +856,69 @@ export default function LawyerDashboard() {
           </div>
 
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#181A2A] text-lg font-semibold">Recent Payments</h2>
+              <div className="text-right">
+                <p className="text-sm text-[#737791]">Total Earned</p>
+                <p className="text-lg font-bold text-[#16D959]">${Number(earnings.total_earned || 0).toFixed(2)}</p>
+              </div>
+            </div>
             <div className="space-y-3">
               {loading ? (
                 <p className="text-center text-[#737791]">Loading...</p>
-              ) : invoices.length === 0 ? (
-                <p className="text-center text-[#737791]">No invoices found</p>
+              ) : recentPayments.length === 0 ? (
+                <p className="text-center text-[#737791]">No payments received yet</p>
               ) : (
-                invoices.map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
-                    <div>
-                      <p className="text-[#181A2A] font-medium">INV-{invoice.id}</p>
-                      <p className="text-[#737791] text-sm">${(invoice.amount || 0).toLocaleString()}</p>
+                recentPayments.slice(0, 5).map((payment) => (
+                  <div key={payment.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#DCFCE7] rounded-full flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-[#16D959]" />
+                      </div>
+                      <div>
+                        <p className="text-[#181A2A] font-medium">{payment.description}</p>
+                        <p className="text-[#737791] text-sm">{new Date(payment.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInvoiceStatusColors(invoice.status)}`}>
-                      {invoice.status?.charAt(0).toUpperCase() + invoice.status?.slice(1) || 'Unknown'}
-                    </span>
+                    <div className="text-right">
+                      <p className="text-[#16D959] font-semibold">${Number(payment.lawyer_earnings || payment.amount || 0).toFixed(2)}</p>
+                      <p className="text-xs text-[#737791]">Earned</p>
+                    </div>
                   </div>
                 ))
               )}
             </div>
+            {recentPayments.length > 5 && (
+              <div className="mt-4 text-center">
+                <button className="text-[#0086CB] text-sm font-medium hover:underline">
+                  View All Payments
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Invoices */}
+        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 mb-6">
+          <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
+          <div className="space-y-3">
+            {loading ? (
+              <p className="text-center text-[#737791]">Loading...</p>
+            ) : invoices.length === 0 ? (
+              <p className="text-center text-[#737791]">No invoices found</p>
+            ) : (
+              invoices.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                  <div>
+                    <p className="text-[#181A2A] font-medium">INV-{invoice.id}</p>
+                    <p className="text-[#737791] text-sm">${(invoice.amount || 0).toLocaleString()}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInvoiceStatusColors(invoice.status)}`}>
+                    {invoice.status?.charAt(0).toUpperCase() + invoice.status?.slice(1) || 'Unknown'}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
         </>

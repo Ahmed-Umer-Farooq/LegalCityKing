@@ -133,9 +133,38 @@ const getLawyerEarnings = async (req, res) => {
   try {
     const lawyerId = req.user.id;
     
+    // Clean up any duplicate earnings records first
+    const allEarnings = await db('earnings').where('lawyer_id', lawyerId);
+    if (allEarnings.length > 1) {
+      // Calculate correct total from all records
+      const totalEarned = allEarnings.reduce((sum, e) => sum + parseFloat(e.total_earned || 0), 0);
+      const totalAvailable = allEarnings.reduce((sum, e) => sum + parseFloat(e.available_balance || 0), 0);
+      
+      // Delete all records
+      await db('earnings').where('lawyer_id', lawyerId).del();
+      
+      // Create single correct record
+      await db('earnings').insert({
+        lawyer_id: lawyerId,
+        total_earned: totalEarned,
+        available_balance: totalAvailable,
+        pending_balance: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+    
+    // Get the earnings record (create if doesn't exist)
     let earnings = await db('earnings').where('lawyer_id', lawyerId).first();
     if (!earnings) {
-      await db('earnings').insert({ lawyer_id: lawyerId });
+      await db('earnings').insert({ 
+        lawyer_id: lawyerId,
+        total_earned: 0,
+        available_balance: 0,
+        pending_balance: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
       earnings = await db('earnings').where('lawyer_id', lawyerId).first();
     }
 
@@ -289,6 +318,29 @@ const handleCheckoutCompleted = async (session) => {
       }
     }
     
+    // Get service description from line items
+    let serviceDescription = 'Legal consultation payment';
+    try {
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      if (lineItems.data && lineItems.data.length > 0) {
+        const serviceName = lineItems.data[0].description;
+        if (serviceName) {
+          // Extract service type from description
+          if (serviceName.includes('30-min Consultation') || serviceName.includes('Initial consultation')) {
+            serviceDescription = '30-min Consultation is paid';
+          } else if (serviceName.includes('1 Hour Session') || serviceName.includes('Hourly Legal Service')) {
+            serviceDescription = '1 Hour Session is paid';
+          } else if (serviceName.includes('Document Review')) {
+            serviceDescription = 'Document Review is paid';
+          } else {
+            serviceDescription = `${serviceName} is paid`;
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch line items for webhook, using default description');
+    }
+    
     await db('transactions').insert({
       stripe_payment_id: session.payment_intent,
       user_id: userId,
@@ -298,20 +350,34 @@ const handleCheckoutCompleted = async (session) => {
       lawyer_earnings: lawyerEarnings,
       type: 'consultation',
       status: 'completed',
-      description: 'Legal consultation payment'
+      description: serviceDescription
     });
     
     console.log(`💰 Transaction saved: $${session.amount_total / 100} to lawyer ${metadata.lawyerId}`);
 
     // Update lawyer earnings
-    await db.raw(`
-      INSERT INTO earnings (lawyer_id, total_earned, available_balance, created_at, updated_at)
-      VALUES (?, ?, ?, NOW(), NOW())
-      ON DUPLICATE KEY UPDATE
-      total_earned = total_earned + ?,
-      available_balance = available_balance + ?,
-      updated_at = NOW()
-    `, [metadata.lawyerId, lawyerEarnings, lawyerEarnings, lawyerEarnings, lawyerEarnings]);
+    const existingEarnings = await db('earnings').where('lawyer_id', metadata.lawyerId).first();
+    
+    if (existingEarnings) {
+      // Update existing record
+      await db('earnings')
+        .where('lawyer_id', metadata.lawyerId)
+        .update({
+          total_earned: parseFloat(existingEarnings.total_earned || 0) + lawyerEarnings,
+          available_balance: parseFloat(existingEarnings.available_balance || 0) + lawyerEarnings,
+          updated_at: new Date()
+        });
+    } else {
+      // Create new record
+      await db('earnings').insert({
+        lawyer_id: metadata.lawyerId,
+        total_earned: lawyerEarnings,
+        available_balance: lawyerEarnings,
+        pending_balance: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
     
     // Process referral reward if this is user's first payment
     if (userId) {

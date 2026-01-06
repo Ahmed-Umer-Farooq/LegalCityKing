@@ -31,24 +31,83 @@ router.post('/capture-now', async (req, res) => {
           }
           
           const amount = session.amount_total / 100;
+          const metadata = session.metadata || {};
+          const lawyerId = metadata.lawyerId || 48; // Default to Ahmad Umer Farooq if no metadata
+          
+          // Get service description from line items
+          let serviceDescription = `Payment captured - $${amount}`;
+          try {
+            const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+            if (lineItems.data && lineItems.data.length > 0) {
+              const serviceName = lineItems.data[0].description;
+              if (serviceName) {
+                // Extract service type from description
+                if (serviceName.includes('30-min Consultation') || serviceName.includes('Initial consultation')) {
+                  serviceDescription = '30-min Consultation is paid';
+                } else if (serviceName.includes('1 Hour Session') || serviceName.includes('Hourly Legal Service')) {
+                  serviceDescription = '1 Hour Session is paid';
+                } else if (serviceName.includes('Document Review')) {
+                  serviceDescription = 'Document Review is paid';
+                } else {
+                  serviceDescription = `${serviceName} is paid`;
+                }
+              }
+            }
+          } catch (error) {
+            // Fallback based on amount
+            if (amount === 150) {
+              serviceDescription = '30-min Consultation is paid';
+            } else if (amount === 300) {
+              serviceDescription = '1 Hour Session is paid';
+            } else if (amount === 200) {
+              serviceDescription = 'Document Review is paid';
+            }
+          }
           
           // Save transaction
           await db('transactions').insert({
             stripe_payment_id: session.payment_intent,
             user_id: user?.id || null,
-            lawyer_id: 48, // Ahmad Umer Farooq
+            lawyer_id: lawyerId,
             amount: amount,
             platform_fee: amount * 0.05,
             lawyer_earnings: amount * 0.95,
             type: 'consultation',
             status: 'completed',
-            description: `Payment captured - $${amount}`,
+            description: serviceDescription,
             created_at: new Date(),
             updated_at: new Date()
           });
           
+          // Update lawyer earnings
+          const lawyerEarnings = amount * 0.95;
+          
+          // Check if earnings record exists
+          const existingEarnings = await db('earnings').where('lawyer_id', lawyerId).first();
+          
+          if (existingEarnings) {
+            // Update existing record
+            await db('earnings')
+              .where('lawyer_id', lawyerId)
+              .update({
+                total_earned: parseFloat(existingEarnings.total_earned || 0) + lawyerEarnings,
+                available_balance: parseFloat(existingEarnings.available_balance || 0) + lawyerEarnings,
+                updated_at: new Date()
+              });
+          } else {
+            // Create new record
+            await db('earnings').insert({
+              lawyer_id: lawyerId,
+              total_earned: lawyerEarnings,
+              available_balance: lawyerEarnings,
+              pending_balance: 0,
+              created_at: new Date(),
+              updated_at: new Date()
+            });
+          }
+          
           captured++;
-          console.log(`✅ Captured $${amount} payment`);
+          console.log(`✅ Captured $${amount} payment for lawyer ID: ${lawyerId}`);
         }
       }
     }
