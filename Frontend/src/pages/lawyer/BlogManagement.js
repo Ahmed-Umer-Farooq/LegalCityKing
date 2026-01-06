@@ -571,14 +571,16 @@ const BlogManagement = () => {
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                   <BarChart3 className="w-12 h-12 text-blue-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">No blogs found</h3>
-                <p className="text-slate-600 mb-6">Create your first blog to start sharing your legal expertise!</p>
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold"
-                >
-                  Create Your First Blog
-                </button>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">{searchTerm ? 'No blogs found' : 'No blogs yet'}</h3>
+                <p className="text-slate-600 mb-6">{searchTerm ? 'Try adjusting your search terms' : 'Create your first blog to start sharing your legal expertise!'}</p>
+                {!searchTerm && (
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold"
+                  >
+                    Create Your First Blog
+                  </button>
+                )}
               </div>
             ) : (
               filteredBlogs.map((blog) => (
@@ -602,14 +604,14 @@ const BlogManagement = () => {
                   </div>
                   <div className="p-6">
                     <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
-                      {blog.title || 'Untitled Blog'}
+                      {blog.title}
                     </h3>
                     <p className="text-slate-600 text-sm mb-4 line-clamp-2">
-                      {blog.excerpt ? blog.excerpt.substring(0, 120) + '...' : 'No content available'}
+                      {blog.excerpt ? blog.excerpt.substring(0, 120) + '...' : blog.content ? blog.content.substring(0, 120) + '...' : ''}
                     </p>
                     <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
-                      <span className="font-medium">{blog.author_name || 'Unknown Author'}</span>
-                      <span>{blog.published_at ? formatTimeAgo(blog.published_at) : 'Unknown Date'}</span>
+                      {blog.author_name && <span className="font-medium">{blog.author_name}</span>}
+                      {blog.published_at && <span>{formatTimeAgo(blog.published_at)}</span>}
                     </div>
                     
                     {/* Metrics */}
@@ -666,14 +668,20 @@ const BlogManagement = () => {
           <div className="bg-gradient-to-r from-white to-blue-50 rounded-2xl shadow-lg border border-slate-200 p-8">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedBlog.title || 'Untitled Blog'}</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedBlog.title}</h3>
                 <p className="text-slate-600 flex items-center gap-2">
-                  <span>Published by {selectedBlog.author_name || 'Unknown Author'}</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {selectedBlog.published_at ? formatTimeAgo(selectedBlog.published_at) : 'Unknown Date'}
-                  </span>
+                  {selectedBlog.author_name && (
+                    <>
+                      <span>Published by {selectedBlog.author_name}</span>
+                      {selectedBlog.published_at && <span>•</span>}
+                    </>
+                  )}
+                  {selectedBlog.published_at && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {formatTimeAgo(selectedBlog.published_at)}
+                    </span>
+                  )}
                 </p>
               </div>
               <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getCategoryColor(selectedBlog.category || 'General')}`}>
