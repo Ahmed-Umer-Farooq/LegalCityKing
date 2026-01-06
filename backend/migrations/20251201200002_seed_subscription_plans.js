@@ -2,43 +2,46 @@ exports.up = function(knex) {
   return knex('subscription_plans').insert([
     {
       name: 'Professional',
-      stripe_price_id: 'price_professional_monthly', // Replace with actual Stripe price ID
+      stripe_price_id: 'price_1QdVJL5fbvco9iYvhJGKJGKJ', // Professional monthly
       price: 49.00,
       billing_period: 'monthly',
+      billing_cycle: 'monthly',
       features: JSON.stringify([
-        'Enhanced profile with video intro',
-        'Unlimited client messages',
-        'Priority placement in search results',
-        'Analytics dashboard',
+        'Enhanced profile management',
+        'Unlimited client messaging',
+        'Blog management system',
+        'Advanced reports & analytics',
         'Email support'
       ]),
       active: true
     },
     {
       name: 'Premium',
-      stripe_price_id: 'price_premium_monthly', // Replace with actual Stripe price ID
+      stripe_price_id: 'price_1QdVJM5fbvco9iYvhJGKJGKK', // Premium monthly
       price: 99.00,
       billing_period: 'monthly',
+      billing_cycle: 'monthly',
       features: JSON.stringify([
         'All Professional features',
-        'Featured homepage placement',
-        'Verified badge',
-        'Lead generation tools',
-        'Client CRM integration',
+        'Q&A answer management',
+        'Verification badge system',
+        'Forms management system',
+        'Client management tools',
         'Priority phone support'
       ]),
       active: true
     },
     {
       name: 'Professional',
-      stripe_price_id: 'price_professional_yearly', // Replace with actual Stripe price ID
-      price: 499.00,
+      stripe_price_id: 'price_1QdVJN5fbvco9iYvhJGKJGKL', // Professional yearly
+      price: 41.65,
       billing_period: 'yearly',
+      billing_cycle: 'yearly',
       features: JSON.stringify([
-        'Enhanced profile with video intro',
-        'Unlimited client messages',
-        'Priority placement in search results',
-        'Analytics dashboard',
+        'Enhanced profile management',
+        'Unlimited client messaging',
+        'Blog management system',
+        'Advanced reports & analytics',
         'Email support',
         '15% annual discount'
       ]),
@@ -46,15 +49,16 @@ exports.up = function(knex) {
     },
     {
       name: 'Premium',
-      stripe_price_id: 'price_premium_yearly', // Replace with actual Stripe price ID
-      price: 999.00,
+      stripe_price_id: 'price_1QdVJO5fbvco9iYvhJGKJGKM', // Premium yearly
+      price: 84.15,
       billing_period: 'yearly',
+      billing_cycle: 'yearly',
       features: JSON.stringify([
         'All Professional features',
-        'Featured homepage placement',
-        'Verified badge',
-        'Lead generation tools',
-        'Client CRM integration',
+        'Q&A answer management',
+        'Verification badge system',
+        'Forms management system',
+        'Client management tools',
         'Priority phone support',
         '15% annual discount'
       ]),

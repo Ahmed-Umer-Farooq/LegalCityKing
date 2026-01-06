@@ -57,6 +57,8 @@ const SubscriptionManagement = () => {
         throw new Error(`No price ID found for ${planType} ${billingCycle} plan`);
       }
       
+      console.log(`🚀 Upgrading to ${planType} (${billingCycle}) with price ID: ${plan.stripe_price_id}`);
+      
       const response = await api.post('/stripe/create-subscription-checkout', {
         priceId: plan.stripe_price_id
       });

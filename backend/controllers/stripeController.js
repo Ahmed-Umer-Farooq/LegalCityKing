@@ -252,8 +252,22 @@ const handleCheckoutCompleted = async (session) => {
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
     const priceId = subscription.items.data[0].price.id;
     
+    // Get plan from database
     const plan = await db('subscription_plans').where('stripe_price_id', priceId).first();
-    const tier = plan?.name.toLowerCase() || 'professional';
+    let tier = 'professional'; // default
+    
+    if (plan) {
+      tier = plan.name.toLowerCase();
+    } else {
+      // Fallback: determine tier from price ID pattern
+      if (priceId.includes('premium')) {
+        tier = 'premium';
+      } else if (priceId.includes('professional')) {
+        tier = 'professional';
+      }
+    }
+    
+    console.log(`🔄 Setting subscription tier to: ${tier} for lawyer ${metadata.lawyerId}`);
     
     await db('lawyers').where('id', metadata.lawyerId).update({
       stripe_subscription_id: session.subscription,
@@ -355,7 +369,20 @@ const updateSubscriptionStatus = async (req, res) => {
       
       // Find plan in database
       const plan = await db('subscription_plans').where('stripe_price_id', priceId).first();
-      const tier = plan?.name.toLowerCase() || 'professional';
+      let tier = 'professional'; // default
+      
+      if (plan) {
+        tier = plan.name.toLowerCase();
+      } else {
+        // Fallback: determine tier from price ID pattern or amount
+        if (priceId.includes('premium') || subscription.items.data[0].price.unit_amount >= 9900) {
+          tier = 'premium';
+        } else if (priceId.includes('professional') || subscription.items.data[0].price.unit_amount >= 4900) {
+          tier = 'professional';
+        }
+      }
+      
+      console.log(`🔄 Manually updating lawyer ${lawyerId} to ${tier} tier (priceId: ${priceId})`);
       
       // Update lawyer subscription
       await db('lawyers').where('id', lawyerId).update({
@@ -365,7 +392,7 @@ const updateSubscriptionStatus = async (req, res) => {
         subscription_created_at: new Date()
       });
       
-      console.log(`✅ Manually updated lawyer ${lawyerId} to ${tier} tier`);
+      console.log(`✅ Successfully updated lawyer ${lawyerId} to ${tier} tier`);
       res.json({ success: true, tier });
     } else {
       res.status(400).json({ error: 'Invalid session or not a subscription' });

@@ -73,3 +73,12 @@ async function testSubscriptionSystem() {
     console.log('  ✅ QNA access: Restricted to Premium members only');
     console.log('  ✅ Forms access: Restricted to Premium members only');
     console.log('  ✅ Blog access: Available to Professional and Premium members');
+    
+  } catch (error) {
+    console.error('❌ Error testing subscription system:', error);
+  } finally {
+    process.exit(0);
+  }
+}
+
+testSubscriptionSystem();
