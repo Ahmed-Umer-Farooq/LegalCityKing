@@ -1,6 +1,11 @@
-exports.up = function(knex) {
-  return knex.schema
-    .createTable('form_categories', (table) => {
+exports.up = async function(knex) {
+  // Check if tables exist and create only if they don't
+  const formCategoriesExists = await knex.schema.hasTable('form_categories');
+  const legalFormsExists = await knex.schema.hasTable('legal_forms');
+  const userFormsExists = await knex.schema.hasTable('user_forms');
+
+  if (!formCategoriesExists) {
+    await knex.schema.createTable('form_categories', (table) => {
       table.increments('id').primary();
       table.string('name', 100).notNullable();
       table.string('slug', 100).notNullable().unique();
@@ -9,8 +14,11 @@ exports.up = function(knex) {
       table.integer('display_order').defaultTo(0);
       table.boolean('is_active').defaultTo(true);
       table.timestamps(true, true);
-    })
-    .createTable('legal_forms', (table) => {
+    });
+  }
+
+  if (!legalFormsExists) {
+    await knex.schema.createTable('legal_forms', (table) => {
       table.increments('id').primary();
       table.string('title', 255).notNullable();
       table.string('slug', 255).notNullable().unique();
@@ -33,8 +41,11 @@ exports.up = function(knex) {
       table.index(['status', 'is_free']);
       table.index(['category_id']);
       table.index(['created_by', 'created_by_type']);
-    })
-    .createTable('user_forms', (table) => {
+    });
+  }
+
+  if (!userFormsExists) {
+    await knex.schema.createTable('user_forms', (table) => {
       table.increments('id').primary();
       table.integer('user_id').unsigned().notNullable();
       table.integer('form_id').unsigned().references('id').inTable('legal_forms').onDelete('CASCADE');
@@ -43,6 +54,7 @@ exports.up = function(knex) {
       table.timestamp('downloaded_at').defaultTo(knex.fn.now());
       table.index(['user_id', 'form_id']);
     });
+  }
 };
 
 exports.down = function(knex) {
