@@ -1,19 +1,28 @@
+require('dotenv').config();
 const db = require('./db');
 
-async function checkLawyers() {
+const checkLawyerAccounts = async () => {
   try {
-    const total = await db('lawyers').count('id as count').first();
-    const verified = await db('lawyers').where({ lawyer_verified: 1 }).count('id as count').first();
-    const unverified = await db('lawyers').where({ lawyer_verified: 0 }).count('id as count').first();
-
-    console.log('Total Lawyers:', total.count);
-    console.log('Verified Lawyers:', verified.count);
-    console.log('Unverified Lawyers:', unverified.count);
+    console.log('🔍 Checking lawyer accounts...');
+    
+    const lawyers = await db('lawyers').select('id', 'name', 'email', 'registration_id', 'password');
+    console.log(`Found ${lawyers.length} lawyer accounts:`);
+    lawyers.forEach(lawyer => {
+      console.log(`- ID: ${lawyer.id}, Name: ${lawyer.name}, Email: ${lawyer.email}, Reg ID: ${lawyer.registration_id}, Has Password: ${lawyer.password ? 'Yes' : 'No'}`);
+    });
+    
+    console.log('\n🔍 Checking users table for comparison...');
+    const users = await db('users').select('id', 'name', 'email').limit(5);
+    console.log('Sample users:');
+    users.forEach(user => {
+      console.log(`- ID: ${user.id}, Name: ${user.name}, Email: ${user.email}`);
+    });
+    
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error:', error.message);
   } finally {
-    process.exit();
+    process.exit(0);
   }
-}
+};
 
-checkLawyers();
+checkLawyerAccounts();

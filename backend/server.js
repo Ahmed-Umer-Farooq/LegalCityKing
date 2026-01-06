@@ -455,6 +455,13 @@ app.use('/api/referral', referralRoutes);
 const verificationRoutes = require('./routes/verification');
 app.use('/api/verification', verificationRoutes);
 
+// Payment acknowledgment routes
+const paymentAcknowledgmentRoutes = require('./routes/paymentAcknowledgment');
+app.use('/api/payment-acknowledgment', paymentAcknowledgmentRoutes);
+
+// Make io available to routes
+app.set('io', io);
+
 // Store active users
 const activeUsers = new Map();
 

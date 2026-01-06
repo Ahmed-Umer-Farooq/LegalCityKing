@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, User, Calendar, FileText, Phone, Mail, Clock, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, PieChart, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
 import api from '../../utils/api';
 import { toast } from 'sonner';
+import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
 
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
@@ -995,6 +996,9 @@ export default function LawyerDashboard() {
           </div>
         </div>
       </footer>
+
+      {/* Payment Acknowledgment Notifications */}
+      <PaymentAcknowledgment onAcknowledged={fetchDashboardData} />
 
       {/* Modals */}
       <CreateClientModal 
