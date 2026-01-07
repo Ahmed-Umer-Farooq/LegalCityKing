@@ -123,9 +123,17 @@ export default function VerificationManagement() {
                     try {
                       const docs = JSON.parse(selectedLawyer.verification_documents);
                       return Array.isArray(docs) ? docs.map((doc, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          <FileText className="w-4 h-4" />
-                          <span className="text-sm">{doc}</span>
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            <span className="text-sm">{doc}</span>
+                          </div>
+                          <button
+                            onClick={() => window.open(`http://localhost:5001/uploads/verification/${doc}`, '_blank')}
+                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                          >
+                            Open
+                          </button>
                         </div>
                       )) : (
                         <div className="p-2 bg-yellow-50 rounded text-sm text-yellow-700">
@@ -133,21 +141,24 @@ export default function VerificationManagement() {
                         </div>
                       );
                     } catch (error) {
-                      // Handle single filename string
-                      return (
-                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      // Handle concatenated filenames
+                      const docString = String(selectedLawyer.verification_documents || '');
+                      const docs = docString.match(/verification-[^.]+\.(png|jpg|jpeg|pdf|doc|docx)/gi) || [docString];
+                      
+                      return docs.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4" />
-                            <span className="text-sm">{selectedLawyer.verification_documents}</span>
+                            <span className="text-sm">{doc}</span>
                           </div>
                           <button
-                            onClick={() => window.open(`http://localhost:5001/uploads/verification/${selectedLawyer.verification_documents}`, '_blank')}
+                            onClick={() => window.open(`http://localhost:5001/uploads/verification/${doc}`, '_blank')}
                             className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
                           >
                             Open
                           </button>
                         </div>
-                      );
+                      ));
                     }
                   })()}
                 </div>

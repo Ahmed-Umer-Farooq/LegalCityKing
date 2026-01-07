@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, User, Calendar, FileText, Phone, Mail, Clock, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, PieChart, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
 import api from '../../utils/api';
 import { toast } from 'sonner';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
@@ -301,28 +301,31 @@ export default function LawyerDashboard() {
             </div>
             
             {/* Navigation Sections */}
+            {currentUser && (
             <nav className="hidden lg:flex items-center gap-4">
               {[
                 { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); } },
-                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, restricted: !isVerified },
-                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, restricted: !isVerified },
-                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, restricted: !isVerified },
-                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, restricted: !isVerified },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, restricted: !hasAdvancedFeatures || !isVerified },
-                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, restricted: !isVerified },
-                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, restricted: !isVerified },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, restricted: !isPremium },
-                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, restricted: !hasAdvancedFeatures },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, restricted: !isPremium },
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, verificationRequired: !isVerified },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, verificationRequired: !isVerified },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, verificationRequired: !isVerified },
+                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, verificationRequired: !isVerified },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, verificationRequired: !isVerified },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, verificationRequired: !isVerified },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, subscriptionRequired: !isPremium },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, subscriptionRequired: !isPremium },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
-                const isRestricted = item.restricted;
+                const needsVerification = item.verificationRequired;
+                const needsSubscription = item.subscriptionRequired;
+                const isRestricted = needsVerification || needsSubscription;
                 return (
                   <button
                     key={item.id}
-                    onClick={isRestricted ? () => { window.location.href = '/lawyer-dashboard/subscription'; } : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
+                    onClick={isRestricted ? (needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
                     className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
@@ -331,7 +334,10 @@ export default function LawyerDashboard() {
                   >
                     <Icon className="w-4 h-4" />
                     <span className="hidden xl:block">{item.label}</span>
-                    {isRestricted && (
+                    {needsVerification && (
+                      <Lock className="w-3 h-3 text-orange-500" />
+                    )}
+                    {needsSubscription && !needsVerification && (
                       <span className="text-xs font-bold text-orange-500">P</span>
                     )}
                     {item.showNotification && (
@@ -353,16 +359,9 @@ export default function LawyerDashboard() {
                 );
               })}
             </nav>
+            )}
             
-            {/* Enhanced Search Bar */}
-            <div className="flex items-center gap-4 bg-[#F9FAFB] rounded-xl px-4 py-3 w-full lg:w-auto lg:max-w-md border border-[#E5E7EB] focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/20 transition-all">
-              <Search className="w-5 h-5 text-[#6B7280]" />
-              <input 
-                type="text" 
-                placeholder="Search cases, clients, documents..." 
-                className="text-[#374151] text-sm bg-transparent outline-none flex-1 placeholder-[#9CA3AF]"
-              />
-            </div>
+
             
             {/* Professional User Profile */}
             <div className="relative group">

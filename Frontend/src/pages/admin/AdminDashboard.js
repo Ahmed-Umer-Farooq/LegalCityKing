@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../utils/api';
 import {
   Users, UserCheck, UserX, Briefcase, CheckCircle, 
@@ -26,8 +26,9 @@ const LoadingSpinner = () => (
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,6 +75,20 @@ const AdminDashboard = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
+
+  // Handle URL parameter changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Prevent browser back button
   useEffect(() => {
@@ -1828,7 +1843,7 @@ const AdminDashboard = () => {
           {/* Navigation */}
           <nav className="p-4 space-y-1">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => handleTabChange('dashboard')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'dashboard'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1839,7 +1854,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Dashboard</span>
             </button>
             <button
-              onClick={() => setActiveTab('users')}
+              onClick={() => handleTabChange('users')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'users'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1850,7 +1865,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Users</span>
             </button>
             <button
-              onClick={() => setActiveTab('lawyers')}
+              onClick={() => handleTabChange('lawyers')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'lawyers'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1861,7 +1876,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Lawyers</span>
             </button>
             <button
-              onClick={() => setActiveTab('blogs')}
+              onClick={() => handleTabChange('blogs')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'blogs'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1872,7 +1887,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Blogs</span>
             </button>
             <button
-              onClick={() => setActiveTab('messages')}
+              onClick={() => handleTabChange('messages')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'messages'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1883,7 +1898,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Messages</span>
             </button>
             <button
-              onClick={() => setActiveTab('activity')}
+              onClick={() => handleTabChange('activity')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'activity'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1894,7 +1909,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Activity Logs</span>
             </button>
             <button
-              onClick={() => setActiveTab('calls')}
+              onClick={() => handleTabChange('calls')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'calls'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1905,7 +1920,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Voice Calls</span>
             </button>
             <button
-              onClick={() => setActiveTab('qa')}
+              onClick={() => handleTabChange('qa')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'qa'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1916,7 +1931,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Q&A</span>
             </button>
             <button
-              onClick={() => setActiveTab('forms')}
+              onClick={() => handleTabChange('forms')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'forms'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1928,7 +1943,7 @@ const AdminDashboard = () => {
             </button>
             <button
               onClick={() => {
-                setActiveTab('reports');
+                handleTabChange('reports');
                 setTimeout(fetchPendingReportsCount, 1000);
               }}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
@@ -1948,7 +1963,7 @@ const AdminDashboard = () => {
               )}
             </button>
             <button
-              onClick={() => setActiveTab('contact')}
+              onClick={() => handleTabChange('contact')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'contact'
                   ? 'bg-blue-50 text-blue-700 font-medium'
@@ -1959,7 +1974,7 @@ const AdminDashboard = () => {
               <span className="text-sm">Contact</span>
             </button>
             <button
-              onClick={() => setActiveTab('verification')}
+              onClick={() => handleTabChange('verification')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'verification'
                   ? 'bg-blue-50 text-blue-700 font-medium'
