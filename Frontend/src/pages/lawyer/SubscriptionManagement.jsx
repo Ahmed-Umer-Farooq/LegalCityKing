@@ -348,11 +348,14 @@ const SubscriptionManagement = () => {
               <div className="text-center mb-8">
                 <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
                 <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
-                  ${billingCycle === 'monthly' ? '49.00' : '41.65'}
-                  <span className="text-xl text-slate-600">/month</span>
+                  ${billingCycle === 'monthly' 
+                    ? (subscriptionPlans.find(p => p.name === 'Professional' && p.billing_cycle === 'monthly')?.price || '49.00')
+                    : (subscriptionPlans.find(p => p.name === 'Professional' && p.billing_cycle === 'yearly')?.price * 12 || '499.80').toFixed(0)
+                  }
+                  <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
                 </div>
                 {billingCycle === 'yearly' && (
-                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
+                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save $88 annually (15% off)</p>
                 )}
               </div>
               
@@ -393,12 +396,19 @@ const SubscriptionManagement = () => {
                 onClick={() => handleUpgrade('professional')}
                 disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
                 className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                  lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'
+                  lawyer?.subscription_tier === 'professional'
                     ? 'bg-emerald-500 text-white cursor-not-allowed'
+                    : lawyer?.subscription_tier === 'premium'
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
                     : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
                 }`}
               >
-                {lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Professional'}
+                {lawyer?.subscription_tier === 'professional' 
+                  ? 'Current Plan' 
+                  : lawyer?.subscription_tier === 'premium'
+                  ? 'Included in Premium'
+                  : 'Get Professional'
+                }
               </button>
             </div>
 
@@ -413,11 +423,14 @@ const SubscriptionManagement = () => {
               <div className="text-center mb-8 mt-4">
                 <h3 className="text-3xl font-bold mb-4">Premium</h3>
                 <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                  ${billingCycle === 'monthly' ? '99.00' : '84.15'}
-                  <span className="text-xl text-slate-600">/month</span>
+                  ${billingCycle === 'monthly' 
+                    ? (subscriptionPlans.find(p => p.name === 'Premium' && p.billing_cycle === 'monthly')?.price || '99.00')
+                    : (subscriptionPlans.find(p => p.name === 'Premium' && p.billing_cycle === 'yearly')?.price * 12 || '1009.80').toFixed(0)
+                  }
+                  <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
                 </div>
                 {billingCycle === 'yearly' && (
-                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Billed annually - Save 15%</p>
+                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save $178 annually (15% off)</p>
                 )}
               </div>
               
@@ -469,7 +482,7 @@ const SubscriptionManagement = () => {
                     : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
                 }`}
               >
-                {lawyer?.subscription_tier === 'premium' ? 'Activated' : 'Get Premium'}
+                {lawyer?.subscription_tier === 'premium' ? 'Current Plan' : 'Get Premium'}
               </button>
             </div>
           </div>

@@ -287,19 +287,22 @@ const handleCheckoutCompleted = async (session) => {
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
     const priceId = subscription.items.data[0].price.id;
     
-    // Get plan from database
+    // Get plan from database using the actual price ID
     const plan = await db('subscription_plans').where('stripe_price_id', priceId).first();
     let tier = 'professional'; // default
     
     if (plan) {
       tier = plan.name.toLowerCase();
+      console.log(`✅ Found plan in database: ${plan.name} (${plan.billing_cycle})`);
     } else {
-      // Fallback: determine tier from price ID pattern
-      if (priceId.includes('premium')) {
+      // Fallback: determine tier from price amount
+      const priceAmount = subscription.items.data[0].price.unit_amount;
+      if (priceAmount >= 8000) { // $80+ is premium (yearly) or $99 (monthly)
         tier = 'premium';
-      } else if (priceId.includes('professional')) {
+      } else if (priceAmount >= 4000) { // $40+ is professional
         tier = 'professional';
       }
+      console.log(`⚠️ Plan not found in DB, using price-based detection: $${priceAmount/100} -> ${tier}`);
     }
     
     console.log(`🔄 Setting subscription tier to: ${tier} for lawyer ${metadata.lawyerId}`);
@@ -456,19 +459,22 @@ const updateSubscriptionStatus = async (req, res) => {
       const subscription = await stripe.subscriptions.retrieve(session.subscription);
       const priceId = subscription.items.data[0].price.id;
       
-      // Find plan in database
+      // Find plan in database using actual price ID
       const plan = await db('subscription_plans').where('stripe_price_id', priceId).first();
       let tier = 'professional'; // default
       
       if (plan) {
         tier = plan.name.toLowerCase();
+        console.log(`✅ Found plan: ${plan.name} (${plan.billing_cycle})`);
       } else {
-        // Fallback: determine tier from price ID pattern or amount
-        if (priceId.includes('premium') || subscription.items.data[0].price.unit_amount >= 9900) {
+        // Fallback: determine tier from price amount
+        const priceAmount = subscription.items.data[0].price.unit_amount;
+        if (priceAmount >= 8000) { // $80+ is premium
           tier = 'premium';
-        } else if (priceId.includes('professional') || subscription.items.data[0].price.unit_amount >= 4900) {
+        } else if (priceAmount >= 4000) { // $40+ is professional
           tier = 'professional';
         }
+        console.log(`⚠️ Plan not in DB, using price: $${priceAmount/100} -> ${tier}`);
       }
       
       console.log(`🔄 Manually updating lawyer ${lawyerId} to ${tier} tier (priceId: ${priceId})`);
