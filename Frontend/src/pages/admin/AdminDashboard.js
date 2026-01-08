@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 import {
   Users, UserCheck, UserX, Briefcase, CheckCircle, 
@@ -418,10 +419,10 @@ const AdminDashboard = () => {
   const handleVerifyLawyer = async (lawyerId) => {
     try {
       await api.put(`/admin/verify-lawyer/${lawyerId}`);
-      alert('Lawyer verified successfully');
+      showToast.success('Lawyer verified successfully');
       refreshData();
     } catch (error) {
-      alert('Failed to verify lawyer');
+      showToast.error('Failed to verify lawyer');
     }
   };
 
@@ -432,10 +433,10 @@ const AdminDashboard = () => {
       await api.put(`/admin/reject-lawyer/${lawyerId}`, {
         reason: 'Rejected by admin'
       });
-      alert('Lawyer verification rejected');
+      showToast.success('Lawyer verification rejected');
       refreshData();
     } catch (error) {
-      alert('Failed to reject lawyer');
+      showToast.error('Failed to reject lawyer');
     }
   };
 
@@ -444,10 +445,10 @@ const AdminDashboard = () => {
     
     try {
       await api.delete(`/admin/users/${userId}`);
-      alert('User deleted successfully');
+      showToast.success('User deleted successfully');
       refreshData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to delete user');
+      showToast.error(error.response?.data?.message || 'Failed to delete user');
     }
   };
 
@@ -456,10 +457,10 @@ const AdminDashboard = () => {
     
     try {
       await api.delete(`/admin/lawyers/${lawyerId}`);
-      alert('Lawyer deleted successfully');
+      showToast.success('Lawyer deleted successfully');
       refreshData();
     } catch (error) {
-      alert('Failed to delete lawyer');
+      showToast.error('Failed to delete lawyer');
     }
   };
 
@@ -468,10 +469,10 @@ const AdminDashboard = () => {
     
     try {
       await api.put(`/admin/users/${userId}/make-admin`);
-      alert('Admin access granted successfully');
+      showToast.success('Admin access granted successfully');
       refreshData();
     } catch (error) {
-      alert('Failed to grant admin access');
+      showToast.error('Failed to grant admin access');
     }
   };
 
@@ -480,10 +481,10 @@ const AdminDashboard = () => {
     
     try {
       await api.put(`/admin/users/${userId}/remove-admin`);
-      alert('Admin access removed successfully');
+      showToast.success('Admin access removed successfully');
       refreshData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to remove admin access');
+      showToast.error(error.response?.data?.message || 'Failed to remove admin access');
     }
   };
 
@@ -492,10 +493,10 @@ const AdminDashboard = () => {
     
     try {
       await api.delete(`/blogs/${blogId}`);
-      alert('Blog deleted successfully');
+      showToast.success('Blog deleted successfully');
       refreshData();
     } catch (error) {
-      alert('Failed to delete blog');
+      showToast.error('Failed to delete blog');
     }
   };
   
@@ -518,13 +519,13 @@ const AdminDashboard = () => {
     
     try {
       await api.delete(`/blogs/comments/${commentId}/moderate`);
-      alert('Comment deleted successfully');
+      showToast.success('Comment deleted successfully');
       // Refresh comments
       if (selectedBlogForComments) {
         handleViewBlogComments(selectedBlogForComments);
       }
     } catch (error) {
-      alert('Failed to delete comment');
+      showToast.error('Failed to delete comment');
     }
   };
 

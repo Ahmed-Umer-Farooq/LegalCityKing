@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
 import api from '../../utils/api';
-import { toast } from 'sonner';
+import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
 
 // Lazy load components to prevent import errors
@@ -738,7 +738,7 @@ export default function LawyerDashboard() {
                               if (hasEvent) {
                                 // Show events for this day
                                 const eventList = dayEvents.map(e => `${e.title} (${new Date(e.start_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })})`).join('\n');
-                                alert(`Events on ${dayObj.fullDate.toLocaleDateString()}:\n\n${eventList}`);
+                                showToast.info(`Events on ${dayObj.fullDate.toLocaleDateString()}:\n\n${eventList}`);
                               } else {
                                 // Open event creation modal with pre-selected date
                                 setShowEventModal(true);

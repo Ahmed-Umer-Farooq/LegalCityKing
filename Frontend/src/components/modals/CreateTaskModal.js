@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
@@ -31,7 +32,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title) {
-      alert('Title is required');
+      showToast.error('Title is required');
       return;
     }
 
@@ -43,13 +44,13 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
       };
       const response = await api.post('/tasks', payload);
       if (response.data?.success) {
-        alert('Task created successfully!');
+        showToast.success('Task created successfully!');
         onSuccess();
         onClose();
         setFormData({ title: '', description: '', priority: 'medium', due_date: '', case_id: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create task');
+      showToast.error(error.response?.data?.error || 'Failed to create task');
     } finally {
       setLoading(false);
     }

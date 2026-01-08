@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from '../../utils/toastUtils';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 
@@ -17,9 +17,9 @@ const Login = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess }) => {
     const error = urlParams.get('error');
     if (error) {
       if (error === 'oauth_failed') {
-        toast.error('Google login failed. Please try again.');
+        showToast.error('Google login failed. Please try again.');
       } else {
-        toast.error(decodeURIComponent(error));
+        showToast.error(decodeURIComponent(error));
       }
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -81,7 +81,7 @@ const Login = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess }) => {
         onLoginSuccess(token, user, response.data);
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Login failed';
-        toast.error(errorMessage);
+        showToast.error(errorMessage);
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
@@ -40,7 +41,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.start_date_time) {
-      alert('Title and start date/time are required');
+      showToast.error('Title and start date/time are required');
       return;
     }
 
@@ -54,7 +55,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
       };
       const response = await api.post('/events', payload);
       if (response.data?.success) {
-        alert('Event created successfully!');
+        showToast.success('Event created successfully!');
         // Signal that an event was created
         localStorage.setItem('eventCreated', Date.now().toString());
         window.dispatchEvent(new StorageEvent('storage', { key: 'eventCreated', newValue: Date.now().toString() }));
@@ -63,7 +64,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
         setFormData({ title: '', event_type: 'meeting', start_date_time: '', end_date_time: '', location: '', case_id: '', client_id: '', description: '', attendees: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create event');
+      showToast.error(error.response?.data?.error || 'Failed to create event');
     } finally {
       setLoading(false);
     }

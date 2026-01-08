@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
@@ -540,14 +540,14 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
         });
 
         await api.post('/auth/register', payload);
-        toast.success('Registration successful! Please check your email for verification code.');
+        showToast.success('Registration successful! Please check your email for verification code.');
         onRegisterSuccess(trimmed.email);
       } catch (error) {
         const data = error?.response?.data;
         if (data?.errors && typeof data.errors === 'object') {
           setErrors(prev => ({ ...prev, ...data.errors }));
         }
-        toast.error(data?.message || 'Registration failed. Please try again.');
+        showToast.error(data?.message || 'Registration failed. Please try again.');
       } finally {
         setLoading(false);
       }

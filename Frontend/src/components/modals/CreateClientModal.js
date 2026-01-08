@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateClientModal({ isOpen, onClose, onSuccess }) {
@@ -19,7 +20,7 @@ export default function CreateClientModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email) {
-      alert('Name and email are required');
+      showToast.error('Name and email are required');
       return;
     }
 
@@ -27,13 +28,13 @@ export default function CreateClientModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/clients', formData);
       if (response.data?.success) {
-        alert('Client created successfully!');
+        showToast.success('Client created successfully!');
         setFormData({ name: '', email: '', username: '', address: '', city: '', state: '', zip_code: '', country: '', mobile_number: '' });
         onSuccess();
         onClose();
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create client');
+      showToast.error(error.response?.data?.error || 'Failed to create client');
     } finally {
       setLoading(false);
     }

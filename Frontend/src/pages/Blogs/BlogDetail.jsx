@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Calendar, Share2, Heart, Bookmark, Twitter, Facebook,
 import CommentSection from '../../components/CommentSection';
 import ReportBlogModal from '../../components/modals/ReportBlogModal';
 import { useAuth } from '../../context/AuthContext';
+import { showToast } from '../../utils/toastUtils';
 import { updatePageMeta, generateSlug } from '../../utils/seo';
 
 const BlogDetail = () => {
@@ -212,7 +213,7 @@ const BlogDetail = () => {
         setLiked(true);
         // Show notification for first-time users
         if (likedBlogs.length === 1) {
-          alert('Like saved locally! Sign up to sync your preferences across devices.');
+          showToast.info('Like saved locally! Sign up to sync your preferences across devices.');
         }
       }
       return;
@@ -221,7 +222,7 @@ const BlogDetail = () => {
     // Check if we have the blog ID
     if (!blogId) {
       console.error('Blog ID not available for like operation');
-      alert('Unable to like this post. Please try refreshing the page.');
+      showToast.error('Unable to like this post. Please try refreshing the page.');
       return;
     }
     
@@ -241,11 +242,11 @@ const BlogDetail = () => {
       } else {
         const errorData = await response.json();
         console.error('Like operation failed:', errorData.message);
-        alert('Failed to like this post. Please try again.');
+        showToast.error('Failed to like this post. Please try again.');
       }
     } catch (error) {
       console.error('Error toggling like:', error);
-      alert('Network error. Please check your connection and try again.');
+      showToast.error('Network error. Please check your connection and try again.');
     }
   };
 
@@ -265,7 +266,7 @@ const BlogDetail = () => {
         setSaved(true);
         // Show notification for first-time users
         if (savedBlogs.length === 1) {
-          alert('Article saved locally! Sign up to access your saved articles from any device.');
+          showToast.info('Article saved locally! Sign up to access your saved articles from any device.');
         }
       }
       return;
@@ -274,7 +275,7 @@ const BlogDetail = () => {
     // Check if we have the blog ID
     if (!blogId) {
       console.error('Blog ID not available for save operation');
-      alert('Unable to save this post. Please try refreshing the page.');
+      showToast.error('Unable to save this post. Please try refreshing the page.');
       return;
     }
     
@@ -294,11 +295,11 @@ const BlogDetail = () => {
       } else {
         const errorData = await response.json();
         console.error('Save operation failed:', errorData.message);
-        alert('Failed to save this post. Please try again.');
+        showToast.error('Failed to save this post. Please try again.');
       }
     } catch (error) {
       console.error('Error toggling save:', error);
-      alert('Network error. Please check your connection and try again.');
+      showToast.error('Network error. Please check your connection and try again.');
     }
   };
 
@@ -313,7 +314,7 @@ const BlogDetail = () => {
       });
     } else {
       navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      showToast.success('Link copied to clipboard!');
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Eye, MessageCircle, Heart, Bookmark, BarChart3, Trash2, Share, Search, Filter, TrendingUp, Users, Calendar, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const BlogManagement = () => {
@@ -90,7 +91,7 @@ const BlogManagement = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      alert('Blog created successfully!');
+      showToast.success('Blog created successfully!');
       setShowCreateForm(false);
       setFormData({ title: '', content: '', category: '', author_name: currentUser?.name || '', image: '', imageUrl: '', slug: '',
         meta_title: '', meta_description: '', focus_keyword: '', alt_text: '', tags: '' });
@@ -98,7 +99,7 @@ const BlogManagement = () => {
       fetchBlogs();
     } catch (error) {
       console.error('Blog creation error:', error);
-      alert('Failed to create blog: ' + (error.response?.data?.message || 'Unknown error'));
+      showToast.error('Failed to create blog: ' + (error.response?.data?.message || 'Unknown error'));
     }
   };
 
@@ -106,10 +107,10 @@ const BlogManagement = () => {
     if (window.confirm('Delete this blog?')) {
       try {
         await api.delete(`/blogs/${id}`);
-        alert('Blog deleted!');
+        showToast.success('Blog deleted!');
         fetchBlogs();
       } catch (error) {
-        alert('Failed to delete blog');
+        showToast.error('Failed to delete blog');
       }
     }
   };
@@ -119,9 +120,9 @@ const BlogManagement = () => {
       try {
         await api.delete(`/blogs/comments/${commentId}/moderate`);
         fetchBlogAnalytics(selectedBlog.secure_id);
-        alert('Comment deleted!');
+        showToast.success('Comment deleted!');
       } catch (error) {
-        alert('Failed to delete comment');
+        showToast.error('Failed to delete comment');
       }
     }
   };
@@ -137,10 +138,10 @@ const BlogManagement = () => {
       setReplyText(prev => ({...prev, [commentId]: ''}));
       setReplyingTo(null);
       fetchBlogAnalytics(selectedBlog.secure_id);
-      alert('Reply posted!');
+      showToast.success('Reply posted!');
     } catch (error) {
       console.error('Reply error:', error);
-      alert('Failed to post reply: ' + (error.response?.data?.message || 'Unknown error'));
+      showToast.error('Failed to post reply: ' + (error.response?.data?.message || 'Unknown error'));
     }
   };
 

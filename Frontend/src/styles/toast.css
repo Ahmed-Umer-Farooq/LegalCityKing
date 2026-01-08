@@ -1,0 +1,60 @@
+/* Sonner Toast Overrides */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
+
+[data-sonner-toast] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  font-family: inherit !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-left: 4px solid #10b981 !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-left: 4px solid #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  border-left: 4px solid #f59e0b !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+/* Prevent browser notification styling conflicts */
+.sonner-toast {
+  position: relative !important;
+  display: block !important;
+  background: white !important;
+  border-radius: 8px !important;
+}
+
+.sonner-toast-description {
+  color: #6b7280 !important;
+  font-size: 14px !important;
+}
+
+/* Hide any browser notification prompts */
+.notification-permission-prompt {
+  display: none !important;
+}
+
+/* Ensure toasts appear above all other content */
+[data-sonner-toaster] {
+  position: fixed !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 999999 !important;
+  pointer-events: none !important;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto !important;
+  margin-bottom: 8px !important;
+}

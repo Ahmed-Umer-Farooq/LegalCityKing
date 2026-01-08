@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { blockBrowserNotifications } from './utils/toastUtils';
+import './styles/toast.css';
 
 import LegalCityAuth from './LegalCityAuth';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -53,18 +55,33 @@ const BlogRedirect = () => {
 };
 
 function App() {
+  // Block browser notifications on app initialization
+  useEffect(() => {
+    blockBrowserNotifications();
+  }, []);
+
   return (
     <div className="App">
       <Toaster 
         position="top-right" 
-        richColors 
+        richColors={false}
         closeButton 
-        duration={2000}
+        duration={4000}
+        expand={false}
+        visibleToasts={3}
+        theme="light"
         toastOptions={{
           style: {
             fontSize: '14px',
             fontWeight: '500',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            color: '#374151',
           },
+          className: 'sonner-toast',
+          descriptionClassName: 'sonner-toast-description',
         }}
       />
       <Routes>
