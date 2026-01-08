@@ -263,11 +263,42 @@ const getProfile = async (req, res) => {
     // Determine verification status - only approved status counts as verified
     const isVerified = lawyer.verification_status === 'approved';
     
+    // Check if subscription has expired
+    const now = new Date();
+    const isExpired = lawyer.subscription_expires_at && new Date(lawyer.subscription_expires_at) < now;
+    
+    // If expired, update status to free
+    if (isExpired && lawyer.subscription_tier !== 'free') {
+      await db('lawyers').where('id', lawyerId).update({
+        subscription_tier: 'free',
+        subscription_status: 'expired',
+        stripe_subscription_id: null
+      });
+      
+      lawyer.subscription_tier = 'free';
+      lawyer.subscription_status = 'expired';
+    }
+
+    const daysUntilExpiry = lawyer.subscription_expires_at 
+      ? Math.ceil((new Date(lawyer.subscription_expires_at) - now) / (1000 * 60 * 60 * 24))
+      : null;
+    
     res.json({
       ...lawyer,
       is_verified: isVerified,
       lawyer_verified: isVerified,
-      verified: isVerified
+      verified: isVerified,
+      subscription: {
+        tier: lawyer.subscription_tier,
+        status: lawyer.subscription_status,
+        created_at: lawyer.subscription_created_at,
+        expires_at: lawyer.subscription_expires_at,
+        cancelled: lawyer.subscription_cancelled,
+        cancelled_at: lawyer.subscription_cancelled_at,
+        auto_renew: lawyer.auto_renew,
+        days_until_expiry: daysUntilExpiry,
+        is_expired: isExpired
+      }
     });
   } catch (error) {
     console.error('Get profile error:', error);

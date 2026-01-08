@@ -9,6 +9,7 @@ const SubscriptionManagement = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [lawyer, setLawyer] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [earnings, setEarnings] = useState(null);
   const [stats, setStats] = useState({ 
     activeCases: 0, 
@@ -22,6 +23,7 @@ const SubscriptionManagement = () => {
 
   useEffect(() => {
     fetchLawyerData();
+    fetchSubscriptionStatus();
     fetchEarnings();
     fetchDashboardStats();
     fetchSubscriptionPlans();
@@ -33,6 +35,15 @@ const SubscriptionManagement = () => {
       handleSubscriptionSuccess(sessionId);
     }
   }, []);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await api.get('/stripe/subscription-status');
+      setSubscriptionStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
 
   const fetchLawyerData = async () => {
     try {
@@ -55,6 +66,24 @@ const SubscriptionManagement = () => {
     } catch (error) {
       console.error('Error creating customer portal:', error);
       toast.error('Failed to open payment management');
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Are you sure you want to cancel your subscription? You will keep access until the end of your current billing period.')) {
+      return;
+    }
+    
+    try {
+      const response = await api.post('/stripe/cancel-subscription');
+      if (response.data?.success) {
+        toast.success('Subscription cancelled successfully. You will keep access until expiry.');
+        await fetchSubscriptionStatus();
+        await fetchLawyerData();
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast.error('Failed to cancel subscription');
     }
   };
 
@@ -117,6 +146,7 @@ const SubscriptionManagement = () => {
       // Refresh user data immediately
       console.log('🔄 Refreshing lawyer data...');
       await fetchLawyerData();
+      await fetchSubscriptionStatus();
       console.log('✅ Lawyer data refreshed, new tier:', lawyer?.subscription_tier);
       
       // Clean URL without redirecting
@@ -203,10 +233,34 @@ const SubscriptionManagement = () => {
                 </div>
               )}
             </div>
+            
+            {/* Cancellation Status */}
+            {subscriptionStatus?.cancelled && (
+              <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-700 mb-1">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-semibold text-sm">Subscription Cancelled</span>
+                </div>
+                <p className="text-xs text-amber-600">
+                  {subscriptionStatus.days_until_expiry > 0 
+                    ? `${subscriptionStatus.days_until_expiry} days remaining`
+                    : 'Expired'
+                  }
+                </p>
+                {subscriptionStatus.expires_at && (
+                  <p className="text-xs text-amber-600">
+                    Expires: {new Date(subscriptionStatus.expires_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            )}
+            
             <p className="text-sm text-slate-600">
               {lawyer?.subscription_tier === 'free' || !lawyer?.subscription_tier
                 ? 'Upgrade to unlock premium features'
-                : `Active since ${new Date(lawyer?.subscription_created_at).toLocaleDateString()}`
+                : subscriptionStatus?.cancelled
+                  ? 'Will downgrade to Free after expiry'
+                  : `Active since ${new Date(lawyer?.subscription_created_at).toLocaleDateString()}`
               }
             </p>
           </div>
@@ -232,12 +286,22 @@ const SubscriptionManagement = () => {
             <div className="text-sm text-slate-600 mb-4">
               {lawyer?.stripe_customer_id ? 'Card on file' : 'No payment method'}
             </div>
-            <button 
-              onClick={handleManagePaymentMethods}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline"
-            >
-              Manage Payment Methods
-            </button>
+            <div className="space-y-2">
+              <button 
+                onClick={handleManagePaymentMethods}
+                className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline block"
+              >
+                Manage Payment Methods
+              </button>
+              {(lawyer?.subscription_tier === 'premium' || lawyer?.subscription_tier === 'professional') && !subscriptionStatus?.cancelled && (
+                <button 
+                  onClick={handleCancelSubscription}
+                  className="text-red-600 hover:text-red-700 font-medium text-sm hover:underline block"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

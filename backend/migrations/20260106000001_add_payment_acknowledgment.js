@@ -1,7 +1,14 @@
-exports.up = function(knex) {
+exports.up = async function(knex) {
+  const hasAcknowledged = await knex.schema.hasColumn('transactions', 'acknowledged');
+  const hasAcknowledgedAt = await knex.schema.hasColumn('transactions', 'acknowledged_at');
+
   return knex.schema.alterTable('transactions', function(table) {
-    table.boolean('acknowledged').defaultTo(false);
-    table.timestamp('acknowledged_at').nullable();
+    if (!hasAcknowledged) {
+      table.boolean('acknowledged').defaultTo(false);
+    }
+    if (!hasAcknowledgedAt) {
+      table.timestamp('acknowledged_at').nullable();
+    }
   });
 };
 

@@ -304,12 +304,25 @@ const handleCheckoutCompleted = async (session) => {
     
     console.log(`🔄 Setting subscription tier to: ${tier} for lawyer ${metadata.lawyerId}`);
     
+    // Calculate expiry date (1 month from now)
+    const expiryDate = new Date();
+    expiryDate.setMonth(expiryDate.getMonth() + 1);
+    
+    // Ensure we save the REAL Stripe subscription ID, not a test one
+    const realStripeId = session.subscription; // This is the actual Stripe subscription ID
+    
     await db('lawyers').where('id', metadata.lawyerId).update({
-      stripe_subscription_id: session.subscription,
+      stripe_subscription_id: realStripeId, // Use real ID from session
+      stripe_customer_id: session.customer, // Also save customer ID
       subscription_tier: tier,
       subscription_status: 'active',
-      subscription_created_at: new Date()
+      subscription_created_at: new Date(),
+      subscription_expires_at: expiryDate,
+      subscription_cancelled: false,
+      auto_renew: true
     });
+    
+    console.log(`✅ Saved real Stripe subscription ID: ${realStripeId}`);
   } else if (metadata.type === 'consultation') {
     const platformFee = parseInt(metadata.platformFee) / 100;
     const lawyerEarnings = parseInt(metadata.lawyerEarnings) / 100;
@@ -414,11 +427,15 @@ const handleSubscriptionCanceled = async (subscription) => {
   const lawyer = await db('lawyers').where('stripe_customer_id', customer.id).first();
   
   if (lawyer) {
+    // Mark as cancelled but keep active until expiry
     await db('lawyers').where('id', lawyer.id).update({
-      subscription_tier: 'free',
-      subscription_status: 'canceled',
-      stripe_subscription_id: null
+      subscription_cancelled: true,
+      subscription_cancelled_at: new Date(),
+      auto_renew: false
+      // Keep subscription_tier and subscription_status active until expiry
     });
+    
+    console.log(`🚫 Subscription cancelled for lawyer ${lawyer.id}, will remain active until expiry`);
   }
 };
 
@@ -456,12 +473,20 @@ const updateSubscriptionStatus = async (req, res) => {
       
       console.log(`🔄 Manually updating lawyer ${lawyerId} to ${tier} tier (priceId: ${priceId})`);
       
-      // Update lawyer subscription
+      // Calculate expiry date (1 month from now)
+      const expiryDate = new Date();
+      expiryDate.setMonth(expiryDate.getMonth() + 1);
+      
+      // Update lawyer subscription with REAL Stripe IDs
       await db('lawyers').where('id', lawyerId).update({
-        stripe_subscription_id: session.subscription,
+        stripe_subscription_id: session.subscription, // Real Stripe subscription ID
+        stripe_customer_id: session.customer, // Real Stripe customer ID
         subscription_tier: tier,
         subscription_status: 'active',
-        subscription_created_at: new Date()
+        subscription_created_at: new Date(),
+        subscription_expires_at: expiryDate,
+        subscription_cancelled: false,
+        auto_renew: true
       });
       
       console.log(`✅ Successfully updated lawyer ${lawyerId} to ${tier} tier`);
@@ -475,6 +500,185 @@ const updateSubscriptionStatus = async (req, res) => {
   }
 };
 
+// Cancel subscription but keep active until expiry
+const cancelSubscription = async (req, res) => {
+  try {
+    const lawyerId = req.user.id;
+    const lawyer = await db('lawyers').where('id', lawyerId).first();
+    
+    if (!lawyer) {
+      return res.status(404).json({ error: 'Lawyer not found' });
+    }
+
+    // If no stripe subscription ID or already cancelled, just mark as cancelled in DB
+    if (!lawyer.stripe_subscription_id || lawyer.subscription_cancelled) {
+      if (lawyer.subscription_cancelled) {
+        return res.status(400).json({ error: 'Subscription is already cancelled' });
+      }
+      
+      // Set expiry date to 1 month from now if not set
+      const expiryDate = lawyer.subscription_expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      
+      await db('lawyers').where('id', lawyerId).update({
+        subscription_cancelled: true,
+        subscription_cancelled_at: new Date(),
+        auto_renew: false,
+        subscription_expires_at: expiryDate
+      });
+      
+      return res.json({ 
+        success: true, 
+        message: 'Subscription cancelled. Your membership will remain active until expiry date.',
+        expires_at: expiryDate
+      });
+    }
+
+    try {
+      // Try to cancel the Stripe subscription at period end
+      await stripe.subscriptions.update(lawyer.stripe_subscription_id, {
+        cancel_at_period_end: true
+      });
+    } catch (stripeError) {
+      console.log(`Stripe subscription ${lawyer.stripe_subscription_id} not found, marking as cancelled in DB only`);
+      // If Stripe subscription doesn't exist, just update our database
+    }
+
+    // Set expiry date to 1 month from now if not set
+    const expiryDate = lawyer.subscription_expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    
+    // Mark as cancelled in our database but keep active until expiry
+    await db('lawyers').where('id', lawyerId).update({
+      subscription_cancelled: true,
+      subscription_cancelled_at: new Date(),
+      auto_renew: false,
+      subscription_expires_at: expiryDate
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Subscription cancelled. Your membership will remain active until expiry date.',
+      expires_at: expiryDate
+    });
+  } catch (error) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get subscription status with expiry information
+const getSubscriptionStatus = async (req, res) => {
+  try {
+    const lawyerId = req.user.id;
+    const lawyer = await db('lawyers')
+      .select('subscription_tier', 'subscription_status', 'subscription_created_at', 
+              'subscription_expires_at', 'subscription_cancelled', 'subscription_cancelled_at', 
+              'auto_renew', 'stripe_subscription_id')
+      .where('id', lawyerId)
+      .first();
+
+    if (!lawyer) {
+      return res.status(404).json({ error: 'Lawyer not found' });
+    }
+
+    // Check if subscription has expired
+    const now = new Date();
+    const isExpired = lawyer.subscription_expires_at && new Date(lawyer.subscription_expires_at) < now;
+    
+    // If expired, update status to free
+    if (isExpired && lawyer.subscription_tier !== 'free') {
+      await db('lawyers').where('id', lawyerId).update({
+        subscription_tier: 'free',
+        subscription_status: 'expired',
+        stripe_subscription_id: null
+      });
+      
+      lawyer.subscription_tier = 'free';
+      lawyer.subscription_status = 'expired';
+    }
+
+    const daysUntilExpiry = lawyer.subscription_expires_at 
+      ? Math.ceil((new Date(lawyer.subscription_expires_at) - now) / (1000 * 60 * 60 * 24))
+      : null;
+
+    res.json({
+      tier: lawyer.subscription_tier,
+      status: lawyer.subscription_status,
+      created_at: lawyer.subscription_created_at,
+      expires_at: lawyer.subscription_expires_at,
+      cancelled: !!lawyer.subscription_cancelled, // Convert to boolean
+      cancelled_at: lawyer.subscription_cancelled_at,
+      auto_renew: !!lawyer.auto_renew, // Convert to boolean
+      days_until_expiry: daysUntilExpiry,
+      is_expired: isExpired,
+      has_active_stripe_subscription: !!lawyer.stripe_subscription_id
+    });
+  } catch (error) {
+    console.error('Get subscription status error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Reactivate cancelled subscription
+const reactivateSubscription = async (req, res) => {
+  try {
+    const lawyerId = req.user.id;
+    const lawyer = await db('lawyers').where('id', lawyerId).first();
+    
+    if (!lawyer || !lawyer.stripe_subscription_id) {
+      return res.status(400).json({ error: 'No subscription found to reactivate' });
+    }
+
+    if (!lawyer.subscription_cancelled) {
+      return res.status(400).json({ error: 'Subscription is not cancelled' });
+    }
+
+    // Reactivate the Stripe subscription
+    await stripe.subscriptions.update(lawyer.stripe_subscription_id, {
+      cancel_at_period_end: false
+    });
+
+    // Update our database
+    await db('lawyers').where('id', lawyerId).update({
+      subscription_cancelled: false,
+      subscription_cancelled_at: null,
+      auto_renew: true
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Subscription reactivated successfully'
+    });
+  } catch (error) {
+    console.error('Reactivate subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Check and expire memberships (to be called by a cron job)
+const checkExpiredMemberships = async () => {
+  try {
+    const now = new Date();
+    const expiredLawyers = await db('lawyers')
+      .where('subscription_expires_at', '<', now)
+      .whereNot('subscription_tier', 'free');
+
+    for (const lawyer of expiredLawyers) {
+      await db('lawyers').where('id', lawyer.id).update({
+        subscription_tier: 'free',
+        subscription_status: 'expired',
+        stripe_subscription_id: null
+      });
+      
+      console.log(`⏰ Expired membership for lawyer ${lawyer.id}`);
+    }
+
+    return { expired_count: expiredLawyers.length };
+  } catch (error) {
+    console.error('Check expired memberships error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createSubscriptionCheckout,
   createConsultationCheckout,
@@ -483,5 +687,9 @@ module.exports = {
   createBillingPortalSession,
   getPaymentReceipt,
   handleWebhook,
-  updateSubscriptionStatus
+  updateSubscriptionStatus,
+  cancelSubscription,
+  getSubscriptionStatus,
+  reactivateSubscription,
+  checkExpiredMemberships
 };

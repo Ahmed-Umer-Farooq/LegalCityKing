@@ -788,8 +788,14 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
+const { startMembershipExpiryJob, startHourlyMembershipCheck } = require('./utils/membershipCron');
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // Start membership expiry cron jobs
+  startMembershipExpiryJob();
+  startHourlyMembershipCheck();
 
   // Verify email transporter connection
   const nodemailer = require('nodemailer');
