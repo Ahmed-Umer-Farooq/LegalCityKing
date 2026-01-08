@@ -55,6 +55,9 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
       const response = await api.post('/events', payload);
       if (response.data?.success) {
         alert('Event created successfully!');
+        // Signal that an event was created
+        localStorage.setItem('eventCreated', Date.now().toString());
+        window.dispatchEvent(new StorageEvent('storage', { key: 'eventCreated', newValue: Date.now().toString() }));
         onSuccess();
         onClose();
         setFormData({ title: '', event_type: 'meeting', start_date_time: '', end_date_time: '', location: '', case_id: '', client_id: '', description: '', attendees: '' });

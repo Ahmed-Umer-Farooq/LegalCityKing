@@ -46,6 +46,18 @@ const SubscriptionManagement = () => {
     }
   };
 
+  const handleManagePaymentMethods = async () => {
+    try {
+      const response = await api.post('/stripe/create-billing-portal-session');
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error('Error creating customer portal:', error);
+      toast.error('Failed to open payment management');
+    }
+  };
+
   const handleUpgrade = async (planType) => {
     try {
       const plan = subscriptionPlans.find(p => 
@@ -167,46 +179,6 @@ const SubscriptionManagement = () => {
           <p className="text-slate-600 text-lg">Manage your subscription and view earnings</p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Active Cases</h3>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-slate-800">{stats.activeCases}</div>
-          </div>
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Total Clients</h3>
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Users className="w-5 h-5 text-emerald-600" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-slate-800">{stats.totalClients}</div>
-          </div>
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Monthly Revenue</h3>
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <DollarSign className="w-5 h-5 text-amber-600" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-slate-800">${stats.monthlyRevenue?.toLocaleString() || '0'}</div>
-          </div>
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Upcoming Hearings</h3>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-purple-600" />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-slate-800">{stats.upcomingHearings}</div>
-          </div>
-        </div>
-
         {/* Current Status */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
@@ -260,7 +232,10 @@ const SubscriptionManagement = () => {
             <div className="text-sm text-slate-600 mb-4">
               {lawyer?.stripe_customer_id ? 'Card on file' : 'No payment method'}
             </div>
-            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline">
+            <button 
+              onClick={handleManagePaymentMethods}
+              className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline"
+            >
               Manage Payment Methods
             </button>
           </div>

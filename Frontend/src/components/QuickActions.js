@@ -51,6 +51,7 @@ export default function QuickActions({ onSuccess }) {
   };
 
   const handleModalSuccess = () => {
+    setActiveModal(null);
     if (onSuccess) onSuccess();
   };
 

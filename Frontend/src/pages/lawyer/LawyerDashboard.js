@@ -21,7 +21,7 @@ const CreateInvoiceModal = React.lazy(() => import('../../components/modals/Crea
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
 const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
-const CalendarPage = React.lazy(() => import('./CalendarPage').catch(() => ({ default: () => <div>Calendar coming soon...</div> })));
+const CalendarPage = React.lazy(() => import('./CalendarPage.jsx').catch(() => ({ default: () => <div>Calendar loading...</div> })));
 const ReportsPage = React.lazy(() => import('./ReportsPage').catch(() => ({ default: () => <div>Reports coming soon...</div> })));
 const TasksPage = React.lazy(() => import('./TasksPage').catch(() => ({ default: () => <div>Tasks coming soon...</div> })));
 const DocumentsPage = React.lazy(() => import('./DocumentsPage').catch(() => ({ default: () => <div>Documents coming soon...</div> })));
@@ -71,6 +71,8 @@ export default function LawyerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [unreadCount, setUnreadCount] = useState(0);
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
   const [earnings, setEarnings] = useState({ total_earned: 0, available_balance: 0 });
@@ -99,7 +101,7 @@ export default function LawyerDashboard() {
     if (urlTab && urlTab !== activeNavItem) {
       setActiveNavItem(urlTab);
     }
-  }, [searchParams, activeNavItem]);
+  }, [searchParams]);
 
   // Prevent browser back button
   useEffect(() => {
@@ -121,65 +123,46 @@ export default function LawyerDashboard() {
   }, []);
 
   useEffect(() => {
-    // Set SEO meta tags
-    document.title = 'Lawyer Dashboard - Professional Legal Practice Management | LegalCity';
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Comprehensive lawyer dashboard for managing cases, clients, invoices, and legal practice operations.');
-    }
-    
-    // Set initial tab from URL
-    const urlTab = searchParams.get('tab');
-    if (urlTab && urlTab !== activeNavItem) {
-      setActiveNavItem(urlTab);
-    }
-    
     fetchDashboardData();
     fetchUserProfile();
     
-    // Initialize chat service for notifications
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (storedUser?.id) {
-      import('../../utils/chatService').then(({ default: chatService }) => {
-        chatService.connect({ userId: storedUser.id, userType: 'lawyer' });
-        chatService.onUnreadCountUpdate(({ count }) => {
-          setUnreadCount(count);
-        });
-        // Get initial unread count via API
-        fetch('/api/chat/unread-count', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        })
-        .then(res => res.json())
-        .then(data => setUnreadCount(data.count || 0))
-        .catch(err => {
-          console.error('Failed to fetch unread count:', err);
-          setUnreadCount(0);
-        });
-        
-        // Get blog engagement count
-        fetch('/api/blogs/engagement-count', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        })
-        .then(res => res.json())
-        .then(data => setBlogEngagementCount(data.count || 0))
-        .catch(err => {
-          console.error('Failed to fetch blog engagement count:', err);
-          setBlogEngagementCount(0);
-        });
-      });
-    }
+    // Listen for event modal open requests
+    const handleOpenEventModal = () => {
+      setShowEventModal(true);
+    };
+    window.addEventListener('openEventModal', handleOpenEventModal);
+    
+    return () => {
+      window.removeEventListener('openEventModal', handleOpenEventModal);
+    };
   }, []);
 
+  // Refresh calendar data when events are created
+  const refreshCalendarData = async () => {
+    try {
+      const [eventsRes, calendarRes] = await Promise.all([
+        api.get('/events/upcoming'),
+        api.get('/events/calendar')
+      ]);
+      setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
+      setCalendarEvents(Array.isArray(calendarRes.data?.data) ? calendarRes.data.data : []);
+    } catch (error) {
+      console.error('Error refreshing calendar data:', error);
+    }
+  };
+
+  // Update fetchDashboardData to also refresh calendar
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes] = await Promise.all([
+      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
-        api.get('/lawyer/clients?page=1&limit=3'),
+        api.get('/clients?page=1&limit=100'),
         api.get('/lawyer/invoices?page=1&limit=3'),
-        api.get('/lawyer/upcoming-events'),
-        api.get('/stripe/lawyer-earnings')
+        api.get('/events/upcoming'),
+        api.get('/stripe/lawyer-earnings'),
+        api.get('/events/calendar')
       ]);
       
       setStats(statsRes.data || { 
@@ -192,9 +175,10 @@ export default function LawyerDashboard() {
         monthlyRevenueData: []
       });
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
-      setClients(Array.isArray(clientsRes.data) ? clientsRes.data : []);
+      setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data?.clients || clientsRes.data?.data || []));
       setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
-      setUpcomingEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
+      setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
+      setCalendarEvents(Array.isArray(calendarRes.data?.data) ? calendarRes.data.data : []);
       
       // Set earnings data
       if (earningsRes.data) {
@@ -338,7 +322,7 @@ export default function LawyerDashboard() {
                       <Lock className="w-3 h-3 text-orange-500" />
                     )}
                     {needsSubscription && !needsVerification && (
-                      <span className="text-xs font-bold text-orange-500">P</span>
+                      <span className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1 rounded font-bold leading-none">PRO</span>
                     )}
                     {item.showNotification && (
                       item.id === 'messages' ? (
@@ -456,7 +440,11 @@ export default function LawyerDashboard() {
       {/* MAIN CONTENT */}
       <main className="w-full px-4 md:px-6 lg:px-8 pb-16 max-w-screen-2xl mx-auto">
         {activeNavItem === 'contacts' && <ContactsPage />}
-        {activeNavItem === 'calendar' && <CalendarPage />}
+        {activeNavItem === 'calendar' && (
+          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+            <CalendarPage />
+          </React.Suspense>
+        )}
         {activeNavItem === 'payment-records' && (
           <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
             <PaymentRecords />
@@ -654,14 +642,28 @@ export default function LawyerDashboard() {
           {/* Professional Calendar */}
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-7">
             <div className="flex items-center justify-between mb-6">
-              <button className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  const newDate = new Date(currentCalendarDate);
+                  newDate.setMonth(newDate.getMonth() - 1);
+                  setCurrentCalendarDate(newDate);
+                }}
+                className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
+              >
                 <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
               </button>
               <div className="text-center">
-                <h2 className="text-[#181A2A] text-lg font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+                <h2 className="text-[#181A2A] text-lg font-semibold">{currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
                 <p className="text-[#737791] text-sm">Today: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
-              <button className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  const newDate = new Date(currentCalendarDate);
+                  newDate.setMonth(newDate.getMonth() + 1);
+                  setCurrentCalendarDate(newDate);
+                }}
+                className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
+              >
                 <ChevronRight className="w-5 h-5 text-[#6B7280]" />
               </button>
             </div>
@@ -680,8 +682,8 @@ export default function LawyerDashboard() {
               {/* Calendar Days */}
               {(() => {
                 const today = new Date();
-                const currentMonth = today.getMonth();
-                const currentYear = today.getFullYear();
+                const currentMonth = currentCalendarDate.getMonth();
+                const currentYear = currentCalendarDate.getFullYear();
                 const firstDay = new Date(currentYear, currentMonth, 1);
                 const lastDay = new Date(currentYear, currentMonth + 1, 0);
                 const startDate = new Date(firstDay);
@@ -693,35 +695,80 @@ export default function LawyerDashboard() {
                   for (let day = 0; day < 7; day++) {
                     const date = new Date(startDate);
                     date.setDate(startDate.getDate() + (week * 7) + day);
-                    weekDays.push(date.getDate());
+                    weekDays.push({
+                      date: date.getDate(),
+                      fullDate: new Date(date),
+                      isCurrentMonth: date.getMonth() === currentMonth
+                    });
                   }
                   weeks.push(weekDays);
                 }
                 
                 return weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="grid grid-cols-7 gap-1">
-                    {week.map((date, dateIndex) => {
+                    {week.map((dayObj, dateIndex) => {
                       const currentDate = new Date();
-                      const isToday = date === currentDate.getDate() && 
+                      const isToday = dayObj.date === currentDate.getDate() && 
                                      currentMonth === currentDate.getMonth() && 
-                                     currentYear === currentDate.getFullYear();
-                      const hasEvent = upcomingEvents.some(event => {
-                        const eventDate = new Date(event.date + ', ' + currentYear);
-                        return eventDate.getDate() === date && eventDate.getMonth() === currentMonth;
+                                     currentYear === currentDate.getFullYear() &&
+                                     dayObj.isCurrentMonth;
+                      
+                      // Check for events on this date
+                      const dayEvents = calendarEvents.filter(event => {
+                        const eventDate = new Date(event.start_date_time);
+                        return eventDate.getDate() === dayObj.date && 
+                               eventDate.getMonth() === dayObj.fullDate.getMonth() &&
+                               eventDate.getFullYear() === dayObj.fullDate.getFullYear();
                       });
+                      
+                      const hasEvent = dayEvents.length > 0;
                       
                       return (
                         <div key={dateIndex} className="relative">
-                          <button className={`w-full h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-[#F8F9FA] ${
-                            isToday 
-                              ? 'bg-[#007EF4] text-white shadow-md' 
-                              : 'text-[#374151] hover:text-[#007EF4]'
-                          }`}>
-                            {date}
+                          <button 
+                            className={`w-full h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-[#F8F9FA] ${
+                              isToday 
+                                ? 'bg-[#007EF4] text-white shadow-md' 
+                                : dayObj.isCurrentMonth
+                                  ? 'text-[#374151] hover:text-[#007EF4]'
+                                  : 'text-[#9CA3AF]'
+                            }`}
+                            title={hasEvent ? `${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''} - Click to view` : 'Click to add event'}
+                            onClick={() => {
+                              if (hasEvent) {
+                                // Show events for this day
+                                const eventList = dayEvents.map(e => `${e.title} (${new Date(e.start_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })})`).join('\n');
+                                alert(`Events on ${dayObj.fullDate.toLocaleDateString()}:\n\n${eventList}`);
+                              } else {
+                                // Open event creation modal with pre-selected date
+                                setShowEventModal(true);
+                              }
+                            }}
+                          >
+                            {dayObj.date}
                           </button>
                           {hasEvent && (
-                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-                              <div className="w-1.5 h-1.5 bg-[#16D959] rounded-full"></div>
+                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                              {dayEvents.slice(0, 3).map((event, i) => {
+                                const eventColors = {
+                                  hearing: 'bg-red-500',
+                                  meeting: 'bg-blue-500',
+                                  deadline: 'bg-orange-500',
+                                  consultation: 'bg-green-500',
+                                  court_date: 'bg-purple-500',
+                                  other: 'bg-gray-500'
+                                };
+                                return (
+                                  <div 
+                                    key={i} 
+                                    className={`w-1.5 h-1.5 rounded-full ${eventColors[event.event_type] || eventColors.other}`}
+                                    title={event.title}
+                                  ></div>
+                                );
+                              })}
+                              {dayEvents.length > 3 && (
+                                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" title={`+${dayEvents.length - 3} more`}></div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -734,25 +781,60 @@ export default function LawyerDashboard() {
             
             {/* Upcoming Events */}
             <div className="mt-6 pt-6 border-t border-[#F8F9FA]">
-              <h3 className="text-sm font-semibold text-[#374151] mb-3">Upcoming Events</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-[#374151]">Upcoming Events</h3>
+                <button 
+                  onClick={() => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }}
+                  className="text-xs text-[#007EF4] hover:underline"
+                >
+                  View All
+                </button>
+              </div>
               <div className="space-y-2">
                 {upcomingEvents.length > 0 ? (
                   upcomingEvents.slice(0, 3).map((event, index) => {
-                    const colors = ['#007EF4', '#16D959', '#F5AB23'];
+                    const eventColors = {
+                      hearing: '#EF4444',
+                      meeting: '#3B82F6',
+                      deadline: '#F59E0B',
+                      consultation: '#10B981',
+                      court_date: '#8B5CF6',
+                      other: '#6B7280'
+                    };
+                    const eventDate = new Date(event.start_date_time);
                     return (
-                      <div key={event.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors">
-                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: colors[index % colors.length]}}></div>
+                      <div key={event.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors cursor-pointer">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{backgroundColor: eventColors[event.event_type] || eventColors.other}}
+                        ></div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-[#374151]">{event.title}</p>
-                          <p className="text-xs text-[#6B7280]">{event.date}, {event.time}</p>
+                          <p className="text-xs text-[#6B7280]">
+                            {eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, {eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                          {event.location && (
+                            <p className="text-xs text-[#9CA3AF]">{event.location}</p>
+                          )}
                         </div>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          event.event_type === 'hearing' ? 'bg-red-100 text-red-800' :
+                          event.event_type === 'meeting' ? 'bg-blue-100 text-blue-800' :
+                          event.event_type === 'deadline' ? 'bg-orange-100 text-orange-800' :
+                          event.event_type === 'consultation' ? 'bg-green-100 text-green-800' :
+                          event.event_type === 'court_date' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {event.event_type.replace('_', ' ')}
+                        </span>
                       </div>
                     );
                   })
                 ) : (
                   <div className="text-center text-[#737791] text-sm py-4">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 text-[#9CA3AF]" />
                     <p>No upcoming events</p>
-                    <p className="text-xs mt-1">Events from database will appear here</p>
+                    <p className="text-xs mt-1">Create events using Quick Actions</p>
                   </div>
                 )}
               </div>
@@ -834,11 +916,26 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Clients & Recent Payments */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Clients</h2>
-            <div className="space-y-3">
+        {/* All Clients & Recent Payments */}
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 md:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#181A2A] text-lg font-semibold">All Clients</h2>
+              <select 
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                onChange={(e) => {
+                  const limit = e.target.value === 'all' ? 100 : parseInt(e.target.value);
+                  api.get(`/clients?page=1&limit=${limit}`).then(res => {
+                    setClients(Array.isArray(res.data) ? res.data : (res.data?.clients || res.data?.data || []));
+                  }).catch(err => console.error('Error fetching clients:', err));
+                }}
+              >
+                <option value="3">Recent (3)</option>
+                <option value="10">Last 10</option>
+                <option value="all">All Clients</option>
+              </select>
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {loading ? (
                 <p className="text-center text-[#737791]">Loading...</p>
               ) : clients.length === 0 ? (
@@ -1015,7 +1112,10 @@ export default function LawyerDashboard() {
       <CreateEventModal 
         isOpen={showEventModal} 
         onClose={() => setShowEventModal(false)} 
-        onSuccess={fetchDashboardData}
+        onSuccess={() => {
+          fetchDashboardData();
+          refreshCalendarData();
+        }}
       />
       <CreateTaskModal 
         isOpen={showTaskModal} 

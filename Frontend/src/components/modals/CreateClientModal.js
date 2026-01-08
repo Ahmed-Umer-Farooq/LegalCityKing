@@ -28,9 +28,9 @@ export default function CreateClientModal({ isOpen, onClose, onSuccess }) {
       const response = await api.post('/clients', formData);
       if (response.data?.success) {
         alert('Client created successfully!');
+        setFormData({ name: '', email: '', username: '', address: '', city: '', state: '', zip_code: '', country: '', mobile_number: '' });
         onSuccess();
         onClose();
-        setFormData({ name: '', email: '', username: '', address: '', city: '', state: '', zip_code: '', country: '', mobile_number: '' });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create client');
