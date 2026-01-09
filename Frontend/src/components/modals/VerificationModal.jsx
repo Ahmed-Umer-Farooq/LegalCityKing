@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 
 export default function VerificationModal({ isOpen, onClose }) {
@@ -28,7 +29,7 @@ export default function VerificationModal({ isOpen, onClose }) {
     const combinedFiles = [...existingFiles, ...newFiles];
     
     if (combinedFiles.length > 5) {
-      alert('Maximum 5 files allowed. Please remove some files first.');
+      toast.error('Maximum 5 files allowed. Please remove some files first.');
       return;
     }
     
@@ -37,7 +38,7 @@ export default function VerificationModal({ isOpen, onClose }) {
 
   const submitVerification = async () => {
     if (documents.length === 0) {
-      alert('Please upload at least one document');
+      toast.error('Please upload at least one document');
       return;
     }
 
@@ -50,7 +51,7 @@ export default function VerificationModal({ isOpen, onClose }) {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Verification documents submitted successfully!');
+      toast.success('Verification documents submitted successfully!');
       fetchVerificationStatus();
       setDocuments([]);
       // Reset file input
@@ -59,7 +60,7 @@ export default function VerificationModal({ isOpen, onClose }) {
     } catch (error) {
       console.error('Error submitting verification:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit verification documents';
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

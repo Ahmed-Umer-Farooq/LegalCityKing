@@ -70,7 +70,7 @@ const ForgotPasswordForm = ({ onSwitchToLogin }) => {
       setLoading(true);
       try {
         await api.post('/auth/forgot-password-otp', { email });
-        toast.error('Password reset OTP sent to your email!');
+        toast.success('Password reset OTP sent to your email!');
         setShowOtpForm(true);
         setCountdown(60); // 60 second countdown
       } catch (error) {
@@ -90,7 +90,7 @@ const ForgotPasswordForm = ({ onSwitchToLogin }) => {
           otp,
           newPassword
         });
-        toast.error('Password reset successfully!');
+        toast.success('Password reset successfully!');
         setTimeout(() => {
           onSwitchToLogin();
         }, 2000);
@@ -108,7 +108,7 @@ const ForgotPasswordForm = ({ onSwitchToLogin }) => {
     setResendLoading(true);
     try {
       await api.post('/auth/forgot-password-otp', { email });
-      toast.error('OTP sent to your email!');
+      toast.success('OTP sent to your email!');
       setCountdown(60);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send OTP');

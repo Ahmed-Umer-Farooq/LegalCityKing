@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 
 const ResetPassword = ({ onResetSuccess }) => {
@@ -55,7 +56,7 @@ const ResetPassword = ({ onResetSuccess }) => {
           token,
           newPassword: formData.newPassword,
         });
-        alert('Password reset successfully! You can now log in with your new password.');
+        toast.success('Password reset successfully! You can now log in with your new password.');
         onResetSuccess();
       } catch (error) {
         setErrors({ general: error.response?.data?.message || 'Failed to reset password' });

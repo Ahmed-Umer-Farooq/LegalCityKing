@@ -12,7 +12,12 @@ const {
   makeAdmin,
   removeAdmin,
   getAllChatMessages,
-  getActivityLogs
+  getActivityLogs,
+  getAllReviews,
+  getAllEndorsements,
+  deleteReview,
+  deleteEndorsement,
+  getReviewStats
 } = require('../controllers/adminController');
 const { requireAdmin } = require('../utils/middleware');
 
@@ -273,5 +278,14 @@ router.put('/platform-reviews/:id/status', async (req, res) => {
     res.status(500).json({ error: 'Failed to update review status' });
   }
 });
+
+// Lawyer Reviews Management
+router.get('/reviews', requireAdmin, getAllReviews);
+router.get('/reviews/stats', requireAdmin, getReviewStats);
+router.delete('/reviews/:id', requireAdmin, deleteReview);
+
+// Lawyer Endorsements Management
+router.get('/endorsements', requireAdmin, getAllEndorsements);
+router.delete('/endorsements/:id', requireAdmin, deleteEndorsement);
 
 module.exports = router;

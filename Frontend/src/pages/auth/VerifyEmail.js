@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 import OtpInput from '../../components/OtpInput';
 
@@ -42,7 +43,7 @@ const VerifyEmail = ({ email, onVerified, onSwitchToLogin }) => {
       setLoading(true);
       try {
         await api.post('/auth/verify-email', { email, code });
-        alert('Email verified successfully! You can now log in.');
+        toast.success('Email verified successfully! You can now log in.');
         setTimeout(() => {
           onVerified();
         }, 2000);
@@ -60,10 +61,10 @@ const VerifyEmail = ({ email, onVerified, onSwitchToLogin }) => {
     setResendLoading(true);
     try {
       await api.post('/auth/send-otp', { email });
-      alert('OTP sent to your email!');
+      toast.success('OTP sent to your email!');
       setCountdown(60); // 60 second countdown
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to send OTP');
+      toast.error(error.response?.data?.message || 'Failed to send OTP');
     } finally {
       setResendLoading(false);
     }

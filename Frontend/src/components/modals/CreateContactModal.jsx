@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 
 const CreateContactModal = ({ isOpen, onClose, onSuccess }) => {
@@ -20,7 +21,7 @@ const CreateContactModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/contacts', formData);
-      alert('Contact created successfully!');
+      toast.success('Contact created successfully!');
       setFormData({
         name: '',
         email: '',
@@ -33,7 +34,7 @@ const CreateContactModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create contact');
+      toast.error(error.response?.data?.error || 'Failed to create contact');
     } finally {
       setLoading(false);
     }

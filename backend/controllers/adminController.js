@@ -447,6 +447,165 @@ const getActivityLogs = async (req, res) => {
   }
 };
 
+const getAllReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = db('lawyer_reviews')
+      .leftJoin('users', 'lawyer_reviews.user_id', 'users.id')
+      .leftJoin('lawyers', 'lawyer_reviews.lawyer_id', 'lawyers.id')
+      .select(
+        'lawyer_reviews.*',
+        'users.name as user_name',
+        'users.email as user_email',
+        'lawyers.name as lawyer_name',
+        'lawyers.email as lawyer_email'
+      );
+
+    if (search) {
+      query = query.where(function() {
+        this.where('users.name', 'like', `%${search}%`)
+            .orWhere('lawyers.name', 'like', `%${search}%`)
+            .orWhere('lawyer_reviews.review_text', 'like', `%${search}%`);
+      });
+    }
+
+    const total = await query.clone().count('lawyer_reviews.id as count').first();
+    const reviews = await query
+      .orderBy('lawyer_reviews.created_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    res.json({
+      reviews,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total.count,
+        totalPages: Math.ceil(total.count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+};
+
+const getAllEndorsements = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = db('lawyer_endorsements')
+      .leftJoin('lawyers as endorser', 'lawyer_endorsements.endorser_lawyer_id', 'endorser.id')
+      .leftJoin('lawyers as endorsed', 'lawyer_endorsements.endorsed_lawyer_id', 'endorsed.id')
+      .select(
+        'lawyer_endorsements.*',
+        'endorser.name as endorser_name',
+        'endorser.email as endorser_email',
+        'endorsed.name as endorsed_name',
+        'endorsed.email as endorsed_email'
+      );
+
+    if (search) {
+      query = query.where(function() {
+        this.where('endorser.name', 'like', `%${search}%`)
+            .orWhere('endorsed.name', 'like', `%${search}%`)
+            .orWhere('lawyer_endorsements.endorsement_text', 'like', `%${search}%`)
+            .orWhere('lawyer_endorsements.relationship', 'like', `%${search}%`);
+      });
+    }
+
+    const total = await query.clone().count('lawyer_endorsements.id as count').first();
+    const endorsements = await query
+      .orderBy('lawyer_endorsements.created_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    res.json({
+      endorsements,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total.count,
+        totalPages: Math.ceil(total.count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching endorsements:', error);
+    res.status(500).json({ error: 'Failed to fetch endorsements' });
+  }
+};
+
+const deleteReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const deleted = await db('lawyer_reviews').where('id', id).del();
+    
+    if (deleted) {
+      res.json({ message: 'Review deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Review not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+};
+
+const deleteEndorsement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const deleted = await db('lawyer_endorsements').where('id', id).del();
+    
+    if (deleted) {
+      res.json({ message: 'Endorsement deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Endorsement not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting endorsement:', error);
+    res.status(500).json({ error: 'Failed to delete endorsement' });
+  }
+};
+
+const getReviewStats = async (req, res) => {
+  try {
+    const [totalReviews, totalEndorsements, avgRating, recentReviews] = await Promise.all([
+      db('lawyer_reviews').count('id as count').first(),
+      db('lawyer_endorsements').count('id as count').first(),
+      db('lawyer_reviews').avg('rating as average').first(),
+      db('lawyer_reviews')
+        .leftJoin('users', 'lawyer_reviews.user_id', 'users.id')
+        .leftJoin('lawyers', 'lawyer_reviews.lawyer_id', 'lawyers.id')
+        .select(
+          'lawyer_reviews.id',
+          'lawyer_reviews.rating',
+          'lawyer_reviews.created_at',
+          'users.name as user_name',
+          'lawyers.name as lawyer_name'
+        )
+        .orderBy('lawyer_reviews.created_at', 'desc')
+        .limit(5)
+    ]);
+
+    res.json({
+      stats: {
+        totalReviews: totalReviews.count,
+        totalEndorsements: totalEndorsements.count,
+        averageRating: avgRating.average ? parseFloat(avgRating.average).toFixed(1) : '0.0'
+      },
+      recentReviews
+    });
+  } catch (error) {
+    console.error('Error fetching review stats:', error);
+    res.status(500).json({ error: 'Failed to fetch review statistics' });
+  }
+};
+
 module.exports = {
   getStats,
   getUsers,
@@ -458,5 +617,10 @@ module.exports = {
   makeAdmin,
   removeAdmin,
   getAllChatMessages,
-  getActivityLogs
+  getActivityLogs,
+  getAllReviews,
+  getAllEndorsements,
+  deleteReview,
+  deleteEndorsement,
+  getReviewStats
 };

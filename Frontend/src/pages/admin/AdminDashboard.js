@@ -188,6 +188,10 @@ const AdminDashboard = () => {
       await fetchActivityLogs();
     } else if (activeTab === 'blogs') {
       await fetchBlogs();
+    } else if (activeTab === 'reviews') {
+      await fetchLawyerReviews();
+      await fetchLawyerEndorsements();
+      await fetchReviewStats();
     }
     setRefreshing(false);
   };
@@ -1319,6 +1323,35 @@ const AdminDashboard = () => {
   // Lawyer Reviews state
   const [lawyerReviews, setLawyerReviews] = useState([]);
   const [loadingLawyerReviews, setLoadingLawyerReviews] = useState(false);
+  const [reviewsSearch, setReviewsSearch] = useState('');
+  const [reviewsPagination, setReviewsPagination] = useState({ page: 1, limit: 20, total: 0 });
+  const [reviewStats, setReviewStats] = useState({ totalReviews: 0, totalEndorsements: 0, averageRating: '0.0' });
+  
+  // Lawyer Endorsements state
+  const [lawyerEndorsements, setLawyerEndorsements] = useState([]);
+  const [loadingEndorsements, setLoadingEndorsements] = useState(false);
+  const [endorsementsSearch, setEndorsementsSearch] = useState('');
+  const [endorsementsPagination, setEndorsementsPagination] = useState({ page: 1, limit: 20, total: 0 });
+  const [activeReviewsTab, setActiveReviewsTab] = useState('reviews'); // 'reviews' or 'endorsements'
+
+  // Auto-search when filters change
+  useEffect(() => {
+    if (activeTab === 'reviews' && activeReviewsTab === 'reviews') {
+      const timeoutId = setTimeout(() => {
+        fetchLawyerReviews();
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [reviewsSearch, reviewsPagination.page, activeTab, activeReviewsTab]);
+  
+  useEffect(() => {
+    if (activeTab === 'reviews' && activeReviewsTab === 'endorsements') {
+      const timeoutId = setTimeout(() => {
+        fetchLawyerEndorsements();
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [endorsementsSearch, endorsementsPagination.page, activeTab, activeReviewsTab]);
 
   const fetchAllMessages = async () => {
     setLoadingMessages(true);
@@ -1342,19 +1375,93 @@ const AdminDashboard = () => {
       initializeCallTracking();
     } else if (activeTab === 'reviews') {
       fetchLawyerReviews();
+      fetchLawyerEndorsements();
+      fetchReviewStats();
     }
   }, [activeTab]);
   
   const fetchLawyerReviews = async () => {
     setLoadingLawyerReviews(true);
     try {
-      const response = await api.get('/admin/lawyer-reviews');
-      setLawyerReviews(response.data || []);
+      const response = await api.get('/admin/reviews', {
+        params: {
+          page: reviewsPagination.page,
+          limit: reviewsPagination.limit,
+          search: reviewsSearch || undefined
+        }
+      });
+      
+      setLawyerReviews(response.data?.reviews || []);
+      setReviewsPagination(prev => ({
+        ...prev,
+        total: response.data?.pagination?.total || 0,
+        totalPages: response.data?.pagination?.totalPages || 1
+      }));
     } catch (error) {
       console.error('Error fetching lawyer reviews:', error);
       setLawyerReviews([]);
     }
     setLoadingLawyerReviews(false);
+  };
+  
+  const fetchLawyerEndorsements = async () => {
+    setLoadingEndorsements(true);
+    try {
+      const response = await api.get('/admin/endorsements', {
+        params: {
+          page: endorsementsPagination.page,
+          limit: endorsementsPagination.limit,
+          search: endorsementsSearch || undefined
+        }
+      });
+      
+      setLawyerEndorsements(response.data?.endorsements || []);
+      setEndorsementsPagination(prev => ({
+        ...prev,
+        total: response.data?.pagination?.total || 0,
+        totalPages: response.data?.pagination?.totalPages || 1
+      }));
+    } catch (error) {
+      console.error('Error fetching lawyer endorsements:', error);
+      setLawyerEndorsements([]);
+    }
+    setLoadingEndorsements(false);
+  };
+  
+  const fetchReviewStats = async () => {
+    try {
+      const response = await api.get('/admin/reviews/stats');
+      setReviewStats(response.data?.stats || { totalReviews: 0, totalEndorsements: 0, averageRating: '0.0' });
+    } catch (error) {
+      console.error('Error fetching review stats:', error);
+      setReviewStats({ totalReviews: 0, totalEndorsements: 0, averageRating: '0.0' });
+    }
+  };
+  
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    
+    try {
+      await api.delete(`/admin/reviews/${reviewId}`);
+      showToast.success('Review deleted successfully');
+      fetchLawyerReviews();
+      fetchReviewStats();
+    } catch (error) {
+      showToast.error('Failed to delete review');
+    }
+  };
+  
+  const handleDeleteEndorsement = async (endorsementId) => {
+    if (!window.confirm('Are you sure you want to delete this endorsement?')) return;
+    
+    try {
+      await api.delete(`/admin/endorsements/${endorsementId}`);
+      showToast.success('Endorsement deleted successfully');
+      fetchLawyerEndorsements();
+      fetchReviewStats();
+    } catch (error) {
+      showToast.error('Failed to delete endorsement');
+    }
   };
   
 
@@ -1985,6 +2092,17 @@ const AdminDashboard = () => {
               <CheckCircle className="w-5 h-5" />
               <span className="text-sm">Verification</span>
             </button>
+            <button
+              onClick={() => handleTabChange('reviews')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                activeTab === 'reviews'
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Star className="w-5 h-5" />
+              <span className="text-sm">Reviews</span>
+            </button>
           </nav>
 
 
@@ -2103,82 +2221,356 @@ const AdminDashboard = () => {
           </Suspense>
         )}
         {activeTab === 'reviews' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-                    <Star className="w-5 h-5 text-white" />
+          <div className="space-y-6">
+            {/* Review Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                        <Star className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-600">Total Reviews</span>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{reviewStats.totalReviews}</div>
+                    <div className="text-xs text-gray-500 font-medium">User reviews for lawyers</div>
                   </div>
-                  Reviews ({lawyerReviews.length})
-                </h3>
-                <button onClick={fetchLawyerReviews} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm font-medium flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh
-                </button>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-600">Endorsements</span>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{reviewStats.totalEndorsements}</div>
+                    <div className="text-xs text-gray-500 font-medium">Lawyer endorsements</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-md">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-600">Average Rating</span>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{reviewStats.averageRating}</div>
+                    <div className="flex items-center text-xs text-gray-500 font-medium">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-3 h-3 ${i < Math.floor(parseFloat(reviewStats.averageRating)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lawyer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Review</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {loadingLawyerReviews ? (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                        Loading lawyer reviews...
-                      </td>
-                    </tr>
-                  ) : lawyerReviews.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                        No lawyer reviews found
-                      </td>
-                    </tr>
-                  ) : (
-                    lawyerReviews.map(review => (
-                      <tr key={review.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-900">{review.id}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{review.user_name || 'Anonymous'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{review.lawyer_name || 'Unknown'}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                            ))}
-                            <span className="ml-2 text-sm text-gray-600">({review.rating})</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-md truncate">{review.review_text || 'No review text'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <button
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this review?')) {
-                                // Add delete functionality here
-                                console.log('Delete review', review.id);
-                              }
+            
+            {/* Tab Navigation */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => setActiveReviewsTab('reviews')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      activeReviewsTab === 'reviews'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    User Reviews ({reviewStats.totalReviews})
+                  </button>
+                  <button
+                    onClick={() => setActiveReviewsTab('endorsements')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      activeReviewsTab === 'endorsements'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Lawyer Endorsements ({reviewStats.totalEndorsements})
+                  </button>
+                </div>
+              </div>
+              
+              {/* Reviews Tab Content */}
+              {activeReviewsTab === 'reviews' && (
+                <div>
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">User Reviews</h3>
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder="Search reviews..."
+                            value={reviewsSearch}
+                            onChange={(e) => {
+                              setReviewsSearch(e.target.value);
+                              setReviewsPagination(prev => ({ ...prev, page: 1 }));
                             }}
-                            className="p-1 text-red-600 hover:text-red-800"
-                            title="Delete Review"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <button
+                          onClick={fetchLawyerReviews}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Refresh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lawyer</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Review</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {loadingLawyerReviews ? (
+                          <tr>
+                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                              Loading reviews...
+                            </td>
+                          </tr>
+                        ) : lawyerReviews.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                              No reviews found
+                            </td>
+                          </tr>
+                        ) : (
+                          lawyerReviews.map(review => (
+                            <tr key={review.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 text-sm text-gray-900">{review.id}</td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                <div>
+                                  <div className="font-medium">{review.user_name || 'Anonymous'}</div>
+                                  <div className="text-xs text-gray-500">{review.user_email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                <div>
+                                  <div className="font-medium">{review.lawyer_name || 'Unknown'}</div>
+                                  <div className="text-xs text-gray-500">{review.lawyer_email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                  ))}
+                                  <span className="ml-2 text-sm text-gray-600">({review.rating})</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
+                                <div className="truncate" title={review.review_text}>
+                                  {review.review_text || 'No review text'}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {new Date(review.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm">
+                                <button
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  className="p-1 text-red-600 hover:text-red-800"
+                                  title="Delete Review"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Reviews Pagination */}
+                  {reviewsPagination.totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                      <p className="text-sm text-gray-500">
+                        Showing {((reviewsPagination.page - 1) * reviewsPagination.limit) + 1} to{' '}
+                        {Math.min(reviewsPagination.page * reviewsPagination.limit, reviewsPagination.total)} of{' '}
+                        {reviewsPagination.total} reviews
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setReviewsPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                          disabled={reviewsPagination.page === 1}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm text-gray-700">
+                          Page {reviewsPagination.page} of {reviewsPagination.totalPages}
+                        </span>
+                        <button
+                          onClick={() => setReviewsPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                          disabled={reviewsPagination.page >= reviewsPagination.totalPages}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              )}
+              
+              {/* Endorsements Tab Content */}
+              {activeReviewsTab === 'endorsements' && (
+                <div>
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">Lawyer Endorsements</h3>
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder="Search endorsements..."
+                            value={endorsementsSearch}
+                            onChange={(e) => {
+                              setEndorsementsSearch(e.target.value);
+                              setEndorsementsPagination(prev => ({ ...prev, page: 1 }));
+                            }}
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <button
+                          onClick={fetchLawyerEndorsements}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Refresh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Endorser</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Endorsed</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Relationship</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Endorsement</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {loadingEndorsements ? (
+                          <tr>
+                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                              Loading endorsements...
+                            </td>
+                          </tr>
+                        ) : lawyerEndorsements.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                              No endorsements found
+                            </td>
+                          </tr>
+                        ) : (
+                          lawyerEndorsements.map(endorsement => (
+                            <tr key={endorsement.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 text-sm text-gray-900">{endorsement.id}</td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                <div>
+                                  <div className="font-medium">{endorsement.endorser_name || 'Unknown'}</div>
+                                  <div className="text-xs text-gray-500">{endorsement.endorser_email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                <div>
+                                  <div className="font-medium">{endorsement.endorsed_name || 'Unknown'}</div>
+                                  <div className="text-xs text-gray-500">{endorsement.endorsed_email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                  {endorsement.relationship}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500 max-w-md">
+                                <div className="truncate" title={endorsement.endorsement_text}>
+                                  {endorsement.endorsement_text}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {new Date(endorsement.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm">
+                                <button
+                                  onClick={() => handleDeleteEndorsement(endorsement.id)}
+                                  className="p-1 text-red-600 hover:text-red-800"
+                                  title="Delete Endorsement"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Endorsements Pagination */}
+                  {endorsementsPagination.totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                      <p className="text-sm text-gray-500">
+                        Showing {((endorsementsPagination.page - 1) * endorsementsPagination.limit) + 1} to{' '}
+                        {Math.min(endorsementsPagination.page * endorsementsPagination.limit, endorsementsPagination.total)} of{' '}
+                        {endorsementsPagination.total} endorsements
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setEndorsementsPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                          disabled={endorsementsPagination.page === 1}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm text-gray-700">
+                          Page {endorsementsPagination.page} of {endorsementsPagination.totalPages}
+                        </span>
+                        <button
+                          onClick={() => setEndorsementsPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                          disabled={endorsementsPagination.page >= endorsementsPagination.totalPages}
+                          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
