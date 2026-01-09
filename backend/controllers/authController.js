@@ -58,6 +58,14 @@ const login = async (req, res) => {
     if (!user && email && !registration_id) {
       user = await db('users').where({ email }).first();
       if (user) {
+        // Prevent clients from logging in
+        if (user.role === 'client') {
+          return res.status(401).json({ message: 'Client accounts cannot login directly. Please contact your lawyer.' });
+        }
+        // Prevent inactive accounts from logging in
+        if (user.is_active === 0) {
+          return res.status(401).json({ message: 'Account is inactive. Please contact support.' });
+        }
         role = 'user';
       }
     }

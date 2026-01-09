@@ -10,7 +10,14 @@ const getDashboardStats = async (req, res) => {
     // Get current month stats
     const [activeCases, totalClients, monthlyRevenue, upcomingHearings] = await Promise.all([
       db('cases').where({ lawyer_id: lawyerId, status: 'active' }).count('id as count').first(),
-      db('cases').where('lawyer_id', lawyerId).countDistinct('client_id as count').first(),
+      db('users')
+        .leftJoin('cases', 'users.id', 'cases.client_id')
+        .where(function() {
+          this.where('cases.lawyer_id', lawyerId)
+              .orWhere('users.created_by_lawyer', lawyerId);
+        })
+        .where('users.role', 'client')
+        .countDistinct('users.id as count').first(),
       db('invoices').where({ lawyer_id: lawyerId, status: 'paid' })
         .whereBetween('created_at', [thisMonth, currentDate])
         .sum('amount as total').first(),
@@ -148,23 +155,34 @@ const getClients = async (req, res) => {
     const lawyerId = req.user.id;
     const { search } = req.query;
     
-    // Get unique client IDs from cases
-    let query = db('cases')
-      .select('client_id')
-      .count('id as casesCount')
-      .where('lawyer_id', lawyerId)
-      .whereNotNull('client_id')
-      .groupBy('client_id');
+    // Get clients created by this lawyer or associated through cases
+    let query = db('users')
+      .select('users.*')
+      .leftJoin('cases', 'users.id', 'cases.client_id')
+      .where(function() {
+        this.where('cases.lawyer_id', lawyerId)
+            .orWhere('users.created_by_lawyer', lawyerId);
+      })
+      .where('users.role', 'client')
+      .groupBy('users.id')
+      .orderBy('users.created_at', 'desc')
+      .limit(3);
 
-    const clientCases = await query;
+    if (search) {
+      query = query.where(function() {
+        this.where('users.name', 'like', `%${search}%`)
+            .orWhere('users.email', 'like', `%${search}%`);
+      });
+    }
+
+    const clients = await query;
     
-    // For now, create mock client data since we don't have actual client records
-    const processedClients = clientCases.map((client, index) => ({
-      id: client.client_id || index + 1,
-      name: `Client ${client.client_id || index + 1}`,
-      email: `client${client.client_id || index + 1}@email.com`,
-      phone: `(555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-      cases: parseInt(client.casesCount)
+    const processedClients = clients.map(client => ({
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      phone: client.mobile_number || client.phone,
+      cases: 0 // Could add case count if needed
     }));
 
     res.json(processedClients);

@@ -3,7 +3,8 @@ const db = require('../db');
 const getAllContacts = async (req, res) => {
   try {
     const lawyerId = req.user.id;
-    const { page = 1, limit = 10, type, case_id } = req.query;
+    console.log('Current lawyer ID:', lawyerId);
+    const { page = 1, limit = 1000, type, case_id } = req.query;
     const offset = (page - 1) * limit;
 
     let query = db('contacts')
@@ -15,6 +16,7 @@ const getAllContacts = async (req, res) => {
     if (case_id) query = query.where('contacts.case_id', case_id);
 
     const contacts = await query.orderBy('contacts.created_at', 'desc').limit(limit).offset(offset);
+    console.log('Found contacts:', contacts.length);
     const total = await db('contacts').where({ created_by: lawyerId }).count('id as count').first();
 
     res.json({
@@ -38,6 +40,19 @@ const createContact = async (req, res) => {
       if (!caseExists) {
         return res.status(400).json({ success: false, error: 'Selected case not found or access denied' });
       }
+    }
+
+    // If type is 'client', create in users table as well
+    if (type === 'client') {
+      const [userId] = await db('users').insert({
+        name,
+        email,
+        phone,
+        role: 'client',
+        created_by_lawyer: lawyerId,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
     }
 
     const [contactId] = await db('contacts').insert({

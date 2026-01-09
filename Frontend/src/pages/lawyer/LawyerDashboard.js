@@ -19,6 +19,7 @@ const TrackTimeModal = React.lazy(() => import('../../components/modals/TrackTim
 const AddExpenseModal = React.lazy(() => import('../../components/modals/AddExpenseModal').catch(() => ({ default: () => null })));
 const CreateInvoiceModal = React.lazy(() => import('../../components/modals/CreateInvoiceModal').catch(() => ({ default: () => null })));
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
+const ViewClientModal = React.lazy(() => import('../../components/modals/ViewClientModal').catch(() => ({ default: () => null })));
 const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
 const CalendarPage = React.lazy(() => import('./CalendarPage.jsx').catch(() => ({ default: () => <div>Calendar loading...</div> })));
@@ -33,10 +34,6 @@ const ProfileManagement = React.lazy(() => import('./ProfileManagement').catch((
 const PaymentRecords = React.lazy(() => import('./PaymentRecords').catch(() => ({ default: () => <div>Payment Records loading...</div> })));
 
 export default function LawyerDashboard() {
-  const [showCaseForm, setShowCaseForm] = useState(false);
-  const [caseTitle, setCaseTitle] = useState('');
-  const [caseType, setCaseType] = useState('civil');
-  const [caseClient, setCaseClient] = useState('');
   const [cases, setCases] = useState([]);
   const [stats, setStats] = useState({ 
     activeCases: 0, 
@@ -66,6 +63,8 @@ export default function LawyerDashboard() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showViewClientModal, setShowViewClientModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeNavItem, setActiveNavItem] = useState(searchParams.get('tab') || 'home');
   const [currentUser, setCurrentUser] = useState(null);
@@ -214,28 +213,23 @@ export default function LawyerDashboard() {
     }
   };
 
-  const addCase = async () => {
-    if (!caseTitle.trim()) return;
-
+  const updateCaseStatus = async (caseId, newStatus) => {
     try {
-      const response = await api.post('/lawyer/cases', {
-        title: caseTitle.trim(),
-        type: caseType,
-        client: caseClient.trim() || 'Unknown Client',
-        description: caseClient.trim() ? `Case for ${caseClient.trim()}` : ''
-      });
-      
-      if (response.data?.message) {
-        setShowCaseForm(false);
-        setCaseTitle('');
-        setCaseClient('');
-        setCaseType('civil');
-        fetchDashboardData();
-        showToast.success('Case created successfully');
-      }
+      await api.put(`/cases/${caseId}`, { status: newStatus });
+      showToast.success(`Case ${newStatus === 'closed' ? 'closed' : 'reopened'} successfully`);
+      fetchDashboardData();
     } catch (error) {
-      console.error('Error adding case:', error);
-      showToast.error('Failed to create case');
+      showToast.error('Failed to update case status');
+    }
+  };
+
+  const deleteCase = async (caseId) => {
+    try {
+      await api.delete(`/cases/${caseId}`);
+      showToast.success('Case deleted successfully');
+      fetchDashboardData();
+    } catch (error) {
+      showToast.error('Failed to delete case');
     }
   };
 
@@ -847,53 +841,16 @@ export default function LawyerDashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[#181A2A] text-lg font-semibold">Cases Management</h2>
             <button 
-              onClick={() => setShowCaseForm(!showCaseForm)} 
+              onClick={() => setShowCaseModal(true)} 
               className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
-              Add Case
+              New Matter
             </button>
           </div>
-
-          {showCaseForm && (
-            <div className="mb-6 p-4 border-2 border-[#DCE8FF] rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <input 
-                  value={caseTitle}
-                  onChange={(e) => setCaseTitle(e.target.value)}
-                  placeholder="Case Title" 
-                  className="px-4 py-2 border border-[#DCE8FF] rounded-lg" 
-                />
-                <input 
-                  value={caseClient}
-                  onChange={(e) => setCaseClient(e.target.value)}
-                  placeholder="Client Name (Optional)" 
-                  className="px-4 py-2 border border-[#DCE8FF] rounded-lg" 
-                />
-                <select 
-                  value={caseType}
-                  onChange={(e) => setCaseType(e.target.value)}
-                  className="px-4 py-2 border border-[#DCE8FF] rounded-lg"
-                >
-                  <option value="civil">Civil</option>
-                  <option value="criminal">Criminal</option>
-                  <option value="family">Family</option>
-                  <option value="corporate">Corporate</option>
-                  <option value="immigration">Immigration</option>
-                  <option value="personal_injury">Personal Injury</option>
-                  <option value="real_estate">Real Estate</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={addCase} className="bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] transition-colors">Save</button>
-                <button onClick={() => setShowCaseForm(false)} className="bg-[#F8F9FA] text-[#737791] px-4 py-2 rounded-lg hover:bg-[#E5E7EB] transition-colors">Cancel</button>
-              </div>
-            </div>
-          )}
 
           <div className="space-y-3">
             {loading ? (
@@ -905,11 +862,30 @@ export default function LawyerDashboard() {
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border-2 border-[#DCE8FF] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                   <div>
                     <h3 className="text-[#181A2A] text-base font-semibold">{caseItem.title}</h3>
-                    <p className="text-[#737791] text-sm">{caseItem.case_number || `Case #${caseItem.id}`} - {caseItem.type} - Filed: {caseItem.filing_date || new Date(caseItem.created_at).toLocaleDateString()}</p>
+                    <div className="flex items-center gap-4 text-[#737791] text-sm mt-1">
+                      <span className="font-medium">Case ID: {caseItem.case_number || `CASE-${caseItem.id}`}</span>
+                      <span>Type: {caseItem.type?.charAt(0).toUpperCase() + caseItem.type?.slice(1) || 'Unknown'}</span>
+                      <span>Filed: {caseItem.filing_date ? new Date(caseItem.filing_date).toLocaleDateString() : new Date(caseItem.created_at).toLocaleDateString()}</span>
+                      {caseItem.estimated_value && <span>Value: ${Number(caseItem.estimated_value).toLocaleString()}</span>}
+                    </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColors(caseItem.status)}`}>
-                    {caseItem.status.charAt(0).toUpperCase() + caseItem.status.slice(1)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColors(caseItem.status)}`}>
+                      {caseItem.status?.charAt(0).toUpperCase() + caseItem.status?.slice(1) || 'Active'}
+                    </span>
+                    <button 
+                      onClick={() => updateCaseStatus(caseItem.id, caseItem.status === 'active' ? 'closed' : 'active')}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      {caseItem.status === 'active' ? 'Close' : 'Reopen'}
+                    </button>
+                    <button 
+                      onClick={() => deleteCase(caseItem.id)}
+                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -952,7 +928,15 @@ export default function LawyerDashboard() {
                         <p className="text-[#737791] text-sm">{client.email}</p>
                       </div>
                     </div>
-                    <button className="text-[#0086CB] text-sm font-medium hover:underline cursor-pointer">View</button>
+                    <button 
+                      onClick={() => {
+                        setSelectedClient(client);
+                        setShowViewClientModal(true);
+                      }}
+                      className="text-[#0086CB] text-sm font-medium hover:underline cursor-pointer"
+                    >
+                      View
+                    </button>
                   </div>
                 ))
               )}
@@ -1166,6 +1150,14 @@ export default function LawyerDashboard() {
         isOpen={showPaymentModal} 
         onClose={() => setShowPaymentModal(false)} 
         onSuccess={fetchDashboardData}
+      />
+      <ViewClientModal 
+        isOpen={showViewClientModal} 
+        onClose={() => {
+          setShowViewClientModal(false);
+          setSelectedClient(null);
+        }} 
+        client={selectedClient}
       />
       <VerificationModal 
         isOpen={showVerificationModal} 

@@ -1,24 +1,21 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateMatterModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: '',
-    client_id: '',
-    type: '',
-    filing_date: '',
-    estimated_value: '',
-    next_hearing_date: ''
+    type: 'civil',
+    filing_date: new Date().toISOString().split('T')[0]
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.status || !formData.client_id) {
-      alert('Title, description, status, and client ID are required');
+    if (!formData.title) {
+      showToast.error('Title is required');
       return;
     }
 
@@ -26,13 +23,13 @@ export default function CreateMatterModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/cases', formData);
       if (response.data?.success) {
-        alert('Matter created successfully!');
+        showToast.success('Matter created successfully!');
         onSuccess();
         onClose();
-        setFormData({ title: '', description: '', status: '', client_id: '', type: '', filing_date: '', estimated_value: '', next_hearing_date: '' });
+        setFormData({ title: '', description: '', type: 'civil', filing_date: new Date().toISOString().split('T')[0] });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create matter');
+      showToast.error(error.response?.data?.error || 'Failed to create matter');
     } finally {
       setLoading(false);
     }
@@ -62,38 +59,12 @@ export default function CreateMatterModal({ isOpen, onClose, onSuccess }) {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 rows="3"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="closed">Closed</option>
-                <option value="on_hold">On Hold</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
-              <input
-                type="text"
-                value={formData.client_id}
-                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
               />
             </div>
             <div>
@@ -103,13 +74,13 @@ export default function CreateMatterModal({ isOpen, onClose, onSuccess }) {
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Type</option>
-                <option value="litigation">Litigation</option>
-                <option value="corporate">Corporate</option>
-                <option value="family">Family</option>
+                <option value="civil">Civil</option>
                 <option value="criminal">Criminal</option>
-                <option value="real_estate">Real Estate</option>
+                <option value="family">Family</option>
+                <option value="corporate">Corporate</option>
                 <option value="immigration">Immigration</option>
+                <option value="personal_injury">Personal Injury</option>
+                <option value="real_estate">Real Estate</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -119,25 +90,6 @@ export default function CreateMatterModal({ isOpen, onClose, onSuccess }) {
                 type="date"
                 value={formData.filing_date}
                 onChange={(e) => setFormData({ ...formData, filing_date: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Value</label>
-              <input
-                type="number"
-                value={formData.estimated_value}
-                onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Next Hearing Date</label>
-              <input
-                type="datetime-local"
-                value={formData.next_hearing_date}
-                onChange={(e) => setFormData({ ...formData, next_hearing_date: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>

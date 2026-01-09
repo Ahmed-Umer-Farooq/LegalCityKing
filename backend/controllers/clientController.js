@@ -6,18 +6,27 @@ const getAllClients = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
+    // Get clients who either have cases with this lawyer OR were created by this lawyer
     const clients = await db('users')
       .select('users.*')
-      .join('cases', 'users.id', 'cases.client_id')
-      .where('cases.lawyer_id', lawyerId)
+      .leftJoin('cases', 'users.id', 'cases.client_id')
+      .where(function() {
+        this.where('cases.lawyer_id', lawyerId)
+            .orWhere('users.created_by_lawyer', lawyerId);
+      })
+      .where('users.role', 'client')
       .groupBy('users.id')
-      .orderBy('users.name')
+      .orderBy('users.created_at', 'desc')
       .limit(limit)
       .offset(offset);
 
     const total = await db('users')
-      .join('cases', 'users.id', 'cases.client_id')
-      .where('cases.lawyer_id', lawyerId)
+      .leftJoin('cases', 'users.id', 'cases.client_id')
+      .where(function() {
+        this.where('cases.lawyer_id', lawyerId)
+            .orWhere('users.created_by_lawyer', lawyerId);
+      })
+      .where('users.role', 'client')
       .countDistinct('users.id as count')
       .first();
 
@@ -52,6 +61,7 @@ const getClientById = async (req, res) => {
 const createClient = async (req, res) => {
   try {
     const { name, email, username, address, city, state, zip_code, country, mobile_number } = req.body;
+    const lawyerId = req.user.id;
 
     // Check if user already exists
     const existingUser = await db('users').where({ email }).first();
@@ -63,14 +73,18 @@ const createClient = async (req, res) => {
       name,
       email,
       username,
-      password: 'temp_password', // Client will need to set password
+      mobile_number,
       address,
       city,
       state,
       zip_code,
       country,
-      mobile_number,
-      email_verified: 0
+      role: 'client',
+      created_by_lawyer: lawyerId,
+      email_verified: 0,
+      is_active: 0, // Clients can't login
+      created_at: new Date(),
+      updated_at: new Date()
     });
 
     const newClient = await db('users').where({ id: clientId }).first();
