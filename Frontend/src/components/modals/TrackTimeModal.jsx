@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const TrackTimeModal = ({ isOpen, onClose, onSuccess }) => {
@@ -18,7 +19,7 @@ const TrackTimeModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/time-entries', formData);
-      alert('Time entry created successfully!');
+      showToast.success('Time entry created successfully!');
       setFormData({
         description: '',
         hours: '',
@@ -29,7 +30,7 @@ const TrackTimeModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create time entry');
+      showToast.error(error.response?.data?.error || 'Failed to create time entry');
     } finally {
       setLoading(false);
     }

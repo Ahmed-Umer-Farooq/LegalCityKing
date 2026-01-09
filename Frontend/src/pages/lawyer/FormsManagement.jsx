@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Edit, Trash2, Eye, Upload, X, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const API_BASE_URL = 'http://localhost:5001/api';
@@ -63,6 +64,7 @@ export default function FormsManagement() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
+      showToast.success('Form created successfully!');
       setShowCreateModal(false);
       setFormData({
         title: '',
@@ -76,18 +78,18 @@ export default function FormsManagement() {
       fetchForms();
     } catch (error) {
       console.error('Error creating form:', error);
-      alert('Failed to create form');
+      showToast.error('Failed to create form');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this form?')) return;
     try {
       await api.delete(`/forms/${id}`);
+      showToast.success('Form deleted successfully!');
       fetchForms();
     } catch (error) {
       console.error('Error deleting form:', error);
-      alert('Failed to delete form');
+      showToast.error('Failed to delete form');
     }
   };
 

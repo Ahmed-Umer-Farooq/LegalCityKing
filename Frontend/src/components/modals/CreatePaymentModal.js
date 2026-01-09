@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreatePaymentModal({ isOpen, onClose, onSuccess }) {
@@ -16,7 +17,7 @@ export default function CreatePaymentModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.invoice_id || !formData.amount || !formData.payment_method) {
-      alert('Invoice ID, amount, and payment method are required');
+      showToast.error('Invoice ID, amount, and payment method are required');
       return;
     }
 
@@ -24,13 +25,13 @@ export default function CreatePaymentModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/payments', formData);
       if (response.data?.success) {
-        alert('Payment recorded successfully!');
+        showToast.success('Payment recorded successfully!');
         onSuccess();
         onClose();
         setFormData({ invoice_id: '', amount: '', payment_method: '', transaction_id: '', notes: '', payment_date: new Date().toISOString().split('T')[0] });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to record payment');
+      showToast.error(error.response?.data?.error || 'Failed to record payment');
     } finally {
       setLoading(false);
     }

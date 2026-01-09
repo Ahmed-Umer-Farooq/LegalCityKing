@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
@@ -17,7 +18,7 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.contact_id || !formData.duration || !formData.call_type) {
-      alert('Contact ID, duration, and call type are required');
+      showToast.error('Contact ID, duration, and call type are required');
       return;
     }
 
@@ -25,13 +26,13 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/calls', formData);
       if (response.data?.success) {
-        alert('Call logged successfully!');
+        showToast.success('Call logged successfully!');
         onSuccess();
         onClose();
         setFormData({ contact_id: '', duration: '', call_type: '', case_id: '', notes: '', outcome: '', scheduled_at: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to log call');
+      showToast.error(error.response?.data?.error || 'Failed to log call');
     } finally {
       setLoading(false);
     }

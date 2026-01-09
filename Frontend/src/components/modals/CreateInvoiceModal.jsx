@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
@@ -18,7 +19,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/invoices', formData);
-      alert('Invoice created successfully!');
+      showToast.success('Invoice created successfully!');
       setFormData({
         invoice_number: `INV-${Date.now()}`,
         amount: '',
@@ -29,7 +30,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create invoice');
+      showToast.error(error.response?.data?.error || 'Failed to create invoice');
     } finally {
       setLoading(false);
     }

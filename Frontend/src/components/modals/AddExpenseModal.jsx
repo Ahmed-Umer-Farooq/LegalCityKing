@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
@@ -18,7 +19,7 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/expenses', formData);
-      alert('Expense added successfully!');
+      showToast.success('Expense added successfully!');
       setFormData({
         category: 'Travel',
         description: '',
@@ -29,7 +30,7 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to add expense');
+      showToast.error(error.response?.data?.error || 'Failed to add expense');
     } finally {
       setLoading(false);
     }

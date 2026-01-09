@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const CreateNoteModal = ({ isOpen, onClose, onSuccess }) => {
@@ -16,7 +17,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/notes', formData);
-      alert('Note created successfully!');
+      showToast.success('Note created successfully!');
       setFormData({
         title: '',
         content: '',
@@ -25,7 +26,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create note');
+      showToast.error(error.response?.data?.error || 'Failed to create note');
     } finally {
       setLoading(false);
     }

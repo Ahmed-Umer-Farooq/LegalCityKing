@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const SendMessageModal = ({ isOpen, onClose, onSuccess }) => {
@@ -16,7 +17,7 @@ const SendMessageModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/messages', formData);
-      alert('Message sent successfully!');
+      showToast.success('Message sent successfully!');
       setFormData({
         subject: '',
         content: '',
@@ -25,7 +26,7 @@ const SendMessageModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to send message');
+      showToast.error(error.response?.data?.error || 'Failed to send message');
     } finally {
       setLoading(false);
     }

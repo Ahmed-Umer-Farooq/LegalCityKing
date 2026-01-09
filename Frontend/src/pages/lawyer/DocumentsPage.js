@@ -1,19 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, File, Search, Filter, FolderOpen, Download } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
+import api from '../../utils/api';
 
 export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [uploading, setUploading] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = React.useRef(null);
 
-  // Mock documents data
-  const documents = [
-    { id: 1, name: 'Contract_Agreement.pdf', type: 'pdf', size: '2.4 MB', date: '2024-01-15', case: 'Case #001' },
-    { id: 2, name: 'Legal_Brief.docx', type: 'docx', size: '1.8 MB', date: '2024-01-14', case: 'Case #002' },
-    { id: 3, name: 'Evidence_Photos.zip', type: 'zip', size: '15.2 MB', date: '2024-01-13', case: 'Case #001' },
-    { id: 4, name: 'Client_Statement.pdf', type: 'pdf', size: '890 KB', date: '2024-01-12', case: 'Case #003' },
-  ];
+  // Fetch documents from API
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching documents from API...');
+      const response = await api.get('/documents');
+      console.log('Documents API response:', response.data);
+      if (response.data.success) {
+        setDocuments(response.data.data);
+        console.log('Documents loaded:', response.data.data.length);
+      } else {
+        console.error('API returned success: false');
+        showToast.error('Failed to load documents');
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      if (error.response?.status === 401) {
+        showToast.error('Please log in to view documents');
+      } else {
+        showToast.error('Failed to load documents');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -25,14 +51,54 @@ export default function DocumentsPage() {
 
     setUploading(true);
     try {
-      // Simulate upload - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert(`File "${file.name}" uploaded successfully!`);
+      console.log('Uploading file:', file.name);
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('category', 'other');
+      
+      const response = await api.post('/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('Upload response:', response.data);
+      if (response.data.success) {
+        showToast.success(`File "${file.name}" uploaded successfully!`);
+        fetchDocuments(); // Refresh the documents list
+      } else {
+        showToast.error('Upload failed: ' + (response.data.error || 'Unknown error'));
+      }
     } catch (error) {
-      alert('Failed to upload file');
+      console.error('Upload error:', error);
+      if (error.response?.status === 401) {
+        showToast.error('Please log in to upload documents');
+      } else {
+        showToast.error('Failed to upload file: ' + (error.response?.data?.error || error.message));
+      }
     } finally {
       setUploading(false);
       event.target.value = '';
+    }
+  };
+
+  const handleDownload = async (documentId, fileName) => {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      showToast.error('Failed to download file');
     }
   };
 
@@ -40,9 +106,24 @@ export default function DocumentsPage() {
     return <File className="w-5 h-5 text-[#737791]" />;
   };
 
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileExtension = (filename) => {
+    return filename.split('.').pop().toLowerCase();
+  };
+
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === 'all' || doc.type === filterType;
+    const matchesSearch = doc.file_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const fileExt = getFileExtension(doc.file_name);
+    const matchesFilter = filterType === 'all' || fileExt === filterType || 
+      (filterType === 'docx' && (fileExt === 'doc' || fileExt === 'docx')) ||
+      (filterType === 'jpg' && (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png'));
     return matchesSearch && matchesFilter;
   });
 
@@ -105,7 +186,11 @@ export default function DocumentsPage() {
             <h2 className="text-lg font-semibold text-[#181A2A]">All Documents ({filteredDocuments.length})</h2>
           </div>
           <div className="p-6">
-            {filteredDocuments.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-[#737791]">Loading documents...</p>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
               <div className="text-center py-8">
                 <FolderOpen className="w-12 h-12 text-[#737791] mx-auto mb-4" />
                 <p className="text-[#737791]">No documents found</p>
@@ -115,18 +200,21 @@ export default function DocumentsPage() {
                 {filteredDocuments.map((doc) => (
                   <div key={doc.id} className="flex items-center justify-between p-4 border border-[#F8F9FA] rounded-lg hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
-                      {getFileIcon(doc.type)}
+                      {getFileIcon(getFileExtension(doc.file_name))}
                       <div>
-                        <h3 className="font-medium text-[#181A2A]">{doc.name}</h3>
+                        <h3 className="font-medium text-[#181A2A]">{doc.file_name}</h3>
                         <div className="flex items-center gap-4 text-sm text-[#737791]">
-                          <span>{doc.size}</span>
-                          <span>{doc.date}</span>
-                          <span>{doc.case}</span>
+                          <span>{formatFileSize(doc.file_size)}</span>
+                          <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                          <span>{doc.case_title || 'No Case'}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-[#737791] hover:text-[#0086CB] hover:bg-[#F8F9FA] rounded">
+                      <button 
+                        onClick={() => handleDownload(doc.id, doc.file_name)}
+                        className="p-2 text-[#737791] hover:text-[#0086CB] hover:bg-[#F8F9FA] rounded"
+                      >
                         <Download className="w-4 h-4" />
                       </button>
                     </div>
@@ -147,7 +235,9 @@ export default function DocumentsPage() {
               <p className="text-[#737791] text-sm">Total Documents</p>
             </div>
             <div className="text-center p-4 border border-[#F8F9FA] rounded-lg">
-              <h3 className="text-xl font-bold text-[#181A2A]">24.8 MB</h3>
+              <h3 className="text-xl font-bold text-[#181A2A]">
+                {formatFileSize(documents.reduce((total, doc) => total + (doc.file_size || 0), 0))}
+              </h3>
               <p className="text-[#737791] text-sm">Storage Used</p>
             </div>
             <div className="text-center p-4 border border-[#F8F9FA] rounded-lg">
@@ -161,20 +251,18 @@ export default function DocumentsPage() {
       <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6">
         <h2 className="text-lg font-semibold text-[#181A2A] mb-4">Recent Activity</h2>
         <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 border border-[#F8F9FA] rounded-lg">
-            <Upload className="w-5 h-5 text-[#28B779]" />
-            <div>
-              <p className="text-sm font-medium text-[#181A2A]">Contract_Agreement.pdf uploaded</p>
-              <p className="text-xs text-[#737791]">2 hours ago</p>
+          {documents.slice(0, 3).map((doc) => (
+            <div key={doc.id} className="flex items-center gap-3 p-3 border border-[#F8F9FA] rounded-lg">
+              <Upload className="w-5 h-5 text-[#28B779]" />
+              <div>
+                <p className="text-sm font-medium text-[#181A2A]">{doc.file_name} uploaded</p>
+                <p className="text-xs text-[#737791]">{new Date(doc.created_at).toLocaleString()}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 border border-[#F8F9FA] rounded-lg">
-            <Download className="w-5 h-5 text-[#0086CB]" />
-            <div>
-              <p className="text-sm font-medium text-[#181A2A]">Legal_Brief.docx downloaded</p>
-              <p className="text-xs text-[#737791]">5 hours ago</p>
-            </div>
-          </div>
+          ))}
+          {documents.length === 0 && (
+            <p className="text-[#737791] text-sm">No recent activity</p>
+          )}
         </div>
       </div>
     </div>

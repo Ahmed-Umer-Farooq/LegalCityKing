@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 export default function CreateIntakeModal({ isOpen, onClose, onSuccess }) {
@@ -18,7 +19,7 @@ export default function CreateIntakeModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.client_name || !formData.client_email || !formData.client_phone || !formData.legal_issue) {
-      alert('Client name, email, phone, and legal issue are required');
+      showToast.error('Client name, email, phone, and legal issue are required');
       return;
     }
 
@@ -26,13 +27,13 @@ export default function CreateIntakeModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/intakes', formData);
       if (response.data?.success) {
-        alert('Intake created successfully!');
+        showToast.success('Intake created successfully!');
         onSuccess();
         onClose();
         setFormData({ client_name: '', client_email: '', client_phone: '', legal_issue: '', urgency: '', preferred_contact: '', notes: '', source: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create intake');
+      showToast.error(error.response?.data?.error || 'Failed to create intake');
     } finally {
       setLoading(false);
     }

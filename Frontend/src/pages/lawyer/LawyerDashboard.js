@@ -231,11 +231,11 @@ export default function LawyerDashboard() {
         setCaseClient('');
         setCaseType('civil');
         fetchDashboardData();
-        toast.success('Case created successfully');
+        showToast.success('Case created successfully');
       }
     } catch (error) {
       console.error('Error adding case:', error);
-      toast.error('Failed to create case');
+      showToast.error('Failed to create case');
     }
   };
 

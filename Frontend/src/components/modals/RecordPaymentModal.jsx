@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
 const RecordPaymentModal = ({ isOpen, onClose, onSuccess }) => {
@@ -18,7 +19,7 @@ const RecordPaymentModal = ({ isOpen, onClose, onSuccess }) => {
     
     try {
       await api.post('/payments', formData);
-      alert('Payment recorded successfully!');
+      showToast.success('Payment recorded successfully!');
       setFormData({
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
@@ -29,7 +30,7 @@ const RecordPaymentModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to record payment');
+      showToast.error(error.response?.data?.error || 'Failed to record payment');
     } finally {
       setLoading(false);
     }
