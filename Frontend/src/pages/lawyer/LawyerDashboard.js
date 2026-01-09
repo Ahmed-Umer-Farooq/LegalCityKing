@@ -35,6 +35,7 @@ const PaymentRecords = React.lazy(() => import('./PaymentRecords').catch(() => (
 
 export default function LawyerDashboard() {
   const [cases, setCases] = useState([]);
+  const [caseDisplayLimit, setCaseDisplayLimit] = useState(3);
   const [stats, setStats] = useState({ 
     activeCases: 0, 
     totalClients: 0, 
@@ -840,16 +841,28 @@ export default function LawyerDashboard() {
         <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[#181A2A] text-lg font-semibold">Cases Management</h2>
-            <button 
-              onClick={() => setShowCaseModal(true)} 
-              className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              New Matter
-            </button>
+            <div className="flex items-center gap-3">
+              <select 
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                value={caseDisplayLimit}
+                onChange={(e) => setCaseDisplayLimit(e.target.value === 'all' ? cases.length : parseInt(e.target.value))}
+              >
+                <option value="3">Latest 3</option>
+                <option value="5">Latest 5</option>
+                <option value="10">Latest 10</option>
+                <option value="all">See All</option>
+              </select>
+              <button 
+                onClick={() => setShowCaseModal(true)} 
+                className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                New Matter
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -858,7 +871,7 @@ export default function LawyerDashboard() {
             ) : cases.length === 0 ? (
               <p className="text-center text-[#737791]">No cases found. Add your first case!</p>
             ) : (
-              cases.map((caseItem) => (
+              cases.slice(0, caseDisplayLimit).map((caseItem) => (
                 <div key={caseItem.id} className="flex items-center justify-between p-4 border-2 border-[#DCE8FF] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                   <div>
                     <h3 className="text-[#181A2A] text-base font-semibold">{caseItem.title}</h3>
