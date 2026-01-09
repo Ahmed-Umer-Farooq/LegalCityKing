@@ -125,6 +125,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
                 onChange={(e) => setFormData({ ...formData, start_date_time: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
+                min={new Date().toISOString().slice(0, 16)}
               />
             </div>
             <div>
@@ -134,6 +135,7 @@ export default function CreateEventModal({ isOpen, onClose, onSuccess }) {
                 value={formData.end_date_time}
                 onChange={(e) => setFormData({ ...formData, end_date_time: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                min={formData.start_date_time || new Date().toISOString().slice(0, 16)}
               />
             </div>
             <div>

@@ -174,30 +174,24 @@ const requireAuth = async (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  // Always check users table first to preserve admin status
-  let user = await db('users').where('id', decoded.id).first();
-  
+  // Check by email to determine which table to use
+  let user = await db('lawyers').where('email', decoded.email).first();
   if (user) {
-    // User found in users table - preserve their role and admin status
+    user.role = 'lawyer';
+    req.user = user;
+    return next();
+  }
+
+  // Check users table
+  user = await db('users').where('email', decoded.email).first();
+  if (user) {
     user.role = user.role || 'user';
     user.isAdmin = user.is_admin || user.role === 'admin' || false;
-  } else {
-    // Check lawyers table if not found in users
-    user = await db('lawyers').where('id', decoded.id).first();
-    if (user) {
-      user.role = 'lawyer';
-      user.is_verified = user.is_verified || 0;
-      user.lawyer_verified = user.lawyer_verified || 0;
-      user.isAdmin = false; // Lawyers are not admins by default
-    }
+    req.user = user;
+    return next();
   }
 
-  if (!user) {
-    return res.status(401).json({ message: 'User not found' });
-  }
-
-  req.user = user;
-  next();
+  return res.status(401).json({ message: 'User not found' });
 };
 
 const requireLawyer = (req, res, next) => {

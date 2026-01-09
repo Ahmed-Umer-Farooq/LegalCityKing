@@ -105,10 +105,11 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                min={new Date().toISOString().slice(0, 16)}
               />
             </div>
             <div className="md:col-span-2">

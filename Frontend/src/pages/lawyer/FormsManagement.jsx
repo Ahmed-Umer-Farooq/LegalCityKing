@@ -32,6 +32,7 @@ export default function FormsManagement() {
       setForms(response.data.forms || []);
     } catch (error) {
       console.error('Error fetching forms:', error);
+      showToast.error('Failed to load forms: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -90,6 +91,26 @@ export default function FormsManagement() {
     } catch (error) {
       console.error('Error deleting form:', error);
       showToast.error('Failed to delete form');
+    }
+  };
+
+  const handleDownload = async (documentId, fileName) => {
+    try {
+      const response = await api.get(`/forms/download/${documentId}`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      showToast.error('Failed to download file: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -165,7 +186,7 @@ export default function FormsManagement() {
               <div className="flex gap-2">
                 {form.file_url ? (
                   <button 
-                    onClick={() => window.open(`${API_BASE_URL}/forms/download/${form.id}`, '_blank')}
+                    onClick={() => handleDownload(form.id, form.title + '.pdf')}
                     className="flex-1 flex items-center justify-center gap-2 bg-blue-100 text-blue-700 px-3 py-2 rounded hover:bg-blue-200 transition text-sm"
                   >
                     <Eye className="w-4 h-4" />

@@ -118,6 +118,7 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
                 value={formData.scheduled_at}
                 onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                min={new Date().toISOString().slice(0, 16)}
               />
             </div>
             <div className="md:col-span-2">

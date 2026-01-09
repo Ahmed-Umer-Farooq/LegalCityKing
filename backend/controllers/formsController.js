@@ -121,12 +121,11 @@ const getMyForms = async (req, res) => {
     const query = db('legal_forms')
       .leftJoin('form_categories', 'legal_forms.category_id', 'form_categories.id')
       .select('legal_forms.*', 'form_categories.name as category_name')
-      .where('legal_forms.created_by', req.user.id)
-      .where('legal_forms.created_by_type', req.user.role === 'lawyer' ? 'lawyer' : 'admin');
+      .where('legal_forms.created_by', req.user.id);
 
     const total = await query.clone().count('legal_forms.id as count').first();
     const forms = await query.orderBy('legal_forms.created_at', 'desc').limit(limit).offset(offset);
-
+    
     res.json({
       forms,
       pagination: {
@@ -275,11 +274,24 @@ const downloadForm = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Get form details
-    const form = await db('legal_forms')
-      .where('id', id)
-      .where('status', 'approved')
-      .first();
+    // Get form details - allow downloading own forms regardless of status
+    let form;
+    if (req.user) {
+      // If authenticated, allow downloading own forms or approved forms
+      form = await db('legal_forms')
+        .where('id', id)
+        .where(function() {
+          this.where('status', 'approved')
+              .orWhere('created_by', req.user.id);
+        })
+        .first();
+    } else {
+      // If not authenticated, only approved forms
+      form = await db('legal_forms')
+        .where('id', id)
+        .where('status', 'approved')
+        .first();
+    }
 
     if (!form) {
       return res.status(404).json({ error: 'Form not found' });
@@ -305,9 +317,6 @@ const downloadForm = async (req, res) => {
     // Stream the file
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
-
-    // Track download (optional - you can add user tracking here)
-    console.log(`Form downloaded: ${form.title} (ID: ${id})`);
 
   } catch (error) {
     console.error('Error downloading form:', error);
