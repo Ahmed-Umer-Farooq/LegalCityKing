@@ -5,10 +5,8 @@ import api from '../../utils/api';
 
 export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    contact_id: '',
     duration: '',
     call_type: '',
-    case_id: '',
     notes: '',
     outcome: '',
     scheduled_at: ''
@@ -17,8 +15,8 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.contact_id || !formData.duration || !formData.call_type) {
-      showToast.error('Contact ID, duration, and call type are required');
+    if (!formData.duration || !formData.call_type) {
+      showToast.error('Duration and call type are required');
       return;
     }
 
@@ -29,7 +27,7 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
         showToast.success('Call logged successfully!');
         onSuccess();
         onClose();
-        setFormData({ contact_id: '', duration: '', call_type: '', case_id: '', notes: '', outcome: '', scheduled_at: '' });
+        setFormData({ duration: '', call_type: '', notes: '', outcome: '', scheduled_at: '' });
       }
     } catch (error) {
       showToast.error(error.response?.data?.error || 'Failed to log call');
@@ -51,16 +49,6 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
         </div>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact ID *</label>
-              <input
-                type="text"
-                value={formData.contact_id}
-                onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
               <input
@@ -86,15 +74,6 @@ export default function CreateCallModal({ isOpen, onClose, onSuccess }) {
                 <option value="missed">Missed</option>
                 <option value="scheduled">Scheduled</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Outcome</label>

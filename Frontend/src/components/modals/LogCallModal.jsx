@@ -5,13 +5,11 @@ import api from '../../utils/api';
 
 const LogCallModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    call_date: new Date().toISOString().split('T')[0],
     duration_minutes: '',
-    call_type: 'consultation',
-    is_billable: true,
-    billable_rate: ''
+    call_type: '',
+    outcome: '',
+    scheduled_at: '',
+    notes: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -23,13 +21,11 @@ const LogCallModal = ({ isOpen, onClose, onSuccess }) => {
       await api.post('/calls', formData);
       showToast.success('Call logged successfully!');
       setFormData({
-        title: '',
-        description: '',
-        call_date: new Date().toISOString().split('T')[0],
         duration_minutes: '',
-        call_type: 'consultation',
-        is_billable: true,
-        billable_rate: ''
+        call_type: '',
+        outcome: '',
+        scheduled_at: '',
+        notes: ''
       });
       onClose();
       if (onSuccess) onSuccess();
@@ -54,62 +50,50 @@ const LogCallModal = ({ isOpen, onClose, onSuccess }) => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="text"
-            placeholder="Call Title *"
-            value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <textarea
-            placeholder="Call Description"
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg h-20 resize-none"
-          />
-          <input
-            type="date"
-            value={formData.call_date}
-            onChange={(e) => setFormData({...formData, call_date: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <input
             type="number"
-            placeholder="Duration (minutes)"
+            placeholder="Duration (minutes) *"
             value={formData.duration_minutes}
             onChange={(e) => setFormData({...formData, duration_minutes: e.target.value})}
             className="w-full px-3 py-2 border rounded-lg"
+            required
           />
           <select
             value={formData.call_type}
             onChange={(e) => setFormData({...formData, call_type: e.target.value})}
             className="w-full px-3 py-2 border rounded-lg"
+            required
           >
+            <option value="">Select Type</option>
             <option value="consultation">Consultation</option>
             <option value="follow_up">Follow Up</option>
             <option value="emergency">Emergency</option>
             <option value="other">Other</option>
           </select>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.is_billable}
-              onChange={(e) => setFormData({...formData, is_billable: e.target.checked})}
-              className="rounded"
-            />
-            <span className="text-sm">Billable</span>
-          </label>
-          {formData.is_billable && (
-            <input
-              type="number"
-              step="0.01"
-              placeholder="Billable Rate ($)"
-              value={formData.billable_rate}
-              onChange={(e) => setFormData({...formData, billable_rate: e.target.value})}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          )}
+          <select
+            value={formData.outcome}
+            onChange={(e) => setFormData({...formData, outcome: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="">Select Outcome</option>
+            <option value="successful">Successful</option>
+            <option value="follow_up_needed">Follow-up Needed</option>
+            <option value="no_answer">No Answer</option>
+            <option value="voicemail">Voicemail</option>
+            <option value="other">Other</option>
+          </select>
+          <input
+            type="datetime-local"
+            placeholder="Scheduled At"
+            value={formData.scheduled_at}
+            onChange={(e) => setFormData({...formData, scheduled_at: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+          <textarea
+            placeholder="Notes"
+            value={formData.notes}
+            onChange={(e) => setFormData({...formData, notes: e.target.value})}
+            className="w-full px-3 py-2 border rounded-lg h-20 resize-none"
+          />
           
           <div className="flex gap-2 pt-4">
             <button

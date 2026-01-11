@@ -7,9 +7,6 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    case_id: '',
-    contact_id: '',
-    tags: '',
     note_type: ''
   });
   const [loading, setLoading] = useState(false);
@@ -24,15 +21,12 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
     setLoading(true);
     try {
       const submitData = { ...formData };
-      if (submitData.tags) {
-        submitData.tags = submitData.tags.split(',').map(tag => tag.trim());
-      }
       const response = await api.post('/notes', submitData);
       if (response.data?.success) {
         alert('Note created successfully!');
         onSuccess();
         onClose();
-        setFormData({ title: '', content: '', case_id: '', contact_id: '', tags: '', note_type: '' });
+        setFormData({ title: '', content: '', note_type: '' });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create note');
@@ -75,24 +69,6 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact ID</label>
-              <input
-                type="text"
-                value={formData.contact_id}
-                onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Note Type</label>
               <select
                 value={formData.note_type}
@@ -107,16 +83,6 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
                 <option value="client_communication">Client Communication</option>
                 <option value="other">Other</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="tag1, tag2, tag3"
-              />
             </div>
           </div>
           <div className="flex gap-3 mt-6">

@@ -41,6 +41,8 @@ export default function QuickActions({ onSuccess }) {
   const handleActionClick = (actionId) => {
     if (actionId === 'qa') {
       navigate('/lawyer/qa-answers');
+    } else if (actionId === 'message') {
+      navigate('/lawyer-dashboard?tab=messages');
     } else {
       setActiveModal(actionId);
     }

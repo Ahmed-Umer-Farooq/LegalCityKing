@@ -10,9 +10,7 @@ export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
     type: '',
     company: '',
     title: '',
-    address: '',
-    case_id: '',
-    tags: ''
+    address: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -26,15 +24,12 @@ export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
     setLoading(true);
     try {
       const submitData = { ...formData };
-      if (submitData.tags) {
-        submitData.tags = submitData.tags.split(',').map(tag => tag.trim());
-      }
       const response = await api.post('/contacts', submitData);
       if (response.data?.success) {
         alert('Contact created successfully!');
         onSuccess();
         onClose();
-        setFormData({ name: '', email: '', phone: '', type: '', company: '', title: '', address: '', case_id: '', tags: '' });
+        setFormData({ name: '', email: '', phone: '', type: '', company: '', title: '', address: '' });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create contact');
@@ -128,25 +123,6 @@ export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 rows="2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="tag1, tag2, tag3"
               />
             </div>
           </div>

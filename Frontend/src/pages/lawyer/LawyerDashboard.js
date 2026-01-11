@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
@@ -51,6 +51,7 @@ export default function LawyerDashboard() {
   });
   const [clients, setClients] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showClientModal, setShowClientModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -155,14 +156,15 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes] = await Promise.all([
+      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes, callsRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
         api.get('/clients?page=1&limit=100'),
         api.get('/lawyer/invoices?page=1&limit=3'),
         api.get('/events/upcoming'),
         api.get('/stripe/lawyer-earnings'),
-        api.get('/events/calendar')
+        api.get('/events/calendar'),
+        api.get('/calls?page=1&limit=5')
       ]);
       
       setStats(statsRes.data || { 
@@ -177,6 +179,7 @@ export default function LawyerDashboard() {
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
       setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data?.clients || clientsRes.data?.data || []));
       setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
+      setCalls(Array.isArray(callsRes.data) ? callsRes.data : []);
       setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
       setCalendarEvents(Array.isArray(calendarRes.data?.data) ? calendarRes.data.data : []);
       
@@ -906,8 +909,8 @@ export default function LawyerDashboard() {
         </div>
 
         {/* All Clients & Recent Payments */}
-        <div className="grid grid-cols-1 gap-6 mb-6">
-          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 md:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[#181A2A] text-lg font-semibold">All Clients</h2>
               <select 
@@ -999,27 +1002,63 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Invoices */}
-        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 mb-6">
-          <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
-          <div className="space-y-3">
-            {loading ? (
-              <p className="text-center text-[#737791]">Loading...</p>
-            ) : invoices.length === 0 ? (
-              <p className="text-center text-[#737791]">No invoices found</p>
-            ) : (
-              invoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
-                  <div>
-                    <p className="text-[#181A2A] font-medium">INV-{invoice.id}</p>
-                    <p className="text-[#737791] text-sm">${(invoice.amount || 0).toLocaleString()}</p>
+        {/* Recent Invoices & Recent Calls */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
+            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
+            <div className="space-y-3">
+              {loading ? (
+                <p className="text-center text-[#737791]">Loading...</p>
+              ) : invoices.length === 0 ? (
+                <p className="text-center text-[#737791]">No invoices found</p>
+              ) : (
+                invoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                    <div>
+                      <p className="text-[#181A2A] font-medium">INV-{invoice.id}</p>
+                      <p className="text-[#737791] text-sm">${(invoice.amount || 0).toLocaleString()}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInvoiceStatusColors(invoice.status)}`}>
+                      {invoice.status?.charAt(0).toUpperCase() + invoice.status?.slice(1) || 'Unknown'}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInvoiceStatusColors(invoice.status)}`}>
-                    {invoice.status?.charAt(0).toUpperCase() + invoice.status?.slice(1) || 'Unknown'}
-                  </span>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
+            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Calls</h2>
+            <div className="space-y-3">
+              {loading ? (
+                <p className="text-center text-[#737791]">Loading...</p>
+              ) : calls.length === 0 ? (
+                <p className="text-center text-[#737791]">No calls logged</p>
+              ) : (
+                calls.map((call) => (
+                  <div key={call.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#E5E7EB] rounded-full flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-[#6B7280]" />
+                      </div>
+                      <div>
+                        <p className="text-[#181A2A] font-medium">{call.call_type?.charAt(0).toUpperCase() + call.call_type?.slice(1) || 'Call'}</p>
+                        <p className="text-[#737791] text-sm">{call.duration} min • {new Date(call.created_at || call.scheduled_at).toLocaleDateString()}</p>
+                        {call.notes && <p className="text-[#9CA3AF] text-xs mt-1">{call.notes.substring(0, 50)}{call.notes.length > 50 ? '...' : ''}</p>}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      call.outcome === 'successful' ? 'bg-green-100 text-green-800' :
+                      call.outcome === 'no_answer' ? 'bg-red-100 text-red-800' :
+                      call.outcome === 'voicemail' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {call.outcome || 'N/A'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
         </>

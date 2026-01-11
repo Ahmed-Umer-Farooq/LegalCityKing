@@ -8,8 +8,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
     title: '',
     description: '',
     priority: 'medium',
-    due_date: '',
-    case_id: ''
+    due_date: ''
   });
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,15 +38,14 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
     setLoading(true);
     try {
       const payload = {
-        ...formData,
-        case_id: formData.case_id || null
+        ...formData
       };
       const response = await api.post('/tasks', payload);
       if (response.data?.success) {
         showToast.success('Task created successfully!');
         onSuccess();
         onClose();
-        setFormData({ title: '', description: '', priority: 'medium', due_date: '', case_id: '' });
+        setFormData({ title: '', description: '', priority: 'medium', due_date: '' });
       }
     } catch (error) {
       showToast.error(error.response?.data?.error || 'Failed to create task');
@@ -101,17 +99,6 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess }) {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 min={new Date().toISOString().slice(0, 16)}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Related Case</label>
-              <select
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Case (Optional)</option>
-                {cases.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
