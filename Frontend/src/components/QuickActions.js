@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Users, FileText, Calendar, CheckSquare, StickyNote, Phone, MessageSquare, Clock, DollarSign, Receipt, CreditCard, UserPlus, HelpCircle } from 'lucide-react';
+import { Plus, Users, FileText, Calendar, CheckSquare, StickyNote, Phone, MessageSquare, Clock, DollarSign, Receipt, CreditCard, UserPlus, HelpCircle, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Import all modal components
@@ -13,9 +13,9 @@ import CreateCallModal from './modals/CreateCallModal';
 import SendMessageModal from './modals/SendMessageModal';
 import TrackTimeModal from './modals/TrackTimeModal';
 import AddExpenseModal from './modals/AddExpenseModal';
-import CreateInvoiceModal from './modals/CreateInvoiceModal';
-import CreatePaymentModal from './modals/CreatePaymentModal';
-import CreateIntakeModal from './modals/CreateIntakeModal';
+
+
+
 
 export default function QuickActions({ onSuccess }) {
   const [activeModal, setActiveModal] = useState(null);
@@ -31,9 +31,9 @@ export default function QuickActions({ onSuccess }) {
     { id: 'call', label: 'Log Call', icon: Phone, color: 'bg-indigo-500' },
     { id: 'message', label: 'Send Message', icon: MessageSquare, color: 'bg-pink-500' },
     { id: 'expense', label: 'Add Expense', icon: DollarSign, color: 'bg-emerald-500' },
-    { id: 'invoice', label: 'New Invoice', icon: Receipt, color: 'bg-cyan-500' },
-    { id: 'payment', label: 'Record Payment', icon: CreditCard, color: 'bg-violet-500' },
-    { id: 'intake', label: 'New Intake', icon: Plus, color: 'bg-rose-500' },
+
+    { id: 'payment-records', label: 'Payment Records', icon: CreditCard, color: 'bg-violet-500' },
+    { id: 'reports', label: 'View Reports', icon: BarChart3, color: 'bg-indigo-600' },
     { id: 'qa', label: 'Answer Q&A', icon: HelpCircle, color: 'bg-blue-600' }
   ];
 
@@ -42,6 +42,10 @@ export default function QuickActions({ onSuccess }) {
       navigate('/lawyer/qa-answers');
     } else if (actionId === 'message') {
       navigate('/lawyer-dashboard?tab=messages');
+    } else if (actionId === 'reports') {
+      navigate('/lawyer-dashboard?tab=reports');
+    } else if (actionId === 'payment-records') {
+      navigate('/lawyer-dashboard?tab=payment-records');
     } else {
       setActiveModal(actionId);
     }
@@ -58,7 +62,7 @@ export default function QuickActions({ onSuccess }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6">
+      <div>
         <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           {quickActions.map((action) => {
@@ -67,7 +71,7 @@ export default function QuickActions({ onSuccess }) {
               <button
                 key={action.id}
                 onClick={() => handleActionClick(action.id)}
-                className="bg-white text-gray-700 p-4 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-3 h-[125px] border border-gray-200 shadow-sm"
+                className="bg-white text-gray-700 p-4 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-3 h-[100px] border border-gray-200 shadow-sm"
               >
                 <IconComponent className="w-5 h-5 text-gray-600" />
                 <span className="text-xs font-medium text-center leading-tight text-gray-700">{action.label}</span>
@@ -123,21 +127,9 @@ export default function QuickActions({ onSuccess }) {
         onClose={handleModalClose} 
         onSuccess={handleModalSuccess}
       />
-      <CreateInvoiceModal 
-        isOpen={activeModal === 'invoice'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
-      <CreatePaymentModal 
-        isOpen={activeModal === 'payment'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
-      <CreateIntakeModal 
-        isOpen={activeModal === 'intake'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
+
+
+
     </>
   );
 }

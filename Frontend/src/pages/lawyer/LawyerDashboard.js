@@ -51,7 +51,7 @@ export default function LawyerDashboard() {
     monthlyRevenueData: []
   });
   const [clients, setClients] = useState([]);
-  const [invoices, setInvoices] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [calls, setCalls] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -158,11 +158,11 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
+      const [statsRes, casesRes, clientsRes, notesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
         api.get('/clients?page=1&limit=100'),
-        api.get('/lawyer/invoices?page=1&limit=3'),
+        api.get('/notes?page=1&limit=3'),
         api.get('/events/upcoming'),
         api.get('/stripe/lawyer-earnings'),
         api.get('/events/calendar'),
@@ -181,7 +181,7 @@ export default function LawyerDashboard() {
       });
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
       setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data?.clients || clientsRes.data?.data || []));
-      setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
+      setNotes(Array.isArray(notesRes.data?.data) ? notesRes.data.data : []);
       setCalls(Array.isArray(callsRes.data) ? callsRes.data : (callsRes.data?.calls || callsRes.data?.data || []));
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : (expensesRes.data?.expenses || expensesRes.data?.data || []));
       setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
@@ -640,42 +640,43 @@ export default function LawyerDashboard() {
         </div>
 
         {/* Quick Actions & Calendar Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Quick Actions */}
-          <div>
-            <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
-              <QuickActions onSuccess={fetchDashboardData} />
-            </React.Suspense>
-          </div>
-
-          {/* Professional Calendar */}
-          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-7">
-            <div className="flex items-center justify-between mb-6">
-              <button 
-                onClick={() => {
-                  const newDate = new Date(currentCalendarDate);
-                  newDate.setMonth(newDate.getMonth() - 1);
-                  setCurrentCalendarDate(newDate);
-                }}
-                className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
-              </button>
-              <div className="text-center">
-                <h2 className="text-[#181A2A] text-lg font-semibold">{currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
-                <p className="text-[#737791] text-sm">Today: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-              </div>
-              <button 
-                onClick={() => {
-                  const newDate = new Date(currentCalendarDate);
-                  newDate.setMonth(newDate.getMonth() + 1);
-                  setCurrentCalendarDate(newDate);
-                }}
-                className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
-              >
-                <ChevronRight className="w-5 h-5 text-[#6B7280]" />
-              </button>
+        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-7 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Quick Actions */}
+            <div className="h-full">
+              <React.Suspense fallback={<div className="animate-pulse h-32 bg-gray-200 rounded"></div>}>
+                <QuickActions onSuccess={fetchDashboardData} />
+              </React.Suspense>
             </div>
+
+            {/* Professional Calendar */}
+            <div className="h-full">
+              <div className="flex items-center justify-between mb-6">
+                <button 
+                  onClick={() => {
+                    const newDate = new Date(currentCalendarDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    setCurrentCalendarDate(newDate);
+                  }}
+                  className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
+                </button>
+                <div className="text-center">
+                  <h2 className="text-[#181A2A] text-lg font-semibold">{currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+                  <p className="text-[#737791] text-sm">Today: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    const newDate = new Date(currentCalendarDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    setCurrentCalendarDate(newDate);
+                  }}
+                  className="p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+                </button>
+              </div>
             
             {/* Calendar Grid */}
             <div className="space-y-1">
@@ -788,65 +789,8 @@ export default function LawyerDashboard() {
               })()}
             </div>
             
-            {/* Upcoming Events */}
-            <div className="mt-6 pt-6 border-t border-[#F8F9FA]">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[#374151]">Upcoming Events</h3>
-                <button 
-                  onClick={() => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }}
-                  className="text-xs text-[#007EF4] hover:underline"
-                >
-                  View All
-                </button>
-              </div>
-              <div className="space-y-2">
-                {upcomingEvents.length > 0 ? (
-                  upcomingEvents.slice(0, 3).map((event, index) => {
-                    const eventColors = {
-                      hearing: '#EF4444',
-                      meeting: '#3B82F6',
-                      deadline: '#F59E0B',
-                      consultation: '#10B981',
-                      court_date: '#8B5CF6',
-                      other: '#6B7280'
-                    };
-                    const eventDate = new Date(event.start_date_time);
-                    return (
-                      <div key={event.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F8F9FA] transition-colors cursor-pointer">
-                        <div 
-                          className="w-2 h-2 rounded-full" 
-                          style={{backgroundColor: eventColors[event.event_type] || eventColors.other}}
-                        ></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-[#374151]">{event.title}</p>
-                          <p className="text-xs text-[#6B7280]">
-                            {eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, {eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                          </p>
-                          {event.location && (
-                            <p className="text-xs text-[#9CA3AF]">{event.location}</p>
-                          )}
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          event.event_type === 'hearing' ? 'bg-red-100 text-red-800' :
-                          event.event_type === 'meeting' ? 'bg-blue-100 text-blue-800' :
-                          event.event_type === 'deadline' ? 'bg-orange-100 text-orange-800' :
-                          event.event_type === 'consultation' ? 'bg-green-100 text-green-800' :
-                          event.event_type === 'court_date' ? 'bg-purple-100 text-purple-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {event.event_type.replace('_', ' ')}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center text-[#737791] text-sm py-4">
-                    <Calendar className="w-8 h-8 mx-auto mb-2 text-[#9CA3AF]" />
-                    <p>No upcoming events</p>
-                    <p className="text-xs mt-1">Create events using Quick Actions</p>
-                  </div>
-                )}
-              </div>
+            <div className="mt-6 pt-6 border-t border-[#F8F9FA] flex-1">
+            </div>
             </div>
           </div>
         </div>
@@ -1006,24 +950,27 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Invoices, Calls & Expenses */}
+        {/* Recent Notes, Calls & Expenses */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
+            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Notes</h2>
             <div className="space-y-3">
               {loading ? (
                 <p className="text-center text-[#737791]">Loading...</p>
-              ) : invoices.length === 0 ? (
-                <p className="text-center text-[#737791]">No invoices found</p>
+              ) : notes.length === 0 ? (
+                <p className="text-center text-[#737791]">No notes found</p>
               ) : (
-                invoices.map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                notes.map((note) => (
+                  <div key={note.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
                     <div>
-                      <p className="text-[#181A2A] font-medium">INV-{invoice.id}</p>
-                      <p className="text-[#737791] text-sm">${(invoice.amount || 0).toLocaleString()}</p>
+                      <p className="text-[#181A2A] font-medium">{note.title}</p>
+                      <p className="text-[#737791] text-sm">{note.content?.substring(0, 50)}{note.content?.length > 50 ? '...' : ''}</p>
+                      <p className="text-[#9CA3AF] text-xs mt-1">{new Date(note.created_at).toLocaleDateString()}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getInvoiceStatusColors(invoice.status)}`}>
-                      {invoice.status?.charAt(0).toUpperCase() + invoice.status?.slice(1) || 'Unknown'}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      note.is_private ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {note.is_private ? 'Private' : 'Shared'}
                     </span>
                   </div>
                 ))
