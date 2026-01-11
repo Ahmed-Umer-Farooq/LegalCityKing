@@ -7,8 +7,17 @@ const { authenticateToken } = require('../utils/middleware');
 router.get('/conversations', authenticateToken, async (req, res) => {
   try {
     const { id: userId, role } = req.user;
-    // Check if user is a lawyer by role or registration_id
-    const userType = (role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     
     console.log(`Fetching conversations for user ${userId} (${userType}) - role: ${role}, reg_id: ${req.user.registration_id}`);
     
@@ -130,7 +139,17 @@ router.get('/conversations', authenticateToken, async (req, res) => {
 router.get('/messages/:partnerId/:partnerType', authenticateToken, async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     let { partnerId, partnerType } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
@@ -179,7 +198,17 @@ router.get('/messages/:partnerId/:partnerType', authenticateToken, async (req, r
 router.put('/messages/read/:partnerId/:partnerType', authenticateToken, async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     let { partnerId, partnerType } = req.params;
 
     // Convert secure_id to actual id if needed
@@ -218,8 +247,18 @@ router.put('/messages/read/:partnerId/:partnerType', authenticateToken, async (r
 // Get unread message count
 router.get('/unread-count', authenticateToken, async (req, res) => {
   try {
-    const { id: userId, role } = req.user;
-    const userType = role === 'lawyer' ? 'lawyer' : 'user';
+    const { id: userId } = req.user;
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     
     const unreadCount = await db('chat_messages')
       .where({
@@ -304,6 +343,22 @@ router.post('/send', authenticateToken, async (req, res) => {
   try {
     let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = req.body;
     
+    // Verify sender is the authenticated user
+    if (sender_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized sender' });
+    }
+    
+    // Determine sender type by checking which table the user exists in
+    let verifiedSenderType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', sender_id).first();
+      if (lawyer) {
+        verifiedSenderType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking sender type:', error);
+    }
+    
     // Convert secure_id to actual id if needed
     if (receiver_type === 'lawyer' && isNaN(receiver_id)) {
       const lawyer = await db('lawyers').where('secure_id', receiver_id).first();
@@ -323,7 +378,7 @@ router.post('/send', authenticateToken, async (req, res) => {
     
     const [messageId] = await db('chat_messages').insert({
       sender_id,
-      sender_type,
+      sender_type: verifiedSenderType,
       receiver_id,
       receiver_type,
       content,
@@ -347,50 +402,17 @@ router.post('/send', authenticateToken, async (req, res) => {
 router.post('/call-history', authenticateToken, async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
-    const { partner_id, partner_name, partner_type, duration, timestamp, type } = req.body;
-
-    const [callId] = await db('call_history').insert({
-      user_id: userId,
-      user_type: userType,
-      partner_id,
-      partner_name,
-      partner_type,
-      duration,
-      call_type: type,
-      created_at: timestamp
-    });
-
-    res.json({ success: true, callId });
-  } catch (error) {
-    console.error('Error saving call history:', error);
-    res.status(500).json({ error: 'Failed to save call history' });
-  }
-});
-
-// Get call history
-router.get('/call-history', authenticateToken, async (req, res) => {
-  try {
-    const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
     
-    const calls = await db('call_history')
-      .where({ user_id: userId, user_type: userType })
-      .orderBy('created_at', 'desc')
-      .limit(50);
-
-    res.json(calls);
-  } catch (error) {
-    console.error('Error fetching call history:', error);
-    res.status(500).json({ error: 'Failed to fetch call history' });
-  }
-});
-
-// Save call history
-router.post('/call-history', authenticateToken, async (req, res) => {
-  try {
-    const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     const { partner_id, partner_name, partner_type, duration, timestamp, type } = req.body;
 
     const [callId] = await db('call_history').insert({
@@ -415,7 +437,17 @@ router.post('/call-history', authenticateToken, async (req, res) => {
 router.get('/call-history', authenticateToken, async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const userType = (req.user.role === 'lawyer' || req.user.registration_id) ? 'lawyer' : 'user';
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     
     const calls = await db('call_history')
       .where({ user_id: userId, user_type: userType })
@@ -432,8 +464,18 @@ router.get('/call-history', authenticateToken, async (req, res) => {
 // Delete conversation
 router.delete('/conversation/:partnerId/:partnerType', authenticateToken, async (req, res) => {
   try {
-    const { id: userId, role } = req.user;
-    const userType = role === 'lawyer' ? 'lawyer' : 'user';
+    const { id: userId } = req.user;
+    
+    // Determine user type by checking which table the user exists in
+    let userType = 'user';
+    try {
+      const lawyer = await db('lawyers').where('id', userId).first();
+      if (lawyer) {
+        userType = 'lawyer';
+      }
+    } catch (error) {
+      console.error('Error checking lawyer table:', error);
+    }
     const { partnerId, partnerType } = req.params;
 
     await db('chat_messages')

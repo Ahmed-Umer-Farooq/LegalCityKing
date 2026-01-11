@@ -21,6 +21,14 @@ const Chat = ({ currentUser }) => {
     // Load conversations
     loadConversations();
 
+    // Check for pending payment link to send
+    const pendingPaymentLink = localStorage.getItem('pendingPaymentLink');
+    if (pendingPaymentLink) {
+      const linkData = JSON.parse(pendingPaymentLink);
+      setNewMessage(`💳 Payment Request: ${linkData.service_name} - $${linkData.amount}\n\nSecure Payment Link: ${window.location.origin}${linkData.secure_url}\n\nThis link is for: ${linkData.client_email}`);
+      localStorage.removeItem('pendingPaymentLink');
+    }
+
     // Socket event listeners
     chatService.onMessageReceived((message) => {
       if (activeChat && 
@@ -224,13 +232,20 @@ const Chat = ({ currentUser }) => {
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-200 text-gray-800'
                   }`}>
-                    {message.content}
+                    {message.content.includes('💳 Payment Request:') ? (
+                      <div className="space-y-2">
+                        <div className="font-semibold text-sm">💳 Payment Request</div>
+                        <div className="whitespace-pre-line text-sm">{message.content.replace('💳 Payment Request:', '')}</div>
+                      </div>
+                    ) : (
+                      message.content
+                    )}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     {new Date(message.created_at).toLocaleTimeString()}
                   </div>
                 </div>
-              ))}
+              ))}}
 
             </div>
 

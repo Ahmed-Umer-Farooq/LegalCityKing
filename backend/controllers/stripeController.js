@@ -57,6 +57,89 @@ const createSubscriptionCheckout = async (req, res) => {
   }
 };
 
+// Create payment link checkout session
+const createPaymentLinkCheckout = async (req, res) => {
+  try {
+    const { linkId, userId } = req.body;
+    
+    // Get payment link details
+    const paymentLink = await db('payment_links')
+      .select('payment_links.*', 'lawyers.name as lawyer_name')
+      .leftJoin('lawyers', 'payment_links.lawyer_id', 'lawyers.id')
+      .where('payment_links.link_id', linkId)
+      .first();
+
+    if (!paymentLink) {
+      return res.status(404).json({ error: 'Payment link not found' });
+    }
+
+    // Check if link is expired
+    if (new Date() > new Date(paymentLink.expires_at)) {
+      return res.status(400).json({ error: 'Payment link has expired' });
+    }
+
+    // Check if already paid
+    const existingTransaction = await db('transactions')
+      .where('payment_link_id', linkId)
+      .where('status', 'completed')
+      .first();
+
+    if (existingTransaction) {
+      return res.status(400).json({ error: 'This payment link has already been used' });
+    }
+
+    let user = null;
+    let customerId = null;
+
+    if (userId) {
+      user = await db('users').where('id', userId).first();
+      if (user) {
+        customerId = user.stripe_customer_id;
+        if (!customerId) {
+          const customer = await createCustomer(user.email, user.name, 'user');
+          customerId = customer.id;
+          await db('users').where('id', userId).update({ stripe_customer_id: customerId });
+        }
+      }
+    }
+
+    const platformFee = Math.round(paymentLink.amount * 0.05 * 100); // 5% platform fee
+    const lawyerEarnings = paymentLink.amount * 100 - platformFee;
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: paymentLink.service_name,
+            description: paymentLink.description || `Legal service from ${paymentLink.lawyer_name}`,
+          },
+          unit_amount: paymentLink.amount * 100,
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/pay/${linkId}`,
+      metadata: {
+        lawyerId: paymentLink.lawyer_id.toString(),
+        userId: userId?.toString() || '',
+        type: 'payment_link',
+        paymentLinkId: linkId,
+        platformFee: platformFee.toString(),
+        lawyerEarnings: lawyerEarnings.toString()
+      }
+    });
+
+    res.json({ sessionId: session.id, url: session.url });
+  } catch (error) {
+    console.error('Payment link checkout error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Create one-time payment checkout session
 const createConsultationCheckout = async (req, res) => {
   try {
@@ -283,7 +366,82 @@ const handleCheckoutCompleted = async (session) => {
   console.log('🔔 Webhook: Payment completed', session.id);
   const { metadata, customer_details } = session;
   
-  if (metadata.type === 'subscription') {
+  if (metadata.type === 'payment_link') {
+    const platformFee = parseInt(metadata.platformFee) / 100;
+    const lawyerEarnings = parseInt(metadata.lawyerEarnings) / 100;
+    
+    // Try to find user by email if userId not provided
+    let userId = metadata.userId || null;
+    if (!userId && customer_details?.email) {
+      const user = await db('users').where('email', customer_details.email).first();
+      if (user) {
+        userId = user.id;
+        console.log(`🔗 Linked payment to user: ${user.name} (${user.email})`);
+      }
+    }
+    
+    // Get payment link details for service description
+    const paymentLink = await db('payment_links')
+      .where('link_id', metadata.paymentLinkId)
+      .first();
+    
+    const serviceDescription = paymentLink ? `${paymentLink.service_name} is paid` : 'Payment link service is paid';
+    
+    await db('transactions').insert({
+      stripe_payment_id: session.payment_intent,
+      user_id: userId,
+      lawyer_id: metadata.lawyerId,
+      amount: session.amount_total / 100,
+      platform_fee: platformFee,
+      lawyer_earnings: lawyerEarnings,
+      type: 'payment_link',
+      status: 'completed',
+      description: serviceDescription,
+      payment_link_id: metadata.paymentLinkId
+    });
+    
+    console.log(`💰 Payment link transaction saved: $${session.amount_total / 100} to lawyer ${metadata.lawyerId}`);
+
+    // Update lawyer earnings
+    const existingEarnings = await db('earnings').where('lawyer_id', metadata.lawyerId).first();
+    
+    if (existingEarnings) {
+      // Update existing record
+      await db('earnings')
+        .where('lawyer_id', metadata.lawyerId)
+        .update({
+          total_earned: parseFloat(existingEarnings.total_earned || 0) + lawyerEarnings,
+          available_balance: parseFloat(existingEarnings.available_balance || 0) + lawyerEarnings,
+          updated_at: new Date()
+        });
+    } else {
+      // Create new record
+      await db('earnings').insert({
+        lawyer_id: metadata.lawyerId,
+        total_earned: lawyerEarnings,
+        available_balance: lawyerEarnings,
+        pending_balance: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+    
+    // Update payment link usage count
+    if (paymentLink) {
+      await db('payment_links')
+        .where('link_id', metadata.paymentLinkId)
+        .update({
+          usage_count: (paymentLink.usage_count || 0) + 1,
+          updated_at: new Date()
+        });
+    }
+    
+    // Process referral reward if this is user's first payment
+    if (userId) {
+      const { processReferralReward } = require('./referralController');
+      await processReferralReward(userId);
+    }
+  } else if (metadata.type === 'subscription') {
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
     const priceId = subscription.items.data[0].price.id;
     
@@ -688,6 +846,7 @@ const checkExpiredMemberships = async () => {
 module.exports = {
   createSubscriptionCheckout,
   createConsultationCheckout,
+  createPaymentLinkCheckout,
   getSubscriptionPlans,
   getLawyerEarnings,
   createBillingPortalSession,

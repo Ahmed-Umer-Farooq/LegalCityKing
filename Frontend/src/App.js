@@ -44,6 +44,7 @@ import LegalForms from './pages/LegalForms';
 import QAPage from './pages/public/QAPage';
 import ContactUs from './pages/ContactUs';
 import PaymentSuccess from './pages/PaymentSuccess';
+import SecurePaymentPage from './pages/PaymentLinkPage';
 import SubscriptionManagement from './pages/lawyer/SubscriptionManagement';
 
 import QAAnswers from './pages/lawyer/QAAnswers';
@@ -124,6 +125,7 @@ function App() {
           <Route path="/user/profile-settings" element={<Profile />} />
           <Route path="/user/calendar-appointments" element={<Calendar />} />
           <Route path="/user/legal-questions-answers" element={<QA />} />
+          <Route path="/user/payment/:linkId" element={<SecurePaymentPage />} />
           <Route path="/user/referral-program" element={<Refer />} />
           <Route path="/user/account-settings" element={<Settings />} />
         </Route>

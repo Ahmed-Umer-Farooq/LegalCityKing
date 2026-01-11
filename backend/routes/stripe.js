@@ -4,6 +4,7 @@ const { authenticateToken } = require('../utils/middleware');
 const {
   createSubscriptionCheckout,
   createConsultationCheckout,
+  createPaymentLinkCheckout,
   getSubscriptionPlans,
   getLawyerEarnings,
   createBillingPortalSession,
@@ -22,6 +23,7 @@ router.get('/receipt', getPaymentReceipt);
 // Protected routes
 router.post('/create-subscription-checkout', authenticateToken, createSubscriptionCheckout);
 router.post('/create-consultation-checkout', createConsultationCheckout);
+router.post('/create-payment-link-checkout', createPaymentLinkCheckout);
 router.get('/lawyer-earnings', authenticateToken, getLawyerEarnings);
 router.post('/create-billing-portal-session', authenticateToken, createBillingPortalSession);
 router.post('/update-subscription-status', authenticateToken, updateSubscriptionStatus);

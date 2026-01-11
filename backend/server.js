@@ -467,6 +467,10 @@ app.use('/api/payment-acknowledgment', paymentAcknowledgmentRoutes);
 const paymentRecordsRoutes = require('./routes/paymentRecords');
 app.use('/api/payment-records', paymentRecordsRoutes);
 
+// Payment links routes
+const paymentLinksRoutes = require('./routes/paymentLinks');
+app.use('/api/payment-links', paymentLinksRoutes);
+
 // Make io available to routes
 app.set('io', io);
 
@@ -481,33 +485,48 @@ io.on('connection', (socket) => {
     const userId = typeof data === 'object' ? data.userId : data;
     const userType = typeof data === 'object' ? data.userType : 'user';
     
-    // Get user name for admin tracking
+    // Verify user exists and get correct type
+    let verifiedUserType = 'user';
     let userName = 'Unknown';
     try {
-      const table = userType === 'lawyer' ? 'lawyers' : 'users';
-      const user = await db(table).select('name').where('id', userId).first();
-      userName = user?.name || 'Unknown';
+      // Check if user is a lawyer first
+      const lawyer = await db('lawyers').select('name', 'id').where('id', userId).first();
+      if (lawyer) {
+        verifiedUserType = 'lawyer';
+        userName = lawyer.name;
+      } else {
+        // Check if user exists in users table
+        const user = await db('users').select('name', 'id').where('id', userId).first();
+        if (user) {
+          verifiedUserType = 'user';
+          userName = user.name;
+        } else {
+          console.error(`User ${userId} not found in either table`);
+          return;
+        }
+      }
     } catch (error) {
-      console.error('Error fetching user name:', error);
+      console.error('Error verifying user:', error);
+      return;
     }
     
-    // Store user with their type and call status
+    // Store user with verified type
     activeUsers.set(userId, { 
       socketId: socket.id, 
-      userType, 
+      userType: verifiedUserType, 
       userName,
       inCall: false,
       callStartTime: null,
       partnerId: null,
       partnerName: null
     });
-    console.log(`User ${userId} (${userType}) connected with socket ${socket.id}`);
+    console.log(`User ${userId} (${verifiedUserType}) connected with socket ${socket.id}`);
     io.emit('user_status', { userId, status: 'online' });
     
     // Send current unread count to user
     try {
       const unreadCount = await db('chat_messages')
-        .where({ receiver_id: userId, receiver_type: userType, read_status: 0 })
+        .where({ receiver_id: userId, receiver_type: verifiedUserType, read_status: 0 })
         .count('id as count')
         .first();
       socket.emit('unread_count_update', { count: unreadCount.count });
@@ -520,11 +539,25 @@ io.on('connection', (socket) => {
     try {
       let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = data;
       
-      // Convert secure_id to actual id if needed
+      // Verify sender exists and has correct type
+      const senderInfo = activeUsers.get(sender_id);
+      if (!senderInfo) {
+        socket.emit('message_error', { error: 'Sender not authenticated' });
+        return;
+      }
+      
+      // Use verified sender type from active users
+      sender_type = senderInfo.userType;
+      
+      // Verify receiver exists
+      let verifiedReceiverId = receiver_id;
+      let verifiedReceiverType = receiver_type;
+      
       if (receiver_type === 'lawyer' && isNaN(receiver_id)) {
         const lawyer = await db('lawyers').where('secure_id', receiver_id).first();
         if (lawyer) {
-          receiver_id = lawyer.id;
+          verifiedReceiverId = lawyer.id;
+          verifiedReceiverType = 'lawyer';
         } else {
           socket.emit('message_error', { error: 'Lawyer not found' });
           return;
@@ -532,9 +565,18 @@ io.on('connection', (socket) => {
       } else if (receiver_type === 'user' && isNaN(receiver_id)) {
         const user = await db('users').where('secure_id', receiver_id).first();
         if (user) {
-          receiver_id = user.id;
+          verifiedReceiverId = user.id;
+          verifiedReceiverType = 'user';
         } else {
           socket.emit('message_error', { error: 'User not found' });
+          return;
+        }
+      } else {
+        // Verify numeric ID exists in correct table
+        const table = receiver_type === 'lawyer' ? 'lawyers' : 'users';
+        const exists = await db(table).where('id', receiver_id).first();
+        if (!exists) {
+          socket.emit('message_error', { error: 'Receiver not found' });
           return;
         }
       }
@@ -542,8 +584,8 @@ io.on('connection', (socket) => {
       const [messageId] = await db('chat_messages').insert({
         sender_id,
         sender_type,
-        receiver_id,
-        receiver_type,
+        receiver_id: verifiedReceiverId,
+        receiver_type: verifiedReceiverType,
         content,
         message_type: message_type || 'text',
         file_url: file_url || null,
@@ -556,24 +598,22 @@ io.on('connection', (socket) => {
       const message = await db('chat_messages').where('id', messageId).first();
       
       // Send to receiver if online
-      const receiverInfo = activeUsers.get(receiver_id);
+      const receiverInfo = activeUsers.get(verifiedReceiverId);
       const receiverSocketId = receiverInfo?.socketId;
-      console.log(`Looking for receiver ${receiver_id} (${receiver_type}), found socket: ${receiverSocketId}`);
-      console.log('Active users:', Array.from(activeUsers.keys()));
+      console.log(`Looking for receiver ${verifiedReceiverId} (${verifiedReceiverType}), found socket: ${receiverSocketId}`);
       
       if (receiverSocketId) {
         console.log(`Sending message to receiver socket ${receiverSocketId}`);
         io.to(receiverSocketId).emit('receive_message', message);
-        // Force refresh conversations for receiver
         io.to(receiverSocketId).emit('refresh_conversations');
-        // Send updated unread count to receiver
+        
         const unreadCount = await db('chat_messages')
-          .where({ receiver_id, receiver_type, read_status: 0 })
+          .where({ receiver_id: verifiedReceiverId, receiver_type: verifiedReceiverType, read_status: 0 })
           .count('id as count')
           .first();
         io.to(receiverSocketId).emit('unread_count_update', { count: unreadCount.count });
       } else {
-        console.log(`Receiver ${receiver_id} is not online`);
+        console.log(`Receiver ${verifiedReceiverId} is not online`);
       }
       
       // Send confirmation to sender

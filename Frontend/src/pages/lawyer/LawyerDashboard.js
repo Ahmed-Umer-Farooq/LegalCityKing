@@ -31,6 +31,7 @@ const ChatPage = React.lazy(() => import('../../pages/userdashboard/ChatPage').c
 const QAAnswers = React.lazy(() => import('./QAAnswers').catch(() => ({ default: () => <div>Q&A coming soon...</div> })));
 const FormsManagement = React.lazy(() => import('./FormsManagement').catch(() => ({ default: () => <div>Forms coming soon...</div> })));
 const ProfileManagement = React.lazy(() => import('./ProfileManagement').catch(() => ({ default: () => <div>Profile Management loading...</div> })));
+const PaymentLinkManager = React.lazy(() => import('../../components/payment/PaymentLinkManager').catch(() => ({ default: () => <div>Payment Links coming soon...</div> })));
 const PaymentRecords = React.lazy(() => import('./PaymentRecords').catch(() => ({ default: () => <div>Payment Records loading...</div> })));
 
 export default function LawyerDashboard() {
@@ -294,6 +295,7 @@ export default function LawyerDashboard() {
                 { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, verificationRequired: !isVerified },
                 { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, verificationRequired: !isVerified },
                 { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, verificationRequired: !isVerified },
+                { id: 'payment-links', label: 'Pay Links', icon: CreditCard, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, verificationRequired: !isVerified },
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, verificationRequired: !isVerified },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, verificationRequired: !isVerified },
@@ -444,6 +446,11 @@ export default function LawyerDashboard() {
         {activeNavItem === 'calendar' && (
           <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
             <CalendarPage />
+          </React.Suspense>
+        )}
+        {activeNavItem === 'payment-links' && (
+          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+            <PaymentLinkManager />
           </React.Suspense>
         )}
         {activeNavItem === 'payment-records' && (
