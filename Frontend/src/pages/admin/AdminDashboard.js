@@ -431,53 +431,133 @@ const AdminDashboard = () => {
   };
 
   const handleRejectLawyer = async (lawyerId) => {
-    if (!window.confirm('Are you sure you want to reject this lawyer?')) return;
-    
-    try {
-      await api.put(`/admin/reject-lawyer/${lawyerId}`, {
-        reason: 'Rejected by admin'
-      });
-      showToast.success('Lawyer verification rejected');
-      refreshData();
-    } catch (error) {
-      showToast.error('Failed to reject lawyer');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to reject this lawyer?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.put(`/admin/reject-lawyer/${lawyerId}`, {
+                  reason: 'Rejected by admin'
+                });
+                toast.success('Lawyer verification rejected');
+                refreshData();
+              } catch (error) {
+                toast.error('Failed to reject lawyer');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Reject
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    
-    try {
-      await api.delete(`/admin/users/${userId}`);
-      showToast.success('User deleted successfully');
-      refreshData();
-    } catch (error) {
-      showToast.error(error.response?.data?.message || 'Failed to delete user');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this user?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/admin/users/${userId}`);
+                toast.success('User deleted successfully');
+                refreshData();
+              } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to delete user');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleDeleteLawyer = async (lawyerId) => {
-    if (!window.confirm('Are you sure you want to delete this lawyer?')) return;
-    
-    try {
-      await api.delete(`/admin/lawyers/${lawyerId}`);
-      showToast.success('Lawyer deleted successfully');
-      refreshData();
-    } catch (error) {
-      showToast.error('Failed to delete lawyer');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this lawyer?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/admin/lawyers/${lawyerId}`);
+                toast.success('Lawyer deleted successfully');
+                refreshData();
+              } catch (error) {
+                toast.error('Failed to delete lawyer');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleMakeAdmin = async (userId) => {
-    if (!window.confirm('Are you sure you want to grant admin access to this user?')) return;
-    
-    try {
-      await api.put(`/admin/users/${userId}/make-admin`);
-      showToast.success('Admin access granted successfully');
-      refreshData();
-    } catch (error) {
-      showToast.error('Failed to grant admin access');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to grant admin access to this user?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.put(`/admin/users/${userId}/make-admin`);
+                toast.success('Admin access granted successfully');
+                refreshData();
+              } catch (error) {
+                toast.error('Failed to grant admin access');
+              }
+            }}
+            className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+          >
+            Grant Access
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleRemoveAdmin = async (userId) => {
@@ -528,7 +608,8 @@ const AdminDashboard = () => {
     setSelectedBlogForComments(blog);
     setLoadingComments(true);
     try {
-      const response = await api.get(`/blogs/${blog.id}/comments`);
+      const blogId = blog.secure_id || blog.id;
+      const response = await api.get(`/blogs/${blogId}/comments`);
       setBlogComments(response.data || []);
     } catch (error) {
       console.error('Error fetching blog comments:', error);
@@ -539,18 +620,37 @@ const AdminDashboard = () => {
   };
   
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
-    
-    try {
-      await api.delete(`/blogs/comments/${commentId}/moderate`);
-      showToast.success('Comment deleted successfully');
-      // Refresh comments
-      if (selectedBlogForComments) {
-        handleViewBlogComments(selectedBlogForComments);
-      }
-    } catch (error) {
-      showToast.error('Failed to delete comment');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this comment?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/blogs/comments/${commentId}`);
+                toast.success('Comment deleted successfully');
+                if (selectedBlogForComments) {
+                  handleViewBlogComments(selectedBlogForComments);
+                }
+              } catch (error) {
+                toast.error('Failed to delete comment');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleLogout = () => {
