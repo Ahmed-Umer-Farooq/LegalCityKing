@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 import { User, Mail, Phone, Shield, Camera, Save, ArrowLeft, MapPin, Globe } from 'lucide-react';
 
@@ -44,7 +45,7 @@ const AdminProfile = () => {
         profile_image: userData.profile_image || ''
       });
       if (userData.profile_image) {
-        setImagePreview(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${userData.profile_image}`);
+        setImagePreview(`http://localhost:5001${userData.profile_image}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -82,19 +83,18 @@ const AdminProfile = () => {
         formData.append('profile_image', selectedFile);
       }
 
-      const response = await api.put('/user/profile', formData, {
+      await api.put('/user/profile/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      if (response.data) {
-        updateUser(response.data.user || response.data);
-        alert('Profile updated successfully!');
-      }
+      toast.success('Profile updated successfully!');
+      await fetchProfileData();
+      setSelectedFile(null);
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile');
+      toast.error('Failed to update profile');
     } finally {
       setLoading(false);
     }

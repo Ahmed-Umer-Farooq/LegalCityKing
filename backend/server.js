@@ -455,6 +455,10 @@ app.use('/api/referral', referralRoutes);
 const verificationRoutes = require('./routes/verification');
 app.use('/api/verification', verificationRoutes);
 
+// Profile routes
+const profileRoutes = require('./routes/profile');
+app.use('/api/user/profile', profileRoutes);
+
 // Payment acknowledgment routes
 const paymentAcknowledgmentRoutes = require('./routes/paymentAcknowledgment');
 app.use('/api/payment-acknowledgment', paymentAcknowledgmentRoutes);

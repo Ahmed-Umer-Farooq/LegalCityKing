@@ -85,6 +85,63 @@ router.post('/upload-image', authenticateToken, upload.single('profileImage'), a
   }
 });
 
+// Update profile
+router.put('/', authenticateToken, upload.single('profile_image'), async (req, res) => {
+  try {
+    const { name, username, mobile_number, address, city, state, zip_code, country } = req.body;
+    
+    // Determine user table
+    let user = await db('users').where({ id: req.user.id }).first();
+    let tableName = 'users';
+    
+    if (!user) {
+      user = await db('lawyers').where({ id: req.user.id }).first();
+      tableName = 'lawyers';
+    }
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updateData = {
+      name,
+      username,
+      mobile_number,
+      address,
+      city,
+      state,
+      zip_code,
+      country
+    };
+
+    // Handle profile image if uploaded
+    if (req.file) {
+      // Delete old profile image if exists
+      if (user.profile_image) {
+        const oldImagePath = path.join(__dirname, '../uploads/profiles', path.basename(user.profile_image));
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    // Update database
+    await db(tableName).where({ id: req.user.id }).update(updateData);
+
+    // Get updated user data
+    const updatedUser = await db(tableName).where({ id: req.user.id }).first();
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+});
+
 // Delete profile image
 router.delete('/delete-image', authenticateToken, async (req, res) => {
   try {
