@@ -29,9 +29,7 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      toast.error('Account deletion requested. Please contact support.');
-    }
+    toast.error('Account deletion is a serious action. Please contact support to proceed.', { duration: 3000 });
   };
 
   return (

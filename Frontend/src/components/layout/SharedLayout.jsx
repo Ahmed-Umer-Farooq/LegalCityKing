@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, Search, Grid3x3, Calendar, Folder, CheckSquare, FileText, MessageCircle, HelpCircle, Edit3, Users, UserPlus, DollarSign, Share2, User, Settings, LogOut } from 'lucide-react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
 import MessageNotification from '../MessageNotification';
 
 // Sidebar Component
@@ -351,9 +352,10 @@ const Header = ({ onMenuClick, sidebarWidth }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm('Are you sure you want to logout?')) {
+                  toast.info('Logging out...', { duration: 1000 });
+                  setTimeout(() => {
                     logout();
-                  }
+                  }, 1000);
                   setShowProfileMenu(false);
                 }}
                 className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-lg flex items-center gap-3 text-red-600"

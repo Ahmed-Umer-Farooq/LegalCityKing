@@ -85,23 +85,30 @@ const CommentSection = ({ blogId, isDashboardView, isPublicView }) => {
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+    const { toast } = await import('sonner');
+    toast.info('Deleting comment...', { duration: 1000 });
+    
+    setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/blogs/comments/${commentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/blogs/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+        if (response.ok) {
+          setComments(comments.filter(comment => comment.id !== commentId));
+          toast.success('Comment deleted successfully');
+        } else {
+          toast.error('Failed to delete comment');
         }
-      });
-
-      if (response.ok) {
-        setComments(comments.filter(comment => comment.id !== commentId));
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+        toast.error('Error deleting comment');
       }
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-    }
+    }, 1000);
   };
 
   const formatDate = (dateString) => {

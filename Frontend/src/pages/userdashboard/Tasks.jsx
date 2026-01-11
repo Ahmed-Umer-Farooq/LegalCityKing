@@ -20,11 +20,6 @@ const Tasks = () => {
     case_secure_id: ''
   });
 
-  useEffect(() => {
-    fetchTasks();
-    fetchStats();
-  }, []);
-
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -58,9 +53,10 @@ const Tasks = () => {
   };
 
   useEffect(() => {
+    fetchStats();
     const timeoutId = setTimeout(() => {
       fetchTasks();
-    }, 300);
+    }, searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' ? 300 : 0);
     return () => clearTimeout(timeoutId);
   }, [searchTerm, statusFilter, priorityFilter]);
 

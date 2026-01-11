@@ -25,11 +25,6 @@ const Cases = () => {
     description: ''
   });
 
-  useEffect(() => {
-    fetchCases();
-    fetchStats();
-  }, []);
-
   const fetchCases = async () => {
     try {
       setLoading(true);
@@ -59,9 +54,10 @@ const Cases = () => {
   };
 
   useEffect(() => {
+    fetchStats();
     const timeoutId = setTimeout(() => {
       fetchCases();
-    }, 300);
+    }, searchTerm || statusFilter !== 'all' ? 300 : 0);
     return () => clearTimeout(timeoutId);
   }, [searchTerm, statusFilter]);
 
