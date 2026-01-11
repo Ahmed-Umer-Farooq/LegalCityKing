@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 import { 
   Mail, Phone, Calendar, Search, Filter, Eye, Trash2, 
@@ -57,20 +58,42 @@ const ContactSubmissions = () => {
         setSelectedSubmission({ ...selectedSubmission, status });
       }
     } catch (error) {
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     }
   };
 
   const deleteSubmission = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this submission?')) return;
-    try {
-      await api.delete(`/contact-submissions/${id}`);
-      fetchSubmissions();
-      fetchStats();
-      setShowModal(false);
-    } catch (error) {
-      alert('Failed to delete submission');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this submission?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/contact-submissions/${id}`);
+                toast.success('Submission deleted successfully');
+                fetchSubmissions();
+                fetchStats();
+                setShowModal(false);
+              } catch (error) {
+                toast.error('Failed to delete submission');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const getStatusBadge = (status) => {

@@ -1566,29 +1566,69 @@ const AdminDashboard = () => {
   };
   
   const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) return;
-    
-    try {
-      await api.delete(`/admin/reviews/${reviewId}`);
-      showToast.success('Review deleted successfully');
-      fetchLawyerReviews();
-      fetchReviewStats();
-    } catch (error) {
-      showToast.error('Failed to delete review');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this review?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/admin/reviews/${reviewId}`);
+                toast.success('Review deleted successfully');
+                fetchLawyerReviews();
+                fetchReviewStats();
+              } catch (error) {
+                toast.error('Failed to delete review');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
   
   const handleDeleteEndorsement = async (endorsementId) => {
-    if (!window.confirm('Are you sure you want to delete this endorsement?')) return;
-    
-    try {
-      await api.delete(`/admin/endorsements/${endorsementId}`);
-      showToast.success('Endorsement deleted successfully');
-      fetchLawyerEndorsements();
-      fetchReviewStats();
-    } catch (error) {
-      showToast.error('Failed to delete endorsement');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this endorsement?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/admin/endorsements/${endorsementId}`);
+                toast.success('Endorsement deleted successfully');
+                fetchLawyerEndorsements();
+                fetchReviewStats();
+              } catch (error) {
+                toast.error('Failed to delete endorsement');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
   
 
