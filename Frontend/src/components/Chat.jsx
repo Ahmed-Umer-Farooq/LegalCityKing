@@ -173,9 +173,12 @@ const Chat = ({ currentUser }) => {
 
 
   return (
-    <div className="flex h-96 bg-white rounded-lg shadow-md">
-      <div className="w-1/3 border-r border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-4">Conversations</h3>
+    <div className="flex h-[600px] bg-white rounded-lg shadow-lg border border-gray-200">
+      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <h3 className="text-lg font-semibold text-gray-800">Messages</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2">
         {conversations.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <p className="mb-2">No conversations yet</p>
@@ -185,25 +188,29 @@ const Chat = ({ currentUser }) => {
           conversations.map((conv) => (
             <div
               key={`${conv.partner_id}-${conv.partner_type}`}
-              className={`p-3 cursor-pointer rounded-lg mb-2 relative group ${activeChat?.partner_id === conv.partner_id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+              className={`p-3 cursor-pointer rounded-lg mb-2 relative group transition-colors ${
+                activeChat?.partner_id === conv.partner_id ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
+              }`}
               onClick={() => selectChat(conv)}
             >
               <div className="flex justify-between items-center">
-                <span className="font-medium">{conv.partner_name}</span>
+                <span className="font-medium text-gray-800">{conv.partner_name}</span>
                 <div className="flex items-center gap-2">
-                  {onlineUsers.has(conv.partner_id) && <span className="text-green-500">●</span>}
+                  {onlineUsers.has(conv.partner_id) && <span className="text-green-500 text-xs">●</span>}
                   <button
                     onClick={(e) => deleteChat(conv, e)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded px-1 text-lg font-bold"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded px-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Delete conversation"
                   >
                     🗑️
                   </button>
                 </div>
               </div>
-              <div className="text-sm text-gray-600 truncate">{conv.last_message || 'Tap to start messaging'}</div>
+              <div className="text-sm text-gray-600 truncate mt-1">{conv.last_message || 'Start messaging'}</div>
               {conv.unread_count > 0 && (
-                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">{conv.unread_count}</span>
+                <span className="absolute top-2 right-8 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                  {conv.unread_count}
+                </span>
               )}
             </div>
           ))
@@ -213,68 +220,129 @@ const Chat = ({ currentUser }) => {
       <div className="w-2/3 flex flex-col">
         {activeChat ? (
           <>
-            <div className="p-4 border-b border-gray-200">
-              <h4 className="font-semibold">{activeChat.partner_name}</h4>
-              <div className="text-sm">
-                {onlineUsers.has(activeChat.partner_id) && <span className="text-green-500">Online</span>}
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <h4 className="font-semibold text-gray-800">{activeChat.partner_name}</h4>
+              <div className="text-sm text-gray-600">
+                {onlineUsers.has(activeChat.partner_id) && <span className="text-green-500">● Online</span>}
                 {typingUsers.has(activeChat.partner_id) && <span className="text-blue-500 ml-2">Typing...</span>}
               </div>
             </div>
             
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-3">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`mb-3 ${message.sender_id === currentUser.id ? 'text-right' : 'text-left'}`}
+                  className={`flex ${message.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`inline-block p-3 rounded-lg max-w-xs ${
+                  <div className={`inline-block p-3 rounded-lg max-w-xs break-words shadow-sm ${
                     message.sender_id === currentUser.id 
                       ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-200 text-gray-800'
+                      : 'bg-white text-gray-800 border border-gray-200'
                   }`}>
                     {message.content.includes('💳 Payment Request:') ? (
                       <div className="space-y-2">
                         <div className="font-semibold text-sm">💳 Payment Request</div>
-                        <div className="whitespace-pre-line text-sm">{message.content.replace('💳 Payment Request:', '')}</div>
+                        <div className="whitespace-pre-line text-sm break-words">
+                          {message.content.replace('💳 Payment Request:', '').split('\n').map((line, index) => {
+                            const urlRegex = /(https?:\/\/[^\s]+)/g;
+                            const parts = line.split(urlRegex);
+                            return (
+                              <div key={index}>
+                                {parts.map((part, partIndex) => {
+                                  if (urlRegex.test(part)) {
+                                    return (
+                                      <a
+                                        key={partIndex}
+                                        href={part}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`underline hover:no-underline break-all ${
+                                          message.sender_id === currentUser.id ? 'text-blue-100' : 'text-blue-600'
+                                        }`}
+                                      >
+                                        {part}
+                                      </a>
+                                    );
+                                  }
+                                  return part;
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
-                      message.content
+                      <div className="break-words">
+                        {message.content.split('\n').map((line, index) => {
+                          const urlRegex = /(https?:\/\/[^\s]+)/g;
+                          const parts = line.split(urlRegex);
+                          return (
+                            <div key={index}>
+                              {parts.map((part, partIndex) => {
+                                if (urlRegex.test(part)) {
+                                  return (
+                                    <a
+                                      key={partIndex}
+                                      href={part}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`underline hover:no-underline break-all ${
+                                        message.sender_id === currentUser.id ? 'text-blue-100' : 'text-blue-600'
+                                      }`}
+                                    >
+                                      {part}
+                                    </a>
+                                  );
+                                }
+                                return part;
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(message.created_at).toLocaleTimeString()}
+                    <div className="text-xs mt-2 opacity-75">
+                      {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                    </div>
                   </div>
                 </div>
               ))}}
 
             </div>
 
-            <div className="p-4 border-t border-gray-200 flex">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={handleTyping}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={handleTyping}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      sendMessage(e);
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button 
+                  type="button"
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     sendMessage(e);
-                  }
-                }}
-                placeholder="Type a message..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 mr-2"
-              />
-              <button 
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  sendMessage(e);
-                }}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-              >
-                Send
-              </button>
+                  }}
+                  disabled={!newMessage.trim()}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    newMessage.trim() 
+                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  Send
+                </button>
+              </div>
             </div>
           </>
         ) : (

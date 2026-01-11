@@ -372,23 +372,6 @@ export default function LawyerProfile() {
                     <Award className="w-5 h-5" />
                     {user && user.role === 'lawyer' ? 'Endorse Lawyer' : 'Login to Endorse'}
                   </button>
-                  {user ? (
-                    <button 
-                      onClick={() => setShowPaymentModal(true)}
-                      className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-                    >
-                      <CreditCard className="w-5 h-5" />
-                      Pay Now
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => navigate('/login')}
-                      className="flex items-center justify-center gap-3 bg-gray-400 text-white px-8 py-4 rounded-lg font-medium cursor-pointer hover:bg-gray-500 transition-colors"
-                    >
-                      <CreditCard className="w-5 h-5" />
-                      Login to Pay
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
