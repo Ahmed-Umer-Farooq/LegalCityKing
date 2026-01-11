@@ -135,7 +135,8 @@ const encryptMessage = (content, key) => {
   try {
     const algorithm = 'aes-256-cbc';
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher(algorithm, key);
+    const keyBuffer = crypto.scryptSync(key, 'salt', 32);
+    const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
     let encrypted = cipher.update(content, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return iv.toString('hex') + ':' + encrypted;
@@ -157,7 +158,9 @@ const decryptMessage = (encryptedContent, key) => {
       return encryptedContent; // Return as-is if invalid format
     }
     
-    const decipher = crypto.createDecipher(algorithm, key);
+    const iv = Buffer.from(parts[0], 'hex');
+    const keyBuffer = crypto.scryptSync(key, 'salt', 32);
+    const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv);
     let decrypted = decipher.update(parts[1], 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
