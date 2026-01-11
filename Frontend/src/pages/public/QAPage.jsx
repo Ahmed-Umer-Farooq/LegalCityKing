@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import SEOHead from '../../components/SEOHead';
 
 const QAPage = () => {
@@ -143,7 +144,7 @@ const QAPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Question submitted successfully! Attorneys will respond soon.');
+        toast.success('Question submitted successfully! Attorneys will respond soon.');
         setFormData({
           question: '',
           situation: '',
@@ -152,11 +153,11 @@ const QAPage = () => {
         });
         setShowPreview(false);
       } else {
-        alert(data.error || 'Error submitting question. Please try again.');
+        toast.error(data.error || 'Error submitting question. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting question:', error);
-      alert('Error submitting question. Please try again.');
+      toast.error('Error submitting question. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

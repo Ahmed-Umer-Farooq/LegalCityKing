@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import SEOHead from '../components/SEOHead';
 
 const ContactUs = () => {
@@ -76,14 +77,14 @@ const ContactUs = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert('Thank you for contacting Legal City. Your message has been received and our team will respond within 24 hours.');
+        toast.success('Thank you for contacting Legal City. Your message has been received and our team will respond within 24 hours.');
         setFormData({ name: '', email: '', phone: '', subject: '', message: '', legalArea: '' });
       } else {
-        alert('Failed to submit your message. Please try again.');
+        toast.error('Failed to submit your message. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to submit your message. Please try again.');
+      toast.error('Failed to submit your message. Please try again.');
     }
     setIsSubmitting(false);
   };
