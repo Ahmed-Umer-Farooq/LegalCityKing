@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 import {
@@ -113,8 +114,10 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // Auto-refresh interval (every 30 seconds)
+  // Auto-refresh interval (every 30 seconds) - excluding reviews
   useEffect(() => {
+    if (activeTab === 'reviews') return; // Skip auto-refresh for reviews
+    
     const interval = setInterval(() => {
       refreshData();
     }, 30000);
@@ -188,11 +191,8 @@ const AdminDashboard = () => {
       await fetchActivityLogs();
     } else if (activeTab === 'blogs') {
       await fetchBlogs();
-    } else if (activeTab === 'reviews') {
-      await fetchLawyerReviews();
-      await fetchLawyerEndorsements();
-      await fetchReviewStats();
     }
+    // Removed auto-refresh for reviews and endorsements
     setRefreshing(false);
   };
 
@@ -493,15 +493,35 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteBlog = async (blogId) => {
-    if (!window.confirm('Are you sure you want to delete this blog?')) return;
-    
-    try {
-      await api.delete(`/blogs/${blogId}`);
-      showToast.success('Blog deleted successfully');
-      refreshData();
-    } catch (error) {
-      showToast.error('Failed to delete blog');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this blog?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/blogs/admin/${blogId}`);
+                toast.success('Blog deleted successfully');
+                refreshData();
+              } catch (error) {
+                toast.error('Failed to delete blog');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
   
   const handleViewBlogComments = async (blog) => {
@@ -1244,7 +1264,7 @@ const AdminDashboard = () => {
             ) : (
               blogs.map(blog => (
                 <tr key={blog.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{blog.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{blog.id || blog.secure_id}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{blog.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{blog.author_name || 'Unknown'}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{blog.category || 'General'}</td>
@@ -1264,7 +1284,8 @@ const AdminDashboard = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {new Date(blog.created_at).toLocaleDateString()}
+                    {blog.created_at ? new Date(blog.created_at).toLocaleDateString() : 
+                     blog.published_at ? new Date(blog.published_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-2">
@@ -1286,7 +1307,7 @@ const AdminDashboard = () => {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteBlog(blog.id)}
+                        onClick={() => handleDeleteBlog(blog.id || blog.secure_id)}
                         className="p-1 text-red-600 hover:text-red-800"
                         title="Delete Blog"
                       >
@@ -1334,24 +1355,7 @@ const AdminDashboard = () => {
   const [endorsementsPagination, setEndorsementsPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [activeReviewsTab, setActiveReviewsTab] = useState('reviews'); // 'reviews' or 'endorsements'
 
-  // Auto-search when filters change
-  useEffect(() => {
-    if (activeTab === 'reviews' && activeReviewsTab === 'reviews') {
-      const timeoutId = setTimeout(() => {
-        fetchLawyerReviews();
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [reviewsSearch, reviewsPagination.page, activeTab, activeReviewsTab]);
-  
-  useEffect(() => {
-    if (activeTab === 'reviews' && activeReviewsTab === 'endorsements') {
-      const timeoutId = setTimeout(() => {
-        fetchLawyerEndorsements();
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [endorsementsSearch, endorsementsPagination.page, activeTab, activeReviewsTab]);
+
 
   const fetchAllMessages = async () => {
     setLoadingMessages(true);
@@ -1374,11 +1378,14 @@ const AdminDashboard = () => {
     } else if (activeTab === 'calls') {
       initializeCallTracking();
     } else if (activeTab === 'reviews') {
-      fetchLawyerReviews();
-      fetchLawyerEndorsements();
+      if (activeReviewsTab === 'reviews') {
+        fetchLawyerReviews();
+      } else {
+        fetchLawyerEndorsements();
+      }
       fetchReviewStats();
     }
-  }, [activeTab]);
+  }, [activeTab, activeReviewsTab]);
   
   const fetchLawyerReviews = async () => {
     setLoadingLawyerReviews(true);

@@ -65,6 +65,14 @@ router.get('/reports', requireAuth, (req, res, next) => {
   next();
 }, blogController.getAllReports);
 
+// DELETE /api/blogs/admin/:id - Admin delete any blog
+router.delete('/admin/:id', requireAuth, (req, res, next) => {
+  if (req.user.role !== 'admin' && !req.user.is_admin && !req.user.isAdmin) {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+}, blogController.adminDeleteBlog);
+
 // LAWYER ROUTES
 // POST /api/blogs - Create new blog (lawyers only)
 router.post('/', authenticateLawyerSpecific, requireVerifiedLawyer, upload.single('image'), blogController.createBlog);

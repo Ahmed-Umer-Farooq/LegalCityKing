@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, CheckCircle, XCircle, Clock, Eye, Trash2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 
 const API_BASE_URL = 'http://localhost:5001/api';
@@ -25,7 +26,7 @@ export default function AdminFormsManagement() {
       setForms(response.data.forms || []);
     } catch (error) {
       console.error('❌ Error fetching forms:', error.response?.data || error.message);
-      alert('Failed to load forms: ' + (error.response?.data?.error || error.message));
+      toast.error('Failed to load forms: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -43,11 +44,11 @@ export default function AdminFormsManagement() {
   const handleApprove = async (id) => {
     try {
       await api.put(`/forms/admin/${id}/approve`);
-      alert('Form approved successfully!');
+      toast.success('Form approved successfully!');
       fetchForms();
       fetchStats();
     } catch (error) {
-      alert('Failed to approve form');
+      toast.error('Failed to approve form');
     }
   };
 
@@ -56,23 +57,45 @@ export default function AdminFormsManagement() {
     if (!reason) return;
     try {
       await api.put(`/forms/admin/${id}/reject`, { reason });
-      alert('Form rejected');
+      toast.success('Form rejected');
       fetchForms();
       fetchStats();
     } catch (error) {
-      alert('Failed to reject form');
+      toast.error('Failed to reject form');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this form?')) return;
-    try {
-      await api.delete(`/forms/admin/${id}`);
-      fetchForms();
-      fetchStats();
-    } catch (error) {
-      alert('Failed to delete form');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this form?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.delete(`/forms/admin/${id}`);
+                toast.success('Form deleted successfully');
+                fetchForms();
+                fetchStats();
+              } catch (error) {
+                toast.error('Failed to delete form');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const getStatusBadge = (status) => {

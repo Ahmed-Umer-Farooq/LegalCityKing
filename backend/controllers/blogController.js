@@ -24,6 +24,7 @@ const blogController = {
           'category',
           'views_count',
           'published_at',
+          'created_at',
           'author_name',
           'meta_title',
           'focus_keyword',
@@ -41,6 +42,7 @@ const blogController = {
           db('blog_likes').where('blog_id', blog.id).count('* as count').first()
         ]);
         return {
+          id: blog.id,
           secure_id: blog.secure_id,
           title: blog.title,
           slug: blog.slug,
@@ -55,7 +57,8 @@ const blogController = {
           meta_description: blog.meta_description,
           image_alt_text: blog.image_alt_text,
           comment_count: commentCount.count,
-          like_count: likeCount.count
+          like_count: likeCount.count,
+          created_at: blog.created_at || blog.published_at
         };
       }));
 
@@ -383,6 +386,24 @@ const blogController = {
       const { identifier } = req.params;
       
       const deleted = await db('blogs').where('secure_id', identifier).del();
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
+      res.json({ message: 'Blog deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      res.status(500).json({ message: 'Failed to delete blog' });
+    }
+  },
+
+  // Admin delete any blog
+  adminDeleteBlog: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const deleted = await db('blogs').where('id', id).del();
       
       if (!deleted) {
         return res.status(404).json({ message: 'Blog not found' });

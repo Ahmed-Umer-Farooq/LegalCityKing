@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 const QAManagement = () => {
   const [questions, setQuestions] = useState([]);
@@ -43,11 +44,11 @@ const QAManagement = () => {
         setQuestions(data.questions);
         setPagination(data.pagination);
       } else {
-        alert('Failed to fetch questions');
+        toast.error('Failed to fetch questions');
       }
     } catch (error) {
       console.error('Error fetching questions:', error);
-      alert('Error fetching questions');
+      toast.error('Error fetching questions');
     } finally {
       setLoading(false);
     }
@@ -85,15 +86,15 @@ const QAManagement = () => {
       });
 
       if (response.ok) {
-        alert('Question status updated');
+        toast.success('Question status updated');
         fetchQuestions();
         fetchStats();
       } else {
-        alert('Failed to update question status');
+        toast.error('Failed to update question status');
       }
     } catch (error) {
       console.error('Error updating question:', error);
-      alert('Error updating question');
+      toast.error('Error updating question');
     }
   };
 
@@ -110,44 +111,62 @@ const QAManagement = () => {
       });
 
       if (response.ok) {
-        alert('Question visibility updated');
+        toast.success('Question visibility updated');
         fetchQuestions();
       } else {
-        alert('Failed to update question visibility');
+        toast.error('Failed to update question visibility');
       }
     } catch (error) {
       console.error('Error updating question:', error);
-      alert('Error updating question');
+      toast.error('Error updating question');
     }
   };
 
   const handleDeleteQuestion = async (questionId) => {
-    if (!window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-      return;
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to delete this question? This action cannot be undone.</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5001/api/admin/qa/questions/${questionId}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5001/api/admin/qa/questions/${questionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        alert('Question deleted successfully');
-        fetchQuestions();
-        fetchStats();
-        setShowModal(false);
-      } else {
-        alert('Failed to delete question');
-      }
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      alert('Error deleting question');
-    }
+                if (response.ok) {
+                  toast.success('Question deleted successfully');
+                  fetchQuestions();
+                  fetchStats();
+                  setShowModal(false);
+                } else {
+                  toast.error('Failed to delete question');
+                }
+              } catch (error) {
+                console.error('Error deleting question:', error);
+                toast.error('Error deleting question');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const getStatusBadge = (status) => {
