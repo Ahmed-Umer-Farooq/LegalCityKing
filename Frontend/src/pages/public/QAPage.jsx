@@ -73,10 +73,10 @@ const QAPage = () => {
 
   const validateField = (field, value) => {
     const constraints = {
-      question: { minLength: 5, maxLength: 200, required: true },
-      situation: { maxLength: 1200, required: true },
+      question: { minLength: 10, maxLength: 200, required: true },
+      situation: { minLength: 20, maxLength: 1200, required: true },
       city_state: { 
-        pattern: /^[A-Za-z .'-]+,\s*[A-Za-z]{2}$/,
+        pattern: /^[A-Za-z .'-]+,\s*[A-Za-z\s]+$/,
         maxLength: 64,
         required: true
       },
@@ -99,7 +99,7 @@ const QAPage = () => {
     }
 
     if (constraint.pattern && !constraint.pattern.test(value)) {
-      return 'Please enter city and 2-letter state code (e.g., Seattle, WA)';
+      return 'Please enter city and state (e.g., Seattle, WA)';
     }
 
     return '';
@@ -108,10 +108,9 @@ const QAPage = () => {
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
+    // Validate field and update errors immediately
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
   };
 
   const validateForm = () => {
@@ -127,6 +126,8 @@ const QAPage = () => {
   const handlePreview = () => {
     if (validateForm()) {
       setShowPreview(true);
+      // Scroll to top when showing preview
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -163,7 +164,11 @@ const QAPage = () => {
     }
   };
 
-  const isFormValid = Object.values(formData).every(value => value.trim()) && Object.keys(errors).length === 0;
+  const isFormValid = Object.values(formData).every(value => value.trim()) && 
+    Object.values(errors).every(error => !error) &&
+    validateField('question', formData.question) === '' &&
+    validateField('situation', formData.situation) === '' &&
+    validateField('city_state', formData.city_state) === '';
 
   if (showPreview) {
     return (
@@ -368,7 +373,7 @@ const QAPage = () => {
                     type="text"
                     value={formData.city_state}
                     onChange={(e) => handleInputChange('city_state', e.target.value)}
-                    placeholder="Example: Seattle, WA"
+                    placeholder="Enter your city and state"
                     className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
                       errors.city_state ? 'border-red-500' : 'border-gray-300'
                     }`}

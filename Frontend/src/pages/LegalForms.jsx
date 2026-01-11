@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import SEOHead from '../components/SEOHead';
 import api from '../utils/api';
 
@@ -238,12 +239,29 @@ export default function LegalForms() {
                   
                   <div className="p-6 pt-0">
                     <button 
-                      onClick={() => {
+                      onClick={async () => {
                         if (form.file_url) {
-                          // Use the download route
-                          window.open(`${API_BASE_URL}/forms/download/${form.id}`, '_blank');
+                          try {
+                            const response = await fetch(`${API_BASE_URL}/forms/download/${form.id}`);
+                            if (response.ok) {
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${form.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                              document.body.removeChild(a);
+                            } else {
+                              const errorData = await response.json();
+                              toast.error(errorData.error || 'Failed to download form');
+                            }
+                          } catch (error) {
+                            toast.error('Error downloading form. Please try again.');
+                          }
                         } else {
-                          alert('Form file not available');
+                          toast.error('Form file not available');
                         }
                       }}
                       className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"

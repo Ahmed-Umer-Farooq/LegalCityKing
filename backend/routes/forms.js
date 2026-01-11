@@ -41,7 +41,7 @@ const upload = multer({
 router.get('/categories', formsController.getCategories);
 router.get('/public', formsController.getForms);
 router.get('/public/:id', formsController.getForm);
-router.get('/download/:id', requireAuth, formsController.downloadForm);
+router.get('/download/:id', formsController.downloadForm);
 
 // Lawyer routes
 router.get('/my-forms', requireAuth, formsController.getMyForms);

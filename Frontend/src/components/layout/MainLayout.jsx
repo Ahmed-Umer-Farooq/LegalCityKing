@@ -79,6 +79,7 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
 
   const handleLanguageSelect = (language) => {
     setCurrentLanguage(language.code);
+    localStorage.setItem('selectedLanguage', language.code);
     setShowLanguageMenu(false);
   };
 
@@ -96,17 +97,17 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
       <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between px-4 lg:px-8">
         <div className="flex items-center gap-6">
           <LegalCityLogo />
-          <nav className="hidden md:flex items-center gap-2" role="navigation" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-1" role="navigation" aria-label="Main navigation">
             <button 
               onClick={() => navigate('/')}
-              className={`flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+              className={`flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
                 isActive('/') 
                   ? 'text-white' 
                   : 'text-white/90 hover:text-white'
               }`}
               aria-current={isActive('/') ? 'page' : undefined}
             >
-              <span>Home</span>
+              <span>{translations[currentLanguage].home}</span>
               {isActive('/') && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"></div>
               )}
@@ -117,7 +118,7 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
             onMouseLeave={() => setShowDirectoryMenu(false)}
           >
             <button 
-              className={`hidden md:flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+              className={`hidden lg:flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
                 isDirectoryActive() 
                   ? 'text-white' 
                   : 'text-white/90 hover:text-white'
@@ -155,7 +156,7 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
                     : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
                 }`}
               >
-                Directory
+                {translations[currentLanguage].directory}
               </button>
               <button
                 onClick={() => {
@@ -168,59 +169,59 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
                     : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
                 }`}
               >
-                Find a Lawyer
+                {translations[currentLanguage].findLawyer}
               </button>
             </div>
           </div>
           <button 
             onClick={() => navigate('/legal-blog')}
-            className={`hidden md:flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+            className={`hidden lg:flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
               isActive('/legal-blog') 
                 ? 'text-white' 
                 : 'text-white/90 hover:text-white'
             }`}
           >
-            <span>Legal Blog</span>
+            <span>{translations[currentLanguage].legalBlog}</span>
             {isActive('/legal-blog') && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"></div>
             )}
           </button>
           <button 
             onClick={() => navigate('/legal-forms')}
-            className={`hidden md:flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+            className={`hidden lg:flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
               isActive('/legal-forms') 
                 ? 'text-white' 
                 : 'text-white/90 hover:text-white'
             }`}
           >
-            <span>Legal Forms</span>
+            <span>{translations[currentLanguage].legalForms}</span>
             {isActive('/legal-forms') && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"></div>
             )}
           </button>
           <button 
             onClick={() => navigate('/qa')}
-            className={`hidden md:flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+            className={`hidden lg:flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
               isActive('/qa') 
                 ? 'text-white' 
                 : 'text-white/90 hover:text-white'
             }`}
           >
-            <span>Q&A</span>
+            <span>{translations[currentLanguage].qa}</span>
             {isActive('/qa') && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"></div>
             )}
           </button>
             <button 
               onClick={() => navigate('/contact-us')}
-              className={`flex items-center text-sm gap-2 transition-all duration-200 px-3 py-2 relative ${
+              className={`flex items-center text-sm gap-1 transition-all duration-200 px-2 py-2 relative whitespace-nowrap ${
                 isActive('/contact-us') 
                   ? 'text-white' 
                   : 'text-white/90 hover:text-white'
               }`}
               aria-current={isActive('/contact-us') ? 'page' : undefined}
             >
-              <span>Contact</span>
+              <span>{translations[currentLanguage].contact}</span>
               {isActive('/contact-us') && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"></div>
               )}
@@ -393,7 +394,9 @@ function Footer({ currentLanguage, translations }) {
 }
 
 export default function MainLayout() {
-  const [currentLanguage, setCurrentLanguage] = useState('EN');
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    return localStorage.getItem('selectedLanguage') || 'EN';
+  });
   const location = useLocation();
   
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
