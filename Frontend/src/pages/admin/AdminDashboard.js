@@ -561,15 +561,35 @@ const AdminDashboard = () => {
   };
 
   const handleRemoveAdmin = async (userId) => {
-    if (!window.confirm('Are you sure you want to remove admin access?')) return;
-    
-    try {
-      await api.put(`/admin/users/${userId}/remove-admin`);
-      showToast.success('Admin access removed successfully');
-      refreshData();
-    } catch (error) {
-      showToast.error(error.response?.data?.message || 'Failed to remove admin access');
-    }
+    toast(
+      <div className="flex flex-col gap-3">
+        <p>Are you sure you want to remove admin access?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss();
+              try {
+                await api.put(`/admin/users/${userId}/remove-admin`);
+                toast.success('Admin access removed successfully');
+                refreshData();
+              } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to remove admin access');
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Remove
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>,
+      { duration: Infinity }
+    );
   };
 
   const handleDeleteBlog = async (blogId) => {
@@ -1034,56 +1054,56 @@ const AdminDashboard = () => {
                 </td>
               </tr>
             ) : (
-              users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{user.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{user.name || 'Not provided'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{user.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{user.mobile_number || 'Not provided'}</td>
+              users.map(tableUser => (
+                <tr key={tableUser.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-900">{tableUser.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{tableUser.name || 'Not provided'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{tableUser.email}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{tableUser.mobile_number || 'Not provided'}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.is_admin || user.role === 'admin'
+                      tableUser.is_admin || tableUser.role === 'admin'
                         ? 'bg-purple-100 text-purple-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {user.is_admin || user.role === 'admin' ? 'Admin' : 'User'}
+                      {tableUser.is_admin || tableUser.role === 'admin' ? 'Admin' : 'User'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.verified || user.is_verified || user.status === 'verified'
+                      tableUser.verified || tableUser.is_verified || tableUser.status === 'verified'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {user.verified || user.is_verified || user.status === 'verified' ? 'Verified' : 'Active'}
+                      {tableUser.verified || tableUser.is_verified || tableUser.status === 'verified' ? 'Verified' : 'Active'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {new Date(tableUser.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-2">
-                      {!(user.is_admin || user.role === 'admin') && (
+                      {!(tableUser.is_admin || tableUser.role === 'admin') && (
                         <button
-                          onClick={() => handleMakeAdmin(user.id)}
+                          onClick={() => handleMakeAdmin(tableUser.id)}
                           className="p-1 text-purple-600 hover:text-purple-800"
                           title="Make Admin"
                         >
                           <Shield className="w-4 h-4" />
                         </button>
                       )}
-                      {(user.is_admin || user.role === 'admin') && user.id !== user.id && (
+                      {(tableUser.is_admin || tableUser.role === 'admin') && tableUser.id !== user.id && (
                         <button
-                          onClick={() => handleRemoveAdmin(user.id)}
+                          onClick={() => handleRemoveAdmin(tableUser.id)}
                           className="p-1 text-orange-600 hover:text-orange-800"
                           title="Remove Admin"
                         >
                           <ShieldOff className="w-4 h-4" />
                         </button>
                       )}
-                      {!(user.is_admin || user.role === 'admin') && (
+                      {!(tableUser.is_admin || tableUser.role === 'admin') && (
                         <button
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => handleDeleteUser(tableUser.id)}
                           className="p-1 text-red-600 hover:text-red-800"
                           title="Delete User"
                         >
