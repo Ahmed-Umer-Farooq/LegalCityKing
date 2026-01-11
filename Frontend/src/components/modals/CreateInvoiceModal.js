@@ -7,7 +7,6 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
     client_id: '',
     amount: '',
     description: '',
-    case_id: '',
     tax: '',
     due_date: '',
     items: ''
@@ -36,7 +35,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
         alert('Invoice created successfully!');
         onSuccess();
         onClose();
-        setFormData({ client_id: '', amount: '', description: '', case_id: '', tax: '', due_date: '', items: '' });
+        setFormData({ client_id: '', amount: '', description: '', tax: '', due_date: '', items: '' });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create invoice');
@@ -79,15 +78,6 @@ export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
                 required
                 min="0"
                 placeholder="0.00"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>

@@ -30,7 +30,6 @@ export default function QuickActions({ onSuccess }) {
     { id: 'note', label: 'New Note', icon: StickyNote, color: 'bg-yellow-500' },
     { id: 'call', label: 'Log Call', icon: Phone, color: 'bg-indigo-500' },
     { id: 'message', label: 'Send Message', icon: MessageSquare, color: 'bg-pink-500' },
-    { id: 'time', label: 'Track Time', icon: Clock, color: 'bg-teal-500' },
     { id: 'expense', label: 'Add Expense', icon: DollarSign, color: 'bg-emerald-500' },
     { id: 'invoice', label: 'New Invoice', icon: Receipt, color: 'bg-cyan-500' },
     { id: 'payment', label: 'Record Payment', icon: CreditCard, color: 'bg-violet-500' },
@@ -68,7 +67,7 @@ export default function QuickActions({ onSuccess }) {
               <button
                 key={action.id}
                 onClick={() => handleActionClick(action.id)}
-                className="bg-white text-gray-700 p-3 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center gap-2 min-h-[80px] border border-gray-200 shadow-sm"
+                className="bg-white text-gray-700 p-4 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-3 h-[125px] border border-gray-200 shadow-sm"
               >
                 <IconComponent className="w-5 h-5 text-gray-600" />
                 <span className="text-xs font-medium text-center leading-tight text-gray-700">{action.label}</span>
@@ -116,11 +115,6 @@ export default function QuickActions({ onSuccess }) {
       />
       <SendMessageModal 
         isOpen={activeModal === 'message'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
-      <TrackTimeModal 
-        isOpen={activeModal === 'time'} 
         onClose={handleModalClose} 
         onSuccess={handleModalSuccess}
       />

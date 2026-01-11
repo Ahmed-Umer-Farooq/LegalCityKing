@@ -4,7 +4,6 @@ import api from '../../utils/api';
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    case_id: '',
     amount: '',
     description: '',
     date: new Date().toISOString().slice(0, 16),
@@ -16,8 +15,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.case_id || !formData.amount || !formData.description || !formData.date) {
-      alert('Case ID, amount, description, and date are required');
+    if (!formData.amount || !formData.description || !formData.date) {
+      alert('Amount, description, and date are required');
       return;
     }
 
@@ -28,7 +27,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
         alert('Expense added successfully!');
         onSuccess();
         onClose();
-        setFormData({ case_id: '', amount: '', description: '', date: new Date().toISOString().slice(0, 16), category: '', receipt_url: '', billable: false });
+        setFormData({ amount: '', description: '', date: new Date().toISOString().slice(0, 16), category: '', receipt_url: '', billable: false });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to add expense');
@@ -50,16 +49,6 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
         </div>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID *</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
               <input

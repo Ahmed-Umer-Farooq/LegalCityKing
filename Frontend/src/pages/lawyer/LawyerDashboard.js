@@ -52,6 +52,7 @@ export default function LawyerDashboard() {
   const [clients, setClients] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [calls, setCalls] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showClientModal, setShowClientModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -156,7 +157,7 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes, callsRes] = await Promise.all([
+      const [statsRes, casesRes, clientsRes, invoicesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
         api.get('/clients?page=1&limit=100'),
@@ -164,7 +165,8 @@ export default function LawyerDashboard() {
         api.get('/events/upcoming'),
         api.get('/stripe/lawyer-earnings'),
         api.get('/events/calendar'),
-        api.get('/calls?page=1&limit=5')
+        api.get('/calls?page=1&limit=3').catch(() => ({ data: [] })),
+        api.get('/expenses?page=1&limit=3').catch(() => ({ data: [] }))
       ]);
       
       setStats(statsRes.data || { 
@@ -179,7 +181,8 @@ export default function LawyerDashboard() {
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
       setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data?.clients || clientsRes.data?.data || []));
       setInvoices(Array.isArray(invoicesRes.data) ? invoicesRes.data : []);
-      setCalls(Array.isArray(callsRes.data) ? callsRes.data : []);
+      setCalls(Array.isArray(callsRes.data) ? callsRes.data : (callsRes.data?.calls || callsRes.data?.data || []));
+      setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : (expensesRes.data?.expenses || expensesRes.data?.data || []));
       setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
       setCalendarEvents(Array.isArray(calendarRes.data?.data) ? calendarRes.data.data : []);
       
@@ -540,23 +543,30 @@ export default function LawyerDashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-[#007EF4] rounded-full"></div>
-                <span className="text-sm text-[#737791]">2024</span>
+                <span className="text-sm text-[#737791]">{new Date().getFullYear()}</span>
               </div>
             </div>
             <div className="h-48 flex items-end justify-between gap-2">
               {stats.monthlyRevenueData?.length > 0 ? (
-                stats.monthlyRevenueData.map((data, index) => {
-                  const maxRevenue = Math.max(...stats.monthlyRevenueData.map(d => d.revenue));
-                  const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 0;
-                  return (
-                    <div 
-                      key={index} 
-                      className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" 
-                      style={{height: `${Math.max(height, 5)}%`}}
-                      title={`${data.month}: $${data.revenue.toLocaleString()}`}
-                    ></div>
+                (() => {
+                  // Reorder to start with January
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const reorderedData = months.map(month => 
+                    stats.monthlyRevenueData.find(d => d.month === month) || { month, revenue: 0 }
                   );
-                })
+                  const maxRevenue = Math.max(...reorderedData.map(d => d.revenue));
+                  return reorderedData.map((data, index) => {
+                    const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 0;
+                    return (
+                      <div 
+                        key={index} 
+                        className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" 
+                        style={{height: `${Math.max(height, 5)}%`}}
+                        title={`${data.month}: $${data.revenue.toLocaleString()}`}
+                      ></div>
+                    );
+                  });
+                })()
               ) : (
                 [65, 45, 78, 52, 89, 67, 95, 73, 88, 92, 85, 98].map((height, index) => (
                   <div key={index} className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" style={{height: `${height}%`}}></div>
@@ -564,15 +574,9 @@ export default function LawyerDashboard() {
               )}
             </div>
             <div className="flex justify-between mt-4 text-xs text-[#737791]">
-              {stats.monthlyRevenueData?.length > 0 ? (
-                stats.monthlyRevenueData.map((data, index) => (
-                  <span key={index}>{data.month}</span>
-                ))
-              ) : (
-                ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
-                  <span key={index}>{month}</span>
-                ))
-              )}
+              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
+                <span key={index}>{month}</span>
+              ))}
             </div>
           </div>
           
@@ -629,9 +633,9 @@ export default function LawyerDashboard() {
         </div>
 
         {/* Quick Actions & Calendar Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Quick Actions */}
-          <div className="lg:col-span-2">
+          <div>
             <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
               <QuickActions onSuccess={fetchDashboardData} />
             </React.Suspense>
@@ -840,11 +844,12 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Cases Management */}
-        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[#181A2A] text-lg font-semibold">Cases Management</h2>
-            <div className="flex items-center gap-3">
+        {/* Cases Management, All Clients & Recent Payments */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Cases Management */}
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[#181A2A] text-lg font-semibold">Cases Management</h2>
               <select 
                 className="px-3 py-1 border border-gray-300 rounded text-sm"
                 value={caseDisplayLimit}
@@ -855,61 +860,52 @@ export default function LawyerDashboard() {
                 <option value="10">Latest 10</option>
                 <option value="all">See All</option>
               </select>
-              <button 
-                onClick={() => setShowCaseModal(true)} 
-                className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                New Matter
-              </button>
+            </div>
+
+            <div className="space-y-3">
+              {loading ? (
+                <p className="text-center text-[#737791]">Loading cases...</p>
+              ) : cases.length === 0 ? (
+                <p className="text-center text-[#737791]">No cases found. Add your first case!</p>
+              ) : (
+                cases.slice(0, caseDisplayLimit).map((caseItem) => (
+                  <div key={caseItem.id} className="p-3 border border-[#F8F9FA] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-[#181A2A] text-sm font-semibold mb-1">{caseItem.title}</h3>
+                        <div className="text-[#737791] text-xs space-y-1">
+                          <div>ID: {caseItem.case_number || `CASE-${caseItem.id}`}</div>
+                          <div>Type: {caseItem.type?.replace('_', ' ')?.charAt(0).toUpperCase() + caseItem.type?.replace('_', ' ')?.slice(1) || 'Unknown'}</div>
+                          <div>Filed: {caseItem.filing_date ? new Date(caseItem.filing_date).toLocaleDateString() : new Date(caseItem.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColors(caseItem.status)}`}>
+                          {caseItem.status?.charAt(0).toUpperCase() + caseItem.status?.slice(1) || 'Active'}
+                        </span>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => updateCaseStatus(caseItem.id, caseItem.status === 'active' ? 'closed' : 'active')}
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          >
+                            {caseItem.status === 'active' ? 'Close' : 'Reopen'}
+                          </button>
+                          <button 
+                            onClick={() => deleteCase(caseItem.id)}
+                            className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          <div className="space-y-3">
-            {loading ? (
-              <p className="text-center text-[#737791]">Loading cases...</p>
-            ) : cases.length === 0 ? (
-              <p className="text-center text-[#737791]">No cases found. Add your first case!</p>
-            ) : (
-              cases.slice(0, caseDisplayLimit).map((caseItem) => (
-                <div key={caseItem.id} className="flex items-center justify-between p-4 border-2 border-[#DCE8FF] rounded-lg hover:bg-[#F9FAFB] transition-colors">
-                  <div>
-                    <h3 className="text-[#181A2A] text-base font-semibold">{caseItem.title}</h3>
-                    <div className="flex items-center gap-4 text-[#737791] text-sm mt-1">
-                      <span className="font-medium">Case ID: {caseItem.case_number || `CASE-${caseItem.id}`}</span>
-                      <span>Type: {caseItem.type?.charAt(0).toUpperCase() + caseItem.type?.slice(1) || 'Unknown'}</span>
-                      <span>Filed: {caseItem.filing_date ? new Date(caseItem.filing_date).toLocaleDateString() : new Date(caseItem.created_at).toLocaleDateString()}</span>
-                      {caseItem.estimated_value && <span>Value: ${Number(caseItem.estimated_value).toLocaleString()}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColors(caseItem.status)}`}>
-                      {caseItem.status?.charAt(0).toUpperCase() + caseItem.status?.slice(1) || 'Active'}
-                    </span>
-                    <button 
-                      onClick={() => updateCaseStatus(caseItem.id, caseItem.status === 'active' ? 'closed' : 'active')}
-                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                    >
-                      {caseItem.status === 'active' ? 'Close' : 'Reopen'}
-                    </button>
-                    <button 
-                      onClick={() => deleteCase(caseItem.id)}
-                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* All Clients & Recent Payments */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* All Clients */}
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[#181A2A] text-lg font-semibold">All Clients</h2>
@@ -959,6 +955,7 @@ export default function LawyerDashboard() {
             </div>
           </div>
 
+          {/* Recent Payments */}
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[#181A2A] text-lg font-semibold">Recent Payments</h2>
@@ -1002,8 +999,8 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Invoices & Recent Calls */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Recent Invoices, Calls & Expenses */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Invoices</h2>
             <div className="space-y-3">
@@ -1028,7 +1025,22 @@ export default function LawyerDashboard() {
           </div>
 
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Calls</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#181A2A] text-lg font-semibold">Recent Calls</h2>
+              <select 
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                onChange={(e) => {
+                  const limit = e.target.value === 'all' ? 100 : parseInt(e.target.value);
+                  api.get(`/calls?page=1&limit=${limit}`).then(res => {
+                    setCalls(Array.isArray(res.data) ? res.data : (res.data?.calls || res.data?.data || []));
+                  }).catch(() => setCalls([]));
+                }}
+              >
+                <option value="3">Recent (3)</option>
+                <option value="5">Last 5</option>
+                <option value="all">All Calls</option>
+              </select>
+            </div>
             <div className="space-y-3">
               {loading ? (
                 <p className="text-center text-[#737791]">Loading...</p>
@@ -1043,7 +1055,7 @@ export default function LawyerDashboard() {
                       </div>
                       <div>
                         <p className="text-[#181A2A] font-medium">{call.call_type?.charAt(0).toUpperCase() + call.call_type?.slice(1) || 'Call'}</p>
-                        <p className="text-[#737791] text-sm">{call.duration} min • {new Date(call.created_at || call.scheduled_at).toLocaleDateString()}</p>
+                        <p className="text-[#737791] text-sm">{call.duration || 0} min • {new Date(call.created_at || call.scheduled_at).toLocaleDateString()}</p>
                         {call.notes && <p className="text-[#9CA3AF] text-xs mt-1">{call.notes.substring(0, 50)}{call.notes.length > 50 ? '...' : ''}</p>}
                       </div>
                     </div>
@@ -1051,9 +1063,42 @@ export default function LawyerDashboard() {
                       call.outcome === 'successful' ? 'bg-green-100 text-green-800' :
                       call.outcome === 'no_answer' ? 'bg-red-100 text-red-800' :
                       call.outcome === 'voicemail' ? 'bg-yellow-100 text-yellow-800' :
+                      call.outcome === 'busy' ? 'bg-orange-100 text-orange-800' :
+                      call.outcome === 'follow_up_needed' ? 'bg-blue-100 text-blue-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {call.outcome || 'N/A'}
+                      {call.outcome ? call.outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Pending'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
+            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Expenses</h2>
+            <div className="space-y-3">
+              {loading ? (
+                <p className="text-center text-[#737791]">Loading...</p>
+              ) : expenses.length === 0 ? (
+                <p className="text-center text-[#737791]">No expenses found</p>
+              ) : (
+                expenses.map((expense) => (
+                  <div key={expense.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#FEF3C7] rounded-full flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-[#D97706]" />
+                      </div>
+                      <div>
+                        <p className="text-[#181A2A] font-medium">{expense.category?.charAt(0).toUpperCase() + expense.category?.slice(1) || 'Expense'}</p>
+                        <p className="text-[#737791] text-sm">${Number(expense.amount || 0).toFixed(2)} • {new Date(expense.date || expense.created_at).toLocaleDateString()}</p>
+                        {expense.description && <p className="text-[#9CA3AF] text-xs mt-1">{expense.description.substring(0, 40)}{expense.description.length > 40 ? '...' : ''}</p>}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      expense.billable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {expense.billable ? 'Billable' : 'Non-billable'}
                     </span>
                   </div>
                 ))
@@ -1070,68 +1115,65 @@ export default function LawyerDashboard() {
         <div className="max-w-screen-2xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="text-white text-base font-bold mb-6">Browse Our Site</h3>
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-[#0284C7] rounded-full px-4 py-2 shadow-lg">
+                  <span className="text-white font-bold text-xl tracking-tight">Legal</span>
+                </div>
+                <span className="text-white font-bold text-xl tracking-tight">City</span>
+              </div>
+              <p className="text-[#CCC] text-sm mb-4">Connect with qualified legal professionals in your area. Find the right lawyer for your specific legal needs with our comprehensive directory.</p>
+            </div>
+
+            <div>
+              <h3 className="text-white text-base font-bold mb-6">Pages</h3>
               <ul className="space-y-2">
-                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white">Find a Lawyer</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Review Your Lawyer</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Legal Advice</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Recently Answered Questions</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Browse Practice Areas</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Avvo Stories Blog</a></li>
+                <li><a href="/" className="text-[#CCC] text-sm hover:text-white transition-colors">Home</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Find Lawyers</a></li>
+                <li><a href="/legal-forms" className="text-[#CCC] text-sm hover:text-white transition-colors">Legal Forms</a></li>
+                <li><a href="/qa" className="text-[#CCC] text-sm hover:text-white transition-colors">Q&A</a></li>
+                <li><a href="/blog" className="text-[#CCC] text-sm hover:text-white transition-colors">Legal Blog</a></li>
+                <li><a href="/contact" className="text-[#CCC] text-sm hover:text-white transition-colors">Contact Us</a></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-white text-base font-bold mb-6">Popular Locations</h3>
+              <h3 className="text-white text-base font-bold mb-6">Popular Cities</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">New York City Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Los Angeles Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Chicago Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Houston Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Washington, DC Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Philadelphia Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Phoenix Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">San Antonio Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">San Diego Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">New York Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Los Angeles Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Chicago Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Houston Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Phoenix Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Philadelphia Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">San Antonio Lawyers</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">San Diego Lawyers</a></li>
               </ul>
             </div>
 
-            <div>
-              <h3 className="text-white text-base font-bold mb-6">Popular Practice Areas</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Bankruptcy & Debt Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Business Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Criminal Defense Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">DUI & DWI Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Estate Planning Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Car Accident Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Divorce & Separation Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Intellectual Property Lawyers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Speeding & Traffic Lawyers</a></li>
-              </ul>
-            </div>
 
             <div>
-              <h3 className="text-white text-base font-bold mb-6">About</h3>
+              <h3 className="text-white text-base font-bold mb-6">Legal Areas</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">About Avvo</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Careers</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Support</a></li>
-                <li><a href="#" className="text-[#CCC] text-sm hover:text-white">Avvo Rating Explained</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Corporate Law</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Family Law</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Criminal Defense</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Personal Injury</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Real Estate</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Immigration</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Employment Law</a></li>
+                <li><a href="/lawyers" className="text-[#CCC] text-sm hover:text-white transition-colors">Estate Planning</a></li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-[#CCC]/20 pt-6 flex flex-wrap gap-4 items-center text-sm">
-            <a href="#" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC]">Terms of Use</a>
-            <a href="#" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC]">Privacy Policy</a>
-            <a href="#" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC]">Do Not Sell or Share My Personal Information</a>
-            <a href="#" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC]">Community Guidelines</a>
-            <a href="#" className="text-[#CCC] hover:text-white">Sitemap</a>
+            <a href="/privacy-policy" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC] transition-colors">Privacy Policy</a>
+            <a href="/terms-of-service" className="text-[#CCC] hover:text-white pr-4 border-r border-[#CCC] transition-colors">Terms of Service</a>
+            <a href="/contact" className="text-[#CCC] hover:text-white transition-colors">Contact</a>
           </div>
 
           <div className="mt-6">
-            <p className="text-[#CCC] text-sm">© Avvo Inc. All Rights Reserved 2023</p>
+            <p className="text-[#CCC] text-sm">© {new Date().getFullYear()} LegalCity. All rights reserved.</p>
           </div>
         </div>
       </footer>

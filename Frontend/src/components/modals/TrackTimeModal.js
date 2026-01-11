@@ -4,7 +4,6 @@ import api from '../../utils/api';
 
 export default function TrackTimeModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    case_id: '',
     hours: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -15,19 +14,26 @@ export default function TrackTimeModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.case_id || !formData.hours || !formData.description || !formData.date) {
-      alert('Case ID, hours, description, and date are required');
+    if (!formData.hours || !formData.description || !formData.date) {
+      alert('Hours, description, and date are required');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await api.post('/time-entries', formData);
+      const payload = {
+        hours: formData.hours,
+        description: formData.description,
+        date: formData.date,
+        billable_rate: formData.billable_rate || 0,
+        activity_type: formData.activity_type || 'general'
+      };
+      const response = await api.post('/time-entries', payload);
       if (response.data?.success) {
         alert('Time entry created successfully!');
         onSuccess();
         onClose();
-        setFormData({ case_id: '', hours: '', description: '', date: new Date().toISOString().split('T')[0], billable_rate: '', activity_type: '' });
+        setFormData({ hours: '', description: '', date: new Date().toISOString().split('T')[0], billable_rate: '', activity_type: '' });
       }
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create time entry');
@@ -49,16 +55,6 @@ export default function TrackTimeModal({ isOpen, onClose, onSuccess }) {
         </div>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Case ID *</label>
-              <input
-                type="text"
-                value={formData.case_id}
-                onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Hours *</label>
               <input
