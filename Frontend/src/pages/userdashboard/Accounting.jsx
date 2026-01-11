@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, FileText, Calendar, Plus, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 import api from '../../api';
 
 const Accounting = () => {
@@ -85,12 +86,12 @@ const Accounting = () => {
       });
       
       if (response.data.success) {
-        alert(`Captured ${response.data.captured} new payments!`);
+        toast.success(`Captured ${response.data.captured} new payments!`);
         fetchTransactions(); // Refresh the list
       }
     } catch (error) {
       console.error('Capture error:', error);
-      alert('Failed to capture payments');
+      toast.error('Failed to capture payments');
     }
   };
 

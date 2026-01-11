@@ -405,13 +405,13 @@ const DashboardStats = () => {
 // Quick Actions Component
 const QuickActions = () => {
   const actions = [
-    { label: "Pay to Lawyer", path: "/user/lawyer-directory", icon: DollarSign },
     { label: "New Case", path: "/user/legal-cases", icon: Folder },
     { label: "Schedule Meeting", path: "/user/calendar-appointments", icon: Calendar },
     { label: "Send Message", path: "/user/messages", icon: MessageCircle },
     { label: "Legal Forms", path: "/user/legal-forms", icon: FileText },
     { label: "Q&A Forum", path: "/user/legal-questions-answers", icon: HelpCircle },
     { label: "Legal Blog", path: "/user/legal-blog", icon: Edit3 },
+    { label: "Transactions", path: "/user/accounting-billing", icon: DollarSign },
     { label: "Profile Settings", path: "/user/profile-settings", icon: User },
   ];
 
