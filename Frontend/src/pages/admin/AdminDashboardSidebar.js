@@ -94,6 +94,10 @@ const AdminDashboardSidebar = () => {
             <Activity className="w-5 h-5" />
             <span>Activity Logs</span>
           </button>
+          <button onClick={() => setActiveTab('security')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'security' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+            <Shield className="w-5 h-5" />
+            <span>Security Monitor</span>
+          </button>
           <button onClick={() => setActiveTab('calls')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'calls' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
             <Phone className="w-5 h-5" />
             <span>Voice Calls</span>

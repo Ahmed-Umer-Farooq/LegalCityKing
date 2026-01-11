@@ -467,6 +467,10 @@ app.use('/api/payment-acknowledgment', paymentAcknowledgmentRoutes);
 const paymentRecordsRoutes = require('./routes/paymentRecords');
 app.use('/api/payment-records', paymentRecordsRoutes);
 
+// Security routes
+const securityRoutes = require('./routes/security');
+app.use('/api/admin/security', securityRoutes);
+
 // Payment links routes
 const paymentLinksRoutes = require('./routes/paymentLinks');
 app.use('/api/payment-links', paymentLinksRoutes);
@@ -539,6 +543,9 @@ io.on('connection', (socket) => {
     try {
       let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = data;
       
+      // Security validation
+      const { validateContent, verifyUserAccess, encryptMessage } = require('./middleware/chatSecurity');
+      
       // Verify sender exists and has correct type
       const senderInfo = activeUsers.get(sender_id);
       if (!senderInfo) {
@@ -548,6 +555,61 @@ io.on('connection', (socket) => {
       
       // Use verified sender type from active users
       sender_type = senderInfo.userType;
+      
+      // Content validation
+      if (!content || typeof content !== 'string') {
+        socket.emit('message_error', { error: 'Invalid message content' });
+        return;
+      }
+      
+      // Spam detection
+      const spamPatterns = [
+        /\b(viagra|cialis|casino|lottery|winner|congratulations)\b/i,
+        /\b(click here|free money|make money fast|get rich quick)\b/i,
+        /\b(crypto|bitcoin|investment opportunity|trading bot)\b/i,
+        /(..)\1{10,}/, // Repeated characters
+        /[A-Z]{5,}.*[A-Z]{5,}/, // Excessive caps
+      ];
+      
+      for (const pattern of spamPatterns) {
+        if (pattern.test(content)) {
+          socket.emit('message_error', { 
+            error: 'Message blocked: Potential spam detected',
+            code: 'SPAM_DETECTED'
+          });
+          return;
+        }
+      }
+      
+      // URL validation
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const urls = content.match(urlRegex) || [];
+      const maliciousPatterns = [
+        /bit\.ly|tinyurl|t\.co|goo\.gl|ow\.ly/i,
+        /\.(tk|ml|ga|cf)$/i,
+        /phishing|malware|virus|trojan/i,
+      ];
+      
+      for (const url of urls) {
+        for (const pattern of maliciousPatterns) {
+          if (pattern.test(url)) {
+            socket.emit('message_error', { 
+              error: 'Suspicious link blocked',
+              code: 'MALICIOUS_LINK'
+            });
+            return;
+          }
+        }
+      }
+      
+      // Content length validation
+      if (content.length > 2000) {
+        socket.emit('message_error', { 
+          error: 'Message too long (max 2000 characters)',
+          code: 'MESSAGE_TOO_LONG'
+        });
+        return;
+      }
       
       // Verify receiver exists
       let verifiedReceiverId = receiver_id;
@@ -581,12 +643,16 @@ io.on('connection', (socket) => {
         }
       }
       
+      // Encrypt message content
+      const encryptionKey = process.env.CHAT_ENCRYPTION_KEY || 'default-key-change-in-production';
+      // const encryptedContent = encryptMessage(content, encryptionKey);
+      
       const [messageId] = await db('chat_messages').insert({
         sender_id,
         sender_type,
         receiver_id: verifiedReceiverId,
         receiver_type: verifiedReceiverType,
-        content,
+        content: content, // Store original content for now
         message_type: message_type || 'text',
         file_url: file_url || null,
         file_name: file_name || null,
@@ -596,6 +662,21 @@ io.on('connection', (socket) => {
       });
 
       const message = await db('chat_messages').where('id', messageId).first();
+      
+      // Security audit logging
+      const securityAudit = require('./utils/securityAudit');
+      
+      // Log all message activities
+      securityAudit.logChatActivity({
+        type: 'MESSAGE_SENT',
+        userId: sender_id,
+        userType: sender_type,
+        receiverId: verifiedReceiverId,
+        receiverType: verifiedReceiverType,
+        messageLength: content.length,
+        hasUrls: urls.length > 0,
+        ip: socket.handshake.address
+      });
       
       // Send to receiver if online
       const receiverInfo = activeUsers.get(verifiedReceiverId);

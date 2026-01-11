@@ -17,6 +17,7 @@ const QAManagement = React.lazy(() => import('./QAManagement'));
 const FormsManagement = React.lazy(() => import('./FormsManagement'));
 const ContactSubmissions = React.lazy(() => import('./ContactSubmissions'));
 const VerificationManagement = React.lazy(() => import('./VerificationManagement'));
+const SecurityMonitor = React.lazy(() => import('../../components/admin/SecurityMonitor'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -2184,6 +2185,17 @@ const AdminDashboard = () => {
               <span className="text-sm">Activity Logs</span>
             </button>
             <button
+              onClick={() => handleTabChange('security')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                activeTab === 'security'
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              <span className="text-sm">Security Monitor</span>
+            </button>
+            <button
               onClick={() => handleTabChange('calls')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                 activeTab === 'calls'
@@ -2385,6 +2397,11 @@ const AdminDashboard = () => {
         {activeTab === 'verification' && (
           <Suspense fallback={<LoadingSpinner />}>
             <VerificationManagement />
+          </Suspense>
+        )}
+        {activeTab === 'security' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SecurityMonitor />
           </Suspense>
         )}
         {activeTab === 'reviews' && (

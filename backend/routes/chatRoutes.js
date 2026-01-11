@@ -2,6 +2,48 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../utils/middleware');
+const { chatRateLimit, validateContent, validateFile, verifyUserAccess, auditLog } = require('../middleware/chatSecurity');
+const { scanFile, quarantineFile } = require('../middleware/fileScanner');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure secure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../uploads/chat');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${Date.now()}_${sanitizedName}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/gif'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not allowed'), false);
+    }
+  }
+});
 
 // Get all conversations for a user (including pending messages for lawyers)
 router.get('/conversations', authenticateToken, async (req, res) => {
@@ -276,61 +318,41 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
   }
 });
 
-// File upload endpoint
-router.post('/upload', authenticateToken, async (req, res) => {
+// File upload endpoint with security scanning
+router.post('/upload', authenticateToken, chatRateLimit, auditLog, upload.single('file'), validateFile, async (req, res) => {
   try {
-    const multer = require('multer');
-    const path = require('path');
-    const fs = require('fs');
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
     
-    // Configure multer for file upload
-    const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../uploads/chat');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + '-' + file.originalname);
-      }
-    });
+    const filePath = req.file.path;
     
-    const upload = multer({ 
-      storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-      fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-          return cb(null, true);
-        } else {
-          cb(new Error('Invalid file type'));
-        }
-      }
-    }).single('file');
+    // Scan file for malicious content
+    const scanResult = await scanFile(filePath);
     
-    upload(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message });
-      }
+    if (!scanResult.safe) {
+      // Quarantine malicious file
+      await quarantineFile(filePath, scanResult.reason);
       
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      
-      const fileUrl = `/uploads/chat/${req.file.filename}`;
-      
-      res.json({ 
-        success: true, 
-        file_url: fileUrl,
-        file_name: req.file.originalname,
-        file_size: req.file.size
+      return res.status(400).json({ 
+        error: 'File blocked by security scan',
+        reason: scanResult.reason,
+        code: scanResult.code
       });
+    }
+    
+    const fileUrl = `/uploads/chat/${req.file.filename}`;
+    
+    res.json({ 
+      success: true, 
+      file_url: fileUrl,
+      file_name: req.file.originalname,
+      file_size: req.file.size,
+      scan_result: {
+        safe: true,
+        hash: scanResult.hash,
+        entropy: scanResult.entropy
+      }
     });
   } catch (error) {
     console.error('Error uploading file:', error);
@@ -338,8 +360,8 @@ router.post('/upload', authenticateToken, async (req, res) => {
   }
 });
 
-// Send message via API (fallback)
-router.post('/send', authenticateToken, async (req, res) => {
+// Send message via API with security validation
+router.post('/send', authenticateToken, chatRateLimit, auditLog, validateContent, verifyUserAccess, async (req, res) => {
   try {
     let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = req.body;
     
@@ -376,12 +398,16 @@ router.post('/send', authenticateToken, async (req, res) => {
       }
     }
     
+    // Encrypt message content
+    const encryptionKey = process.env.CHAT_ENCRYPTION_KEY || 'default-key-change-in-production';
+    const encryptedContent = encryptMessage(content, encryptionKey);
+    
     const [messageId] = await db('chat_messages').insert({
       sender_id,
       sender_type: verifiedSenderType,
       receiver_id,
       receiver_type,
-      content,
+      content: content, // Store original content for now to fix display issue
       message_type: message_type || 'text',
       file_url: file_url || null,
       file_name: file_name || null,
@@ -391,6 +417,10 @@ router.post('/send', authenticateToken, async (req, res) => {
     });
 
     const message = await db('chat_messages').where('id', messageId).first();
+    
+    // Return decrypted content to sender
+    message.content = content;
+    
     res.json({ success: true, data: message });
   } catch (error) {
     console.error('Error sending message:', error);

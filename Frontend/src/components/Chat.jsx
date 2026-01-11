@@ -12,6 +12,8 @@ const Chat = ({ currentUser }) => {
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
+    if (!currentUser?.id) return;
+
     // Connect to socket
     const socket = chatService.connect({ 
       userId: currentUser.id, 
@@ -78,7 +80,7 @@ const Chat = ({ currentUser }) => {
     return () => {
       chatService.disconnect();
     };
-  }, [currentUser.id, currentUser.role, activeChat]);
+  }, [currentUser?.id, currentUser?.role, activeChat]);
 
   const loadConversations = async () => {
     try {
@@ -107,7 +109,7 @@ const Chat = ({ currentUser }) => {
       e.stopPropagation();
     }
     
-    if (!newMessage.trim() || !activeChat) return;
+    if (!newMessage.trim() || !activeChat || !currentUser?.id) return;
 
     const messageData = {
       sender_id: currentUser.id,
@@ -232,10 +234,10 @@ const Chat = ({ currentUser }) => {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`inline-block p-3 rounded-lg max-w-xs break-words shadow-sm ${
-                    message.sender_id === currentUser.id 
+                    message.sender_id === currentUser?.id 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-white text-gray-800 border border-gray-200'
                   }`}>
@@ -257,7 +259,7 @@ const Chat = ({ currentUser }) => {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className={`underline hover:no-underline break-all ${
-                                          message.sender_id === currentUser.id ? 'text-blue-100' : 'text-blue-600'
+                                          message.sender_id === currentUser?.id ? 'text-blue-100' : 'text-blue-600'
                                         }`}
                                       >
                                         {part}
@@ -287,7 +289,7 @@ const Chat = ({ currentUser }) => {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className={`underline hover:no-underline break-all ${
-                                        message.sender_id === currentUser.id ? 'text-blue-100' : 'text-blue-600'
+                                        message.sender_id === currentUser?.id ? 'text-blue-100' : 'text-blue-600'
                                       }`}
                                     >
                                       {part}
