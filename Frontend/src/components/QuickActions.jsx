@@ -3,16 +3,16 @@ import { Plus, Users, FileText, Calendar, CheckSquare, StickyNote, Phone, Messag
 import { useNavigate } from 'react-router-dom';
 
 // Import all modal components
-import CreateClientModal from './modals/CreateClientModal';
-import CreateContactModal from './modals/CreateContactModal';
-import CreateMatterModal from './modals/CreateMatterModal';
-import CreateEventModal from './modals/CreateEventModal';
-import CreateTaskModal from './modals/CreateTaskModal';
-import CreateNoteModal from './modals/CreateNoteModal';
-import CreateCallModal from './modals/CreateCallModal';
-import SendMessageModal from './modals/SendMessageModal';
-import TrackTimeModal from './modals/TrackTimeModal';
-import AddExpenseModal from './modals/AddExpenseModal';
+import CreateClientModal from './modals/CreateClientModal.jsx';
+import CreateContactModal from './modals/CreateContactModal.jsx';
+import CreateMatterModal from './modals/CreateMatterModal.jsx';
+import CreateEventModal from './modals/CreateEventModal.jsx';
+import CreateTaskModal from './modals/CreateTaskModal.jsx';
+import CreateNoteModal from './modals/CreateNoteModal.jsx';
+import CreateCallModal from './modals/CreateCallModal.jsx';
+import SendMessageModal from './modals/SendMessageModal.jsx';
+import TrackTimeModal from './modals/TrackTimeModal.jsx';
+import AddExpenseModal from './modals/AddExpenseModal.jsx';
 
 
 

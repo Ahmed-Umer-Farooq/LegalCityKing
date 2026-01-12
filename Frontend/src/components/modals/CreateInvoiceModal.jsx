@@ -1,36 +1,44 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { showToast } from '../../utils/toastUtils';
 import api from '../../utils/api';
 
-const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
+export default function CreateInvoiceModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    invoice_number: `INV-${Date.now()}`,
+    client_id: '',
     amount: '',
+    description: '',
+    tax: '',
     due_date: '',
-    status: 'draft',
-    description: ''
+    items: ''
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.client_id || !formData.amount || !formData.description) {
+      alert('Client ID, amount, and description are required');
+      return;
+    }
+
     setLoading(true);
-    
     try {
-      await api.post('/invoices', formData);
-      showToast.success('Invoice created successfully!');
-      setFormData({
-        invoice_number: `INV-${Date.now()}`,
-        amount: '',
-        due_date: '',
-        status: 'draft',
-        description: ''
-      });
-      onClose();
-      if (onSuccess) onSuccess();
+      const submitData = { ...formData };
+      if (submitData.items) {
+        try {
+          submitData.items = JSON.parse(submitData.items);
+        } catch {
+          submitData.items = submitData.items.split('\n').map(item => ({ description: item.trim(), amount: 0 }));
+        }
+      }
+      const response = await api.post('/invoices', submitData);
+      if (response.data?.success) {
+        alert('Invoice created successfully!');
+        onSuccess();
+        onClose();
+        setFormData({ client_id: '', amount: '', description: '', tax: '', due_date: '', items: '' });
+      }
     } catch (error) {
-      showToast.error(error.response?.data?.error || 'Failed to create invoice');
+      alert(error.response?.data?.error || 'Failed to create invoice');
     } finally {
       setLoading(false);
     }
@@ -39,69 +47,95 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">New Invoice</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-[#181A2A]">Create Invoice</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Invoice Number *"
-            value={formData.invoice_number}
-            onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Amount ($) *"
-            value={formData.amount}
-            onChange={(e) => setFormData({...formData, amount: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <input
-            type="date"
-            placeholder="Due Date"
-            value={formData.due_date}
-            onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-          />
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({...formData, status: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg"
-          >
-            <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
-          </select>
-          <textarea
-            placeholder="Invoice Description"
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            className="w-full px-3 py-2 border rounded-lg h-20 resize-none"
-          />
-          
-          <div className="flex gap-2 pt-4">
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+              <input
+                type="text"
+                value={formData.client_id}
+                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+                min="0"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tax Amount</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.tax}
+                onChange={(e) => setFormData({ ...formData, tax: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                min="0"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+              <input
+                type="datetime-local"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                rows="2"
+                required
+                placeholder="Invoice description..."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Items (one per line or JSON)</label>
+              <textarea
+                value={formData.items}
+                onChange={(e) => setFormData({ ...formData, items: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                rows="3"
+                placeholder="Legal consultation - 2 hours&#10;Document review&#10;Court filing fees"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 bg-[#28B779] text-white px-6 py-2 rounded-lg hover:bg-[#229966] disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Invoice'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              className="flex-1 bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
             >
               Cancel
             </button>
@@ -110,6 +144,4 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       </div>
     </div>
   );
-};
-
-export default CreateInvoiceModal;
+}
