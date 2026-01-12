@@ -5,7 +5,7 @@ import { blockBrowserNotifications } from './utils/toastUtils';
 import './styles/toast.css';
 
 import LegalCityAuth from './LegalCityAuth';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfile from './pages/admin/AdminProfile';
 import GoogleUserSetup from './pages/auth/GoogleUserSetup';

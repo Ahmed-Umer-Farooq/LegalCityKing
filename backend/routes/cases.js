@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../utils/middleware');
-const { getAllCases, getCaseById, createCase, updateCase, deleteCase, getCaseTimeline, getCaseStats } = require('../controllers/caseController');
+const { getCases, getCaseById, createCase, updateCase, deleteCase, getCaseTimeline, getCaseStats } = require('../controllers/unified/caseController');
 
-router.get('/', authenticateToken, getAllCases);
+router.get('/', authenticateToken, getCases);
 router.get('/stats', authenticateToken, getCaseStats);
 router.get('/:id', authenticateToken, getCaseById);
 router.get('/:id/timeline', authenticateToken, getCaseTimeline);

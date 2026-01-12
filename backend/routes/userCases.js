@@ -2,18 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../utils/middleware');
 const {
-  getUserCases,
-  createUserCase,
-  updateUserCase,
+  getCases,
+  createCase,
+  updateCase,
   addCaseDocument,
   addCaseMeeting,
   getCaseStats
-} = require('../controllers/userCaseController');
+} = require('../controllers/unified/caseController');
 
-router.get('/', authenticateToken, getUserCases);
+router.get('/', authenticateToken, getCases);
 router.get('/stats', authenticateToken, getCaseStats);
-router.post('/', authenticateToken, createUserCase);
-router.put('/:secure_id', authenticateToken, updateUserCase);
+router.post('/', authenticateToken, createCase);
+router.put('/:secure_id', authenticateToken, updateCase);
 router.post('/:secure_id/documents', authenticateToken, addCaseDocument);
 router.post('/:secure_id/meetings', authenticateToken, addCaseMeeting);
 

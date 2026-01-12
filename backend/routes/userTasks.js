@@ -2,17 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../utils/middleware');
 const {
-  getUserTasks,
-  createUserTask,
-  updateUserTask,
-  deleteUserTask,
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
   getTaskStats
-} = require('../controllers/userTaskController');
+} = require('../controllers/unified/taskController');
 
-router.get('/', authenticateToken, getUserTasks);
+router.get('/', authenticateToken, getTasks);
 router.get('/stats', authenticateToken, getTaskStats);
-router.post('/', authenticateToken, createUserTask);
-router.put('/:secure_id', authenticateToken, updateUserTask);
-router.delete('/:secure_id', authenticateToken, deleteUserTask);
+router.post('/', authenticateToken, createTask);
+router.put('/:secure_id', authenticateToken, updateTask);
+router.delete('/:secure_id', authenticateToken, deleteTask);
 
 module.exports = router;

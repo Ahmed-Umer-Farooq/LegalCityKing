@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../utils/middleware');
-const { createPaymentToLawyer } = require('../controllers/userPaymentController');
+const { createPayment } = require('../controllers/unified/paymentController');
 
-router.post('/pay-lawyer', authenticateToken, createPaymentToLawyer);
+router.post('/pay-lawyer', authenticateToken, createPayment);
 
 module.exports = router;

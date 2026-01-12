@@ -21,10 +21,10 @@ const CreateInvoiceModal = React.lazy(() => import('../../components/modals/Crea
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
 const ViewClientModal = React.lazy(() => import('../../components/modals/ViewClientModal').catch(() => ({ default: () => null })));
 const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
-const ContactsPage = React.lazy(() => import('./ContactsPage').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
+const ContactsPage = React.lazy(() => import('./ContactsPage.jsx').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
 const CalendarPage = React.lazy(() => import('./CalendarPage.jsx').catch(() => ({ default: () => <div>Calendar loading...</div> })));
 const ReportsPage = React.lazy(() => import('./ReportsPage').catch(() => ({ default: () => <div>Reports coming soon...</div> })));
-const TasksPage = React.lazy(() => import('./TasksPage').catch(() => ({ default: () => <div>Tasks coming soon...</div> })));
+const TasksPage = React.lazy(() => import('./TasksPage.jsx').catch(() => ({ default: () => <div>Tasks coming soon...</div> })));
 const DocumentsPage = React.lazy(() => import('./DocumentsPage').catch(() => ({ default: () => <div>Documents coming soon...</div> })));
 const BlogManagement = React.lazy(() => import('./BlogManagement').catch(() => ({ default: () => <div>Blog Management coming soon...</div> })));
 const ChatPage = React.lazy(() => import('../../pages/userdashboard/ChatPage').catch(() => ({ default: () => <div>Chat coming soon...</div> })));

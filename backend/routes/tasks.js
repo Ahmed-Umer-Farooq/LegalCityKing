@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../utils/middleware');
-const { getAllTasks, createTask, updateTask, deleteTask, updateTaskStatus, getMyTasks } = require('../controllers/taskController');
+const { getTasks, createTask, updateTask, deleteTask, updateTaskStatus, getMyTasks, getTaskStats } = require('../controllers/unified/taskController');
 
-router.get('/', authenticateToken, getAllTasks);
+router.get('/', authenticateToken, getTasks);
 router.get('/my-tasks', authenticateToken, getMyTasks);
 router.post('/', authenticateToken, createTask);
 router.put('/:id', authenticateToken, updateTask);
