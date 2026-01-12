@@ -4,7 +4,7 @@ const Sidebar = ({ isAuthPage = false }) => {
   // Auth page sidebar - Enhanced with DARKER, more vibrant colors and WIDER to cover almost half screen
   if (isAuthPage) {
     return (
-      <aside className="w-[35vw] bg-gradient-to-br from-[#0369A1] via-[#075985] to-[#0C4A6E] min-h-screen p-12 flex flex-col relative overflow-hidden shadow-2xl">
+      <aside className="hidden lg:flex w-[35vw] bg-gradient-to-br from-[#0369A1] via-[#075985] to-[#0C4A6E] min-h-screen p-12 flex-col relative overflow-hidden shadow-2xl">
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-15">
           <div 

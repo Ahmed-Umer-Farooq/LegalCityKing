@@ -6,6 +6,7 @@ import ReportBlogModal from '../../components/modals/ReportBlogModal';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toastUtils';
 import { updatePageMeta, generateSlug } from '../../utils/seo';
+import { responsive } from '../../utils/responsive';
 
 const BlogDetail = () => {
   const { id } = useParams();
@@ -357,26 +358,26 @@ const BlogDetail = () => {
 
       {/* Hero Section */}
       <div className="bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className={`${responsive.containerSm} ${responsive.spacing.section}`}>
           {/* Category Badge */}
-          <div className="mb-6">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+          <div className="mb-4 sm:mb-6">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full ${responsive.text.xs} font-medium bg-blue-100 text-blue-800`}>
               {currentBlogPost.category}
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
+          <h1 className={`${responsive.text['3xl']} font-bold text-gray-900 leading-tight mb-3 sm:mb-4`}>
             {currentBlogPost.title}
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl text-gray-600 leading-relaxed mb-8">
+          <p className={`${responsive.text.base} text-gray-600 leading-relaxed mb-6 sm:mb-8`}>
             {currentBlogPost.subtitle}
           </p>
 
           {/* Meta Information */}
-          <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className={`${responsive.flex.responsive} items-start justify-between mb-6 sm:mb-8 ${responsive.spacing.gap}`}>
             <div 
               className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
               onClick={() => {
@@ -388,20 +389,21 @@ const BlogDetail = () => {
                 <img 
                   src={currentBlogPost.authorImage} 
                   alt={currentBlogPost.author}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center">
-                  <span className="text-white font-bold">{currentBlogPost.author?.charAt(0) || 'A'}</span>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#E7EFFD] to-[#0071BC] flex items-center justify-center">
+                  <span className="text-white font-bold text-sm sm:text-base">{currentBlogPost.author?.charAt(0) || 'A'}</span>
                 </div>
               )}
               <div>
-                <p className="font-semibold text-gray-900">{currentBlogPost.author}</p>
-                <p className="text-sm text-gray-600">Senior Technology Writer</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                <p className={`font-semibold text-gray-900 ${responsive.text.sm}`}>{currentBlogPost.author}</p>
+                <p className={`${responsive.text.xs} text-gray-600`}>Senior Technology Writer</p>
+                <div className={`flex items-center gap-2 sm:gap-4 ${responsive.text.xs} text-gray-500 mt-1`}>
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
-                    {currentBlogPost.date}
+                    <span className="hidden sm:inline">{currentBlogPost.date}</span>
+                    <span className="sm:hidden">{new Date(currentBlogPost.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
@@ -412,47 +414,47 @@ const BlogDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button 
                 onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg transition-colors ${
                   liked 
                     ? 'bg-red-100 text-red-600' 
                     : 'bg-red-50 text-red-600 hover:bg-red-100'
                 }`}
                 title={!isAuthenticated ? 'Like (stored locally)' : 'Like'}
               >
-                <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
-                <span className="font-medium">{liked ? 'Liked' : 'Like'}</span>
-                {!isAuthenticated && <span className="text-xs opacity-75">(local)</span>}
+                <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
+                <span className={`font-medium ${responsive.text.xs} hidden sm:inline`}>{liked ? 'Liked' : 'Like'}</span>
+                {!isAuthenticated && <span className="text-xs opacity-75 hidden sm:inline">(local)</span>}
               </button>
               <button 
                 onClick={handleSave}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg transition-colors ${
                   saved 
                     ? 'bg-blue-100 text-blue-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 title={!isAuthenticated ? 'Save (stored locally)' : 'Save'}
               >
-                <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
-                <span className="font-medium">{saved ? 'Saved' : 'Save'}</span>
-                {!isAuthenticated && <span className="text-xs opacity-75">(local)</span>}
+                <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+                <span className={`font-medium ${responsive.text.xs} hidden sm:inline`}>{saved ? 'Saved' : 'Save'}</span>
+                {!isAuthenticated && <span className="text-xs opacity-75 hidden sm:inline">(local)</span>}
               </button>
               <button 
                 onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors`}
               >
-                <Share2 size={18} />
-                <span className="font-medium">Share</span>
+                <Share2 size={16} />
+                <span className={`font-medium ${responsive.text.xs} hidden sm:inline`}>Share</span>
               </button>
               <button
                 onClick={() => setReportModal({ isOpen: true, blogId: blogId, blogTitle: currentBlogPost.title })}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors`}
                 title="Report this blog"
               >
-                <Flag size={18} />
-                <span className="font-medium">Report</span>
+                <Flag size={16} />
+                <span className={`font-medium ${responsive.text.xs} hidden sm:inline`}>Report</span>
               </button>
             </div>
           </div>
@@ -461,11 +463,11 @@ const BlogDetail = () => {
 
       {/* Featured Image */}
       <div className="bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className={responsive.containerSm}>
           <img 
             src={currentBlogPost.image} 
             alt={currentBlogPost.title}
-            className="w-full h-96 object-cover rounded-xl shadow-lg"
+            className="w-full h-48 sm:h-64 md:h-96 object-cover rounded-xl shadow-lg"
             onError={(e) => {
               if (!e.target.src.includes('picsum.photos')) {
                 e.target.src = getPlaceholderImage(currentBlogPost.category, currentBlogPost.secure_id);
@@ -477,13 +479,13 @@ const BlogDetail = () => {
 
       {/* Article Content */}
       <div className="bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className={`${responsive.containerSm} ${responsive.spacing.section}`}>
           <div className="prose prose-lg max-w-none">
             <div 
               dangerouslySetInnerHTML={{ __html: currentBlogPost.content }}
-              className="text-gray-800 leading-relaxed space-y-6"
+              className={`text-gray-800 leading-relaxed space-y-4 sm:space-y-6 ${responsive.text.sm}`}
               style={{
-                fontSize: '18px',
+                fontSize: window.innerWidth < 640 ? '16px' : '18px',
                 lineHeight: '1.8'
               }}
             />
@@ -497,21 +499,21 @@ const BlogDetail = () => {
 
       {/* Comments Section */}
       <div className="bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className={`${responsive.containerSm} ${responsive.spacing.section}`}>
           <CommentSection blogId={blogId} isDashboardView={isDashboardView} isPublicView={isPublicView} />
         </div>
       </div>
 
       {/* Related Articles */}
       <div className="bg-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Related Articles</h2>
+        <div className={`${responsive.containerSm} ${responsive.spacing.section}`}>
+          <h2 className={`${responsive.text['2xl']} font-bold text-gray-900 mb-6 sm:mb-8`}>Related Articles</h2>
           {relatedArticles.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-600">Loading related articles...</p>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`${responsive.grid.cols1} md:grid-cols-3 ${responsive.spacing.gap}`}>
             {relatedArticles.map((article) => (
               <div 
                 key={article.id}
@@ -525,23 +527,23 @@ const BlogDetail = () => {
                 <img 
                   src={article.image} 
                   alt={article.title}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-40 sm:h-48 object-cover"
                   onError={(e) => {
                     if (!e.target.src.includes('picsum.photos')) {
                       e.target.src = getPlaceholderImage(article.category, article.secure_id);
                     }
                   }}
                 />
-                <div className="p-6">
+                <div className={responsive.spacing.card}>
                   <div className="mb-3">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full ${responsive.text.xs} font-medium bg-gray-100 text-gray-800`}>
                       {article.category}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                  <h3 className={`${responsive.text.base} font-semibold text-gray-900 mb-2 line-clamp-2`}>
                     {article.title}
                   </h3>
-                  <p className="text-sm text-gray-600">{article.readTime}</p>
+                  <p className={`${responsive.text.xs} text-gray-600`}>{article.readTime}</p>
                 </div>
               </div>
             ))}
@@ -551,17 +553,17 @@ const BlogDetail = () => {
 
       {/* Newsletter Signup */}
       <div className="bg-gradient-to-r from-blue-600 to-cyan-400">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className={`${responsive.containerSm} py-12 sm:py-16`}>
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Stay Updated</h2>
-            <p className="text-xl text-blue-100 mb-8">Get the latest insights delivered to your inbox</p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <h2 className={`${responsive.text['2xl']} font-bold text-white mb-3 sm:mb-4`}>Stay Updated</h2>
+            <p className={`${responsive.text.base} text-blue-100 mb-6 sm:mb-8`}>Get the latest insights delivered to your inbox</p>
+            <div className={`${responsive.flex.responsive} ${responsive.spacing.gap} max-w-md mx-auto`}>
               <input 
                 type="email" 
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className={`flex-1 ${responsive.input} border-0 focus:ring-2 focus:ring-white/50`}
               />
-              <button className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+              <button className={`${responsive.button} bg-white text-blue-600 font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap`}>
                 Subscribe
               </button>
             </div>

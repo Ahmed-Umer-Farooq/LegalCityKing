@@ -90,8 +90,8 @@ const AuthContent = () => {
       <Sidebar isAuthPage={true} />
 
       {/* Right form area */}
-      <main className="flex-1 flex items-start justify-start pt-12 pl-16 pr-16 pb-12 overflow-y-auto">
-        <div className="w-full max-w-[620px]">
+      <main className="flex-1 flex items-start justify-start pt-12 pl-16 pr-16 pb-12 lg:pl-16 lg:pr-16 px-4 lg:px-16 overflow-y-auto">
+        <div className="w-full max-w-[620px] lg:max-w-[620px] max-w-md mx-auto lg:mx-0">
           {authMode === 'register' ? (
             <Register
               onSwitchToLogin={() => { setAuthMode('login'); navigate('/login'); }}

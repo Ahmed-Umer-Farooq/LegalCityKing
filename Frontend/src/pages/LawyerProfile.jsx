@@ -715,7 +715,7 @@ export default function LawyerProfile() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="hidden lg:block space-y-6">
             {/* Contact Info */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>

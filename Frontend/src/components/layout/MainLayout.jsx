@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { responsive } from '../../utils/responsive';
 
 /**
  * Sub-components (Icons & Logo)
@@ -29,6 +30,7 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
   const { user, isAuthenticated, logout } = useAuth();
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showDirectoryMenu, setShowDirectoryMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -229,11 +231,12 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Language Selector */}
           <div className="relative">
             <button 
               onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-              className="w-9 h-9 rounded-full bg-transparent border border-white/30 hover:bg-white/10 transition-colors flex items-center justify-center"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-transparent border border-white/30 hover:bg-white/10 transition-colors flex items-center justify-center"
               title={`Language: ${currentLanguage}`}
             >
               <span className="text-white text-xs font-medium">{currentLanguage}</span>
@@ -256,10 +259,20 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
             )}
           </div>
 
-          {/* Conditional navigation buttons based on authentication */}
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showMobileMenu ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
+
+          {/* Desktop Auth Buttons */}
           {isAuthenticated && user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-white text-sm">Welcome, {user.name}</span>
+            <div className="hidden lg:flex items-center gap-2 sm:gap-3">
+              <span className="text-white text-sm hidden xl:inline">Welcome, {user.name}</span>
               <button
                 onClick={() => {
                   if (user.role === 'admin' || user.is_admin) {
@@ -270,22 +283,22 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
                     navigate('/user-dashboard');
                   }
                 }}
-                className="flex items-center gap-2 h-[38px] px-4 rounded-[20px] bg-white/20 hover:bg-white/30 transition-colors"
+                className="flex items-center gap-2 h-8 sm:h-[38px] px-3 sm:px-4 rounded-[20px] bg-white/20 hover:bg-white/30 transition-colors"
               >
                 <span className="text-white text-sm">Dashboard</span>
               </button>
               <button
                 onClick={logout}
-                className="flex items-center gap-2 h-[38px] px-4 rounded-[20px] bg-transparent border border-white/30 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 h-8 sm:h-[38px] px-3 sm:px-4 rounded-[20px] bg-transparent border border-white/30 hover:bg-white/10 transition-colors"
               >
                 <span className="text-white text-sm">Logout</span>
               </button>
             </div>
           ) : (
-            <>
+            <div className="hidden lg:flex items-center gap-2 sm:gap-3">
               <button 
                 onClick={handleLoginClick}
-                className="flex items-center gap-2 h-[38px] px-4 rounded-[20px] bg-transparent border border-white/30 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 h-8 sm:h-[38px] px-3 sm:px-4 rounded-[20px] bg-transparent border border-white/30 hover:bg-white/10 transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="7" cy="4" r="3" stroke="white" strokeWidth="1.5"/>
@@ -295,14 +308,115 @@ function Header({ currentLanguage, setCurrentLanguage, translations }) {
               </button>
               <button 
                 onClick={handleSignupClick}
-                className="h-[38px] px-6 rounded-[20px] bg-white text-black text-sm font-medium hover:bg-gray-100 transition-colors"
+                className="h-8 sm:h-[38px] px-4 sm:px-6 rounded-[20px] bg-white text-black text-sm font-medium hover:bg-gray-100 transition-colors"
               >
                 {translations[currentLanguage].signup}
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+          <div className="px-4 py-4 space-y-3">
+            <button 
+              onClick={() => { navigate('/'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].home}
+            </button>
+            <button 
+              onClick={() => { navigate('/lawyers'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/lawyers') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].directory}
+            </button>
+            <button 
+              onClick={() => { navigate('/legal-blog'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/legal-blog') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].legalBlog}
+            </button>
+            <button 
+              onClick={() => { navigate('/legal-forms'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/legal-forms') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].legalForms}
+            </button>
+            <button 
+              onClick={() => { navigate('/qa'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/qa') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].qa}
+            </button>
+            <button 
+              onClick={() => { navigate('/contact-us'); setShowMobileMenu(false); }}
+              className={`block w-full text-left py-2 text-sm ${
+                isActive('/contact-us') ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {translations[currentLanguage].contact}
+            </button>
+            
+            {/* Mobile Auth Buttons */}
+            <div className="border-t border-gray-200 pt-3 mt-3">
+              {isAuthenticated && user ? (
+                <div className="space-y-2">
+                  <p className="text-gray-600 text-sm">Welcome, {user.name}</p>
+                  <button
+                    onClick={() => {
+                      if (user.role === 'admin' || user.is_admin) {
+                        navigate('/admin-dashboard');
+                      } else if (user.role === 'lawyer' || user.registration_id) {
+                        navigate('/lawyer-dashboard');
+                      } else {
+                        navigate('/user-dashboard');
+                      }
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full text-left py-2 text-sm text-blue-600 font-medium"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => { logout(); setShowMobileMenu(false); }}
+                    className="block w-full text-left py-2 text-sm text-red-600"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => { handleLoginClick(); setShowMobileMenu(false); }}
+                    className="block w-full text-left py-2 text-sm text-blue-600 font-medium"
+                  >
+                    {translations[currentLanguage].login}
+                  </button>
+                  <button 
+                    onClick={() => { handleSignupClick(); setShowMobileMenu(false); }}
+                    className="block w-full text-left py-2 text-sm text-blue-600 font-medium"
+                  >
+                    {translations[currentLanguage].signup}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -312,31 +426,31 @@ function Footer({ currentLanguage, translations }) {
 
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className={`${responsive.container} ${responsive.spacing.section}`}>
+        <div className={`${responsive.grid.cols1} md:grid-cols-2 lg:grid-cols-5 ${responsive.spacing.gap}`}>
           <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-white rounded-full px-4 py-2 shadow-lg">
-                <span className="text-[#0284C7] font-bold text-xl tracking-tight">Legal</span>
+              <div className="bg-white rounded-full px-2 py-1 sm:px-4 sm:py-2 shadow-lg">
+                <span className={`text-[#0284C7] font-bold ${responsive.text.sm} tracking-tight`}>Legal</span>
               </div>
-              <span className="text-white font-bold text-xl tracking-tight">City</span>
+              <span className={`text-white font-bold ${responsive.text.sm} tracking-tight`}>City</span>
             </div>
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className={`text-gray-300 mb-6 max-w-md ${responsive.text.sm}`}>
               Connect with qualified legal professionals in your area. Find the right lawyer for your specific legal needs with our comprehensive directory.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex gap-3 sm:gap-4">
+              <a href="#" className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                 </svg>
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <a href="#" className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
                 </svg>
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <a href="#" className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                 </svg>
               </a>
@@ -344,8 +458,8 @@ function Footer({ currentLanguage, translations }) {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Pages</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className={`font-semibold mb-4 ${responsive.text.sm}`}>Pages</h3>
+            <ul className={`space-y-2 ${responsive.text.xs}`}>
               <li><button onClick={() => navigate('/')} className="text-gray-300 hover:text-white transition-colors">Home</button></li>
               <li><button onClick={() => navigate('/lawyers')} className="text-gray-300 hover:text-white transition-colors">Find Lawyers</button></li>
               <li><button onClick={() => navigate('/legal-forms')} className="text-gray-300 hover:text-white transition-colors">Legal Forms</button></li>
@@ -356,16 +470,16 @@ function Footer({ currentLanguage, translations }) {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Account</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className={`font-semibold mb-4 ${responsive.text.sm}`}>Account</h3>
+            <ul className={`space-y-2 ${responsive.text.xs}`}>
               <li><button onClick={() => navigate('/login')} className="text-gray-300 hover:text-white transition-colors">Login</button></li>
               <li><button onClick={() => navigate('/register')} className="text-gray-300 hover:text-white transition-colors">Sign Up</button></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Legal Areas</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className={`font-semibold mb-4 ${responsive.text.sm}`}>Legal Areas</h3>
+            <ul className={`space-y-2 ${responsive.text.xs}`}>
               <li><button onClick={() => navigate('/lawyers?practice=Corporate Law')} className="text-gray-300 hover:text-white transition-colors">Corporate Law</button></li>
               <li><button onClick={() => navigate('/lawyers?practice=Family Law')} className="text-gray-300 hover:text-white transition-colors">Family Law</button></li>
               <li><button onClick={() => navigate('/lawyers?practice=Criminal Defense')} className="text-gray-300 hover:text-white transition-colors">Criminal Defense</button></li>
@@ -378,14 +492,14 @@ function Footer({ currentLanguage, translations }) {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">
+        <div className={`border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 ${responsive.flex.responsive} justify-between items-center`}>
+          <p className={`text-gray-400 ${responsive.text.xs}`}>
             © 2024 LegalCity. All rights reserved.
           </p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Contact</a>
+          <div className="flex flex-wrap gap-4 sm:gap-6 mt-4 md:mt-0">
+            <a href="#" className={`text-gray-400 hover:text-white ${responsive.text.xs} transition-colors`}>Privacy Policy</a>
+            <a href="#" className={`text-gray-400 hover:text-white ${responsive.text.xs} transition-colors`}>Terms of Service</a>
+            <a href="#" className={`text-gray-400 hover:text-white ${responsive.text.xs} transition-colors`}>Contact</a>
           </div>
         </div>
       </div>
@@ -401,10 +515,8 @@ export default function MainLayout() {
   
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   
-  // Check if user came from dashboard (for lawyer profile)
-  const cameFromDashboard = localStorage.getItem('navigatedFromDashboard') === 'true' || location.pathname.startsWith('/dashboard/lawyer/');
-  const isLawyerProfile = location.pathname.startsWith('/lawyer/');
-  const shouldHideHeader = isLawyerProfile && cameFromDashboard;
+  // Only hide header/footer for auth pages
+  const shouldHideHeader = isAuthPage;
 
   const translations = {
     EN: {
@@ -527,13 +639,13 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-white font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {!isAuthPage && !shouldHideHeader && (
+      {!shouldHideHeader && (
         <Header currentLanguage={currentLanguage} setCurrentLanguage={setCurrentLanguage} translations={translations} />
       )}
-      <main className={`flex-1 ${!isAuthPage && !shouldHideHeader ? 'pt-16' : ''}`}>
+      <main className={`flex-1 ${!shouldHideHeader ? 'pt-14 sm:pt-16' : ''}`}>
         <Outlet />
       </main>
-      {!isAuthPage && !shouldHideHeader && <Footer currentLanguage={currentLanguage} translations={translations} />}
+      {!shouldHideHeader && <Footer currentLanguage={currentLanguage} translations={translations} />}
     </div>
   );
 }

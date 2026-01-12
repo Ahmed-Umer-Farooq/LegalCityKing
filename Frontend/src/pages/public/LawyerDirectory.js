@@ -5,6 +5,7 @@ import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import DashboardHeader from '../../components/layout/DashboardHeader';
 import { updatePageMeta, addStructuredData, seoConfigs, generateLawyerStructuredData } from '../../utils/seo';
+import { responsive } from '../../utils/responsive';
 
 // Default fallback data if API fails
 const fallbackLawyers = [];
@@ -36,20 +37,20 @@ function Header() {
   const isFromUserDashboard = location.pathname.includes('/user/lawyer-directory') || location.state?.from === 'user-dashboard';
 
   return (
-    <header className="w-full h-16 bg-gradient-to-b from-blue-600 to-cyan-400 flex items-center justify-between px-4 lg:px-36">
+    <header className="w-full h-16 bg-gradient-to-b from-blue-600 to-cyan-400 flex items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-36">
       <div className="flex items-center flex-shrink-0">
         <div 
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate('/')}
         >
-          <div className="bg-white rounded-lg px-3 py-1.5 shadow-sm">
-            <span className="text-[#0284C7] font-bold text-lg tracking-tight">Legal</span>
+          <div className="bg-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 shadow-sm">
+            <span className="text-[#0284C7] font-bold text-base sm:text-lg tracking-tight">Legal</span>
           </div>
-          <span className="text-white font-bold text-lg tracking-tight">City</span>
+          <span className="text-white font-bold text-base sm:text-lg tracking-tight">City</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Admin Panel - Only show for admin users */}
         {user && (user.role === 'admin' || user.is_admin) && (
           <button 
@@ -64,9 +65,10 @@ function Header() {
           <>
             <button 
               onClick={handleBackNavigation}
-              className="flex items-center justify-center h-9 px-4 md:px-7 rounded-full bg-white/20 text-white text-sm font-normal hover:bg-white/30 transition-colors"
+              className="flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 md:px-7 rounded-full bg-white/20 text-white text-xs sm:text-sm font-normal hover:bg-white/30 transition-colors"
             >
-              {isFromUserDashboard ? 'Back to Dashboard' : 'Back to Home'}
+              <span className="hidden sm:inline">{isFromUserDashboard ? 'Back to Dashboard' : 'Back to Home'}</span>
+              <span className="sm:hidden">Back</span>
             </button>
             {!isFromUserDashboard && (
               <button 
@@ -74,7 +76,7 @@ function Header() {
                   localStorage.removeItem('token');
                   window.location.href = '/';
                 }}
-                className="flex items-center justify-center h-9 px-4 md:px-7 rounded-full bg-white text-black text-sm font-normal hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 md:px-7 rounded-full bg-white text-black text-xs sm:text-sm font-normal hover:bg-gray-100 transition-colors"
               >
                 Logout
               </button>
@@ -83,9 +85,10 @@ function Header() {
         ) : (
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center justify-center h-9 px-4 md:px-7 rounded-full bg-white text-black text-sm font-normal hover:bg-gray-100 transition-colors"
+            className="flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 md:px-7 rounded-full bg-white text-black text-xs sm:text-sm font-normal hover:bg-gray-100 transition-colors"
           >
-            Back to Home
+            <span className="hidden sm:inline">Back to Home</span>
+            <span className="sm:hidden">Home</span>
           </button>
         )}
       </div>
@@ -119,40 +122,40 @@ function LawyerCard({
 
   return (
     <div className="w-full">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+      <div className={`${responsive.card} overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
         {/* Category Badge */}
-        <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-6 py-3">
-          <span className="text-white font-semibold text-sm uppercase tracking-wide">{category}</span>
+        <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-4 sm:px-6 py-2 sm:py-3">
+          <span className={`text-white font-semibold ${responsive.text.xs} uppercase tracking-wide`}>{category}</span>
         </div>
         
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className={responsive.spacing.card}>
+          <div className={`${responsive.flex.responsive} ${responsive.spacing.gap}`}>
             {/* Professional Avatar */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 mx-auto md:mx-0">
               <img
                 src={imageUrl}
                 alt={`${name} - ${category} Attorney`}
-                className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-full border-4 border-gray-100 shadow-md"
+                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-cover rounded-full border-4 border-gray-100 shadow-md"
                 loading="lazy"
               />
             </div>
 
-            <div className="flex-1">
+            <div className="flex-1 text-center md:text-left">
               {/* Lawyer Name */}
-              <h3 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer" onClick={handleViewProfile}>
+              <h3 className={`${responsive.text.lg} font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer`} onClick={handleViewProfile}>
                 {name}
               </h3>
 
               {/* Location */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
                 <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <span className="text-sm text-gray-600">{location}</span>
+                <span className={`${responsive.text.xs} text-gray-600`}>{location}</span>
               </div>
 
               {/* Rating */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} className={`w-4 h-4 ${i < Math.round(rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -160,7 +163,7 @@ function LawyerCard({
                     </svg>
                   ))}
                 </div>
-                <span className="text-sm font-semibold text-gray-700">
+                <span className={`${responsive.text.xs} font-semibold text-gray-700`}>
                   {rating > 0 ? rating.toFixed(1) : '0.0'}
                 </span>
                 <span className="text-xs text-gray-500">
@@ -169,8 +172,8 @@ function LawyerCard({
               </div>
 
               {/* Experience */}
-              <div className="mb-4">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <div className="mb-4 flex justify-center md:justify-start">
+                <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {yearsLicensed} years licensed
                 </span>
               </div>
@@ -178,9 +181,9 @@ function LawyerCard({
           </div>
 
           {/* Practice Areas */}
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Practice Areas</h4>
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <h4 className={`${responsive.text.xs} font-semibold text-gray-700 mb-2 uppercase tracking-wide`}>Practice Areas</h4>
+            <div className="flex flex-wrap gap-1 sm:gap-2 justify-center md:justify-start">
               {practiceAreas.map((area, index) => (
                 <span key={index} className="px-2 py-1 bg-white text-gray-700 text-xs rounded-md border border-gray-200 font-medium">
                   {area}
@@ -190,13 +193,13 @@ function LawyerCard({
           </div>
 
           {/* Description & Action */}
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <p className="text-sm text-gray-600 leading-relaxed flex-1">
+          <div className={`mt-4 ${responsive.flex.responsive} sm:items-end sm:justify-between ${responsive.spacing.gap}`}>
+            <p className={`${responsive.text.xs} text-gray-600 leading-relaxed flex-1 text-center md:text-left`}>
               {description}
             </p>
             <button 
               onClick={handleViewProfile}
-              className="px-6 py-3 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm whitespace-nowrap"
+              className={`px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 ${responsive.text.xs} whitespace-nowrap w-full sm:w-auto`}
             >
               View Profile
             </button>
@@ -408,7 +411,7 @@ function LawyerDirectory() {
 
       
       {/* Professional Hero Section */}
-      <section className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-white to-gray-50">
+      <section className="relative w-full h-[300px] sm:h-[350px] lg:h-[400px] bg-gradient-to-br from-blue-50 via-white to-gray-50">
         <img
           src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1440&h=400&fit=crop&auto=format&q=80"
           alt="Professional lawyer directory - Find qualified attorneys and legal professionals for your legal needs"
@@ -419,15 +422,15 @@ function LawyerDirectory() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-blue-50/60 to-white/80" />
 
-        <div className="relative h-full flex items-center justify-center px-4">
+        <div className={`relative h-full ${responsive.flex.colCenter} ${responsive.spacing.card}`}>
           <div className="text-center max-w-4xl">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className={`${responsive.text['3xl']} font-bold text-gray-900 mb-4 sm:mb-6 leading-tight`}>
               <span className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] bg-clip-text text-transparent">Lawyer Directory</span>
             </h1>
-            <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed font-medium max-w-3xl mx-auto">
+            <p className={`${responsive.text.base} text-gray-700 mb-6 sm:mb-8 leading-relaxed font-medium max-w-3xl mx-auto`}>
               Connect with Top-Rated Legal Professionals. Browse our comprehensive directory of qualified attorneys, filter by practice area and experience to find the perfect legal representation for your needs.
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span>Verified Attorneys</span>
@@ -446,17 +449,17 @@ function LawyerDirectory() {
       </section>
 
       {/* Main Content */}
-      <div className="max-w-screen-xl mx-auto px-4 lg:px-36 py-6">
+      <div className={`${responsive.container} py-6`}>
         {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className={`${responsive.card} mb-6`}>
+          <div className={`${responsive.flex.responsive} ${responsive.spacing.gap}`}>
             <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Search by name or practice area"
                 value={filters.search}
                 onChange={(e) => setFilters({...filters, search: e.target.value})}
-                className="w-full h-12 px-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                className={`${responsive.input} h-10 sm:h-12 border-2 border-gray-300 focus:border-blue-500`}
               />
             </div>
             <div className="relative flex-1">
@@ -465,19 +468,19 @@ function LawyerDirectory() {
                 placeholder="Location (city, state)"
                 value={filters.location}
                 onChange={(e) => setFilters({...filters, location: e.target.value})}
-                className="w-full h-12 px-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                className={`${responsive.input} h-10 sm:h-12 border-2 border-gray-300 focus:border-blue-500`}
               />
             </div>
           </div>
         </div>
 
         {/* Professional Filter Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Attorneys</h2>
-          <div className="flex flex-wrap gap-3">
+        <div className={`${responsive.card} mb-8`}>
+          <h2 className={`${responsive.text.lg} font-semibold text-gray-900 mb-4`}>Filter Attorneys</h2>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button 
               onClick={clearFilters}
-              className="h-12 px-6 rounded-lg border-2 border-gray-300 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-400 transition-all font-medium"
+              className="h-10 sm:h-12 px-4 sm:px-6 rounded-lg border-2 border-gray-300 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-400 transition-all font-medium"
             >
               <svg
                 className="w-5 h-5 stroke-gray-600"
@@ -492,14 +495,14 @@ function LawyerDirectory() {
                   stroke="#5A5A5A"
                 />
               </svg>
-              <span className="text-sm text-gray-700">Clear Filters</span>
+              <span className={`${responsive.text.xs} text-gray-700`}>Clear Filters</span>
             </button>
 
             <div className="relative">
               <select 
                 value={filters.yearsLicensed}
                 onChange={(e) => setFilters({...filters, yearsLicensed: e.target.value})}
-                className="h-12 px-4 pr-10 rounded-lg border-2 border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all appearance-none cursor-pointer font-medium min-w-[160px]"
+                className={`h-10 sm:h-12 px-3 sm:px-4 pr-8 sm:pr-10 rounded-lg border-2 border-gray-300 ${responsive.text.xs} text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all appearance-none cursor-pointer font-medium min-w-[140px] sm:min-w-[160px]`}
               >
                 <option value="">Years Licensed</option>
                 {yearsOptions.map(option => (
@@ -513,7 +516,7 @@ function LawyerDirectory() {
               <select 
                 value={filters.practiceArea}
                 onChange={(e) => setFilters({...filters, practiceArea: e.target.value})}
-                className="h-12 px-4 pr-10 rounded-lg border-2 border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all appearance-none cursor-pointer font-medium min-w-[160px]"
+                className={`h-10 sm:h-12 px-3 sm:px-4 pr-8 sm:pr-10 rounded-lg border-2 border-gray-300 ${responsive.text.xs} text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all appearance-none cursor-pointer font-medium min-w-[140px] sm:min-w-[160px]`}
               >
                 <option value="">Practice Area</option>
                 {practiceAreas.map(area => (
@@ -529,7 +532,7 @@ function LawyerDirectory() {
         {(filters.search || filters.location || filters.yearsLicensed || filters.practiceArea) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {filters.search && (
-              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm flex items-center gap-2">
+              <span className={`px-2 sm:px-3 py-1 bg-purple-100 text-purple-800 rounded-full ${responsive.text.xs} flex items-center gap-2`}>
                 Search: {filters.search}
                 <button onClick={() => setFilters({...filters, search: ''})} className="hover:text-purple-900">
                   ×
@@ -537,7 +540,7 @@ function LawyerDirectory() {
               </span>
             )}
             {filters.location && (
-              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm flex items-center gap-2">
+              <span className={`px-2 sm:px-3 py-1 bg-orange-100 text-orange-800 rounded-full ${responsive.text.xs} flex items-center gap-2`}>
                 Location: {filters.location}
                 <button onClick={() => setFilters({...filters, location: ''})} className="hover:text-orange-900">
                   ×
@@ -545,7 +548,7 @@ function LawyerDirectory() {
               </span>
             )}
             {filters.yearsLicensed && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-2">
+              <span className={`px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full ${responsive.text.xs} flex items-center gap-2`}>
                 Years: {filters.yearsLicensed}
                 <button onClick={() => setFilters({...filters, yearsLicensed: ''})} className="hover:text-blue-900">
                   ×
@@ -553,7 +556,7 @@ function LawyerDirectory() {
               </span>
             )}
             {filters.practiceArea && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center gap-2">
+              <span className={`px-2 sm:px-3 py-1 bg-green-100 text-green-800 rounded-full ${responsive.text.xs} flex items-center gap-2`}>
                 Area: {filters.practiceArea}
                 <button onClick={() => setFilters({...filters, practiceArea: ''})} className="hover:text-green-900">
                   ×
@@ -565,7 +568,7 @@ function LawyerDirectory() {
 
         {/* Results Count */}
         <div className="mb-4">
-          <p className="text-gray-600 text-sm">
+          <p className={`text-gray-600 ${responsive.text.xs}`}>
             Showing {filteredLawyers.length} of {lawyers.length} lawyers
           </p>
         </div>

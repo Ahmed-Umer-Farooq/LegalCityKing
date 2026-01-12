@@ -914,7 +914,7 @@ const Blog = () => {
             </div>
 
             {/* Right Sidebar */}
-            <aside className="w-full lg:w-80 flex-shrink-0">
+            <aside className="hidden lg:block w-full lg:w-80 flex-shrink-0">
               <div className="sticky top-8 space-y-10">
                 <CategoriesWidget 
                   onCategoryClick={handleCategoryClick} 
