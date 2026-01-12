@@ -7,7 +7,6 @@ import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
 
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
-const CreateClientModal = React.lazy(() => import('../../components/modals/CreateClientModal').catch(() => ({ default: () => null })));
 const CreateEventModal = React.lazy(() => import('../../components/modals/CreateEventModal').catch(() => ({ default: () => null })));
 const CreateTaskModal = React.lazy(() => import('../../components/modals/CreateTaskModal').catch(() => ({ default: () => null })));
 const CreateContactModal = React.lazy(() => import('../../components/modals/CreateContactModal').catch(() => ({ default: () => null })));
@@ -19,7 +18,6 @@ const TrackTimeModal = React.lazy(() => import('../../components/modals/TrackTim
 const AddExpenseModal = React.lazy(() => import('../../components/modals/AddExpenseModal').catch(() => ({ default: () => null })));
 const CreateInvoiceModal = React.lazy(() => import('../../components/modals/CreateInvoiceModal').catch(() => ({ default: () => null })));
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
-const ViewClientModal = React.lazy(() => import('../../components/modals/ViewClientModal').catch(() => ({ default: () => null })));
 const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage.jsx').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
 const CalendarPage = React.lazy(() => import('./CalendarPage.jsx').catch(() => ({ default: () => <div>Calendar loading...</div> })));
@@ -50,12 +48,10 @@ export default function LawyerDashboard() {
     caseDistribution: [],
     monthlyRevenueData: []
   });
-  const [clients, setClients] = useState([]);
   const [notes, setNotes] = useState([]);
   const [calls, setCalls] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showClientModal, setShowClientModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -67,8 +63,6 @@ export default function LawyerDashboard() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showViewClientModal, setShowViewClientModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeNavItem, setActiveNavItem] = useState(searchParams.get('tab') || 'home');
   const [currentUser, setCurrentUser] = useState(null);
@@ -158,10 +152,9 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, clientsRes, notesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
+      const [statsRes, casesRes, notesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
-        api.get('/clients?page=1&limit=100'),
         api.get('/notes?page=1&limit=3'),
         api.get('/events/upcoming'),
         api.get('/stripe/lawyer-earnings'),
@@ -180,7 +173,6 @@ export default function LawyerDashboard() {
         monthlyRevenueData: []
       });
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
-      setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data?.clients || clientsRes.data?.data || []));
       setNotes(Array.isArray(notesRes.data?.data) ? notesRes.data.data : []);
       setCalls(Array.isArray(callsRes.data) ? callsRes.data : (callsRes.data?.calls || callsRes.data?.data || []));
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : (expensesRes.data?.expenses || expensesRes.data?.data || []));
@@ -795,8 +787,8 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Cases Management, All Clients & Recent Payments */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Cases Management & Recent Payments */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Cases Management */}
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <div className="flex items-center justify-between mb-6">
@@ -850,56 +842,6 @@ export default function LawyerDashboard() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* All Clients */}
-          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[#181A2A] text-lg font-semibold">All Clients</h2>
-              <select 
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
-                onChange={(e) => {
-                  const limit = e.target.value === 'all' ? 100 : parseInt(e.target.value);
-                  api.get(`/clients?page=1&limit=${limit}`).then(res => {
-                    setClients(Array.isArray(res.data) ? res.data : (res.data?.clients || res.data?.data || []));
-                  }).catch(err => console.error('Error fetching clients:', err));
-                }}
-              >
-                <option value="3">Recent (3)</option>
-                <option value="10">Last 10</option>
-                <option value="all">All Clients</option>
-              </select>
-            </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {loading ? (
-                <p className="text-center text-[#737791]">Loading...</p>
-              ) : clients.length === 0 ? (
-                <p className="text-center text-[#737791]">No clients found</p>
-              ) : (
-                clients.map((client) => (
-                  <div key={client.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#EDF3FF] rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-[#186898]" />
-                      </div>
-                      <div>
-                        <p className="text-[#181A2A] font-medium">{client.name}</p>
-                        <p className="text-[#737791] text-sm">{client.email}</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setShowViewClientModal(true);
-                      }}
-                      className="text-[#0086CB] text-sm font-medium hover:underline cursor-pointer"
-                    >
-                      View
-                    </button>
                   </div>
                 ))
               )}
@@ -1136,11 +1078,6 @@ export default function LawyerDashboard() {
       <PaymentAcknowledgment onAcknowledged={fetchDashboardData} />
 
       {/* Modals */}
-      <CreateClientModal 
-        isOpen={showClientModal} 
-        onClose={() => setShowClientModal(false)} 
-        onSuccess={fetchDashboardData}
-      />
       <CreateEventModal 
         isOpen={showEventModal} 
         onClose={() => setShowEventModal(false)} 
@@ -1198,14 +1135,6 @@ export default function LawyerDashboard() {
         isOpen={showPaymentModal} 
         onClose={() => setShowPaymentModal(false)} 
         onSuccess={fetchDashboardData}
-      />
-      <ViewClientModal 
-        isOpen={showViewClientModal} 
-        onClose={() => {
-          setShowViewClientModal(false);
-          setSelectedClient(null);
-        }} 
-        client={selectedClient}
       />
       <VerificationModal 
         isOpen={showVerificationModal} 

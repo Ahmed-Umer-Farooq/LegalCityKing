@@ -364,8 +364,6 @@ const dashboardRoutes = require('./routes/dashboard');
 app.use('/api/dashboard', dashboardRoutes);
 const casesRoutes = require('./routes/cases');
 app.use('/api/cases', casesRoutes);
-const clientsRoutes = require('./routes/clients');
-app.use('/api/clients', clientsRoutes);
 const eventsRoutes = require('./routes/events');
 app.use('/api/events', eventsRoutes);
 const tasksRoutes = require('./routes/tasks');

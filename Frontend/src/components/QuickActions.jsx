@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Users, FileText, Calendar, CheckSquare, StickyNote, Phone, MessageSquare, Clock, DollarSign, Receipt, CreditCard, UserPlus, HelpCircle, BarChart3 } from 'lucide-react';
+import { Plus, Link, FileText, Calendar, CheckSquare, StickyNote, Phone, MessageSquare, Clock, DollarSign, Receipt, CreditCard, UserPlus, HelpCircle, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Import all modal components
-import CreateClientModal from './modals/CreateClientModal.jsx';
 import CreateContactModal from './modals/CreateContactModal.jsx';
 import CreateMatterModal from './modals/CreateMatterModal.jsx';
 import CreateEventModal from './modals/CreateEventModal.jsx';
@@ -22,7 +21,7 @@ export default function QuickActions({ onSuccess }) {
   const navigate = useNavigate();
 
   const quickActions = [
-    { id: 'client', label: 'New Client', icon: Users, color: 'bg-blue-500' },
+    { id: 'payment-links', label: 'Payment Links', icon: Link, color: 'bg-blue-500' },
     { id: 'contact', label: 'New Contact', icon: UserPlus, color: 'bg-green-500' },
     { id: 'matter', label: 'New Matter', icon: FileText, color: 'bg-purple-500' },
     { id: 'event', label: 'New Event', icon: Calendar, color: 'bg-orange-500' },
@@ -46,6 +45,8 @@ export default function QuickActions({ onSuccess }) {
       navigate('/lawyer-dashboard?tab=reports');
     } else if (actionId === 'payment-records') {
       navigate('/lawyer-dashboard?tab=payment-records');
+    } else if (actionId === 'payment-links') {
+      navigate('/lawyer-dashboard?tab=payment-links');
     } else {
       setActiveModal(actionId);
     }
@@ -82,11 +83,6 @@ export default function QuickActions({ onSuccess }) {
       </div>
 
       {/* Modals */}
-      <CreateClientModal 
-        isOpen={activeModal === 'client'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
       <CreateContactModal 
         isOpen={activeModal === 'contact'} 
         onClose={handleModalClose} 
