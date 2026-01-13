@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const { getAllEvents, createEvent, updateEvent, deleteEvent, getUpcomingEvents, getCalendarEvents } = require('../controllers/eventController');
 
-router.get('/', authenticateToken, getAllEvents);
-router.get('/upcoming', authenticateToken, getUpcomingEvents);
-router.get('/calendar', authenticateToken, getCalendarEvents);
-router.post('/', authenticateToken, createEvent);
-router.put('/:id', authenticateToken, updateEvent);
-router.delete('/:id', authenticateToken, deleteEvent);
+router.use(authenticate);
+
+router.get('/', authorize('read', 'events'), getAllEvents);
+router.get('/upcoming', authorize('read', 'events'), getUpcomingEvents);
+router.get('/calendar', authorize('read', 'events'), getCalendarEvents);
+router.post('/', authorize('write', 'events'), createEvent);
+router.put('/:id', authorize('write', 'events'), updateEvent);
+router.delete('/:id', authorize('write', 'events'), deleteEvent);
 
 module.exports = router;

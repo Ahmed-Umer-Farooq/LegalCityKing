@@ -1,0 +1,36 @@
+p, admin, /api/admin/*, *
+p, admin, /api/users/*, *
+p, admin, /api/lawyers/*, *
+p, admin, /api/payments/*, *
+p, admin, /api/verification/*, *
+p, admin, /api/profile/*, *
+
+p, lawyer, /api/lawyer/*, *
+p, lawyer, /api/cases/*, *
+p, lawyer, /api/documents/*, *
+p, lawyer, /api/invoices/*, *
+p, lawyer, /api/payments/create, POST
+p, lawyer, /api/payments/process, POST
+p, lawyer, /api/blogs/*, *
+p, lawyer, /api/qa/*, *
+p, lawyer, /api/profile/*, *
+
+p, user, /api/user/*, *
+p, user, /api/cases/view, GET
+p, user, /api/documents/view, GET
+p, user, /api/payments/create, POST
+p, user, /api/payments/view, GET
+p, user, /api/blogs/view, GET
+p, user, /api/qa/ask, POST
+p, user, /api/profile/*, *
+
+p, client, /api/user/*, *
+p, client, /api/cases/view, GET
+p, client, /api/documents/view, GET
+p, client, /api/payments/view, GET
+p, client, /api/profile/*, *
+
+g, admin, admin
+g, lawyer, lawyer
+g, user, user
+g, client, user

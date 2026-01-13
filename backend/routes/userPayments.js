@@ -1,8 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const { createPayment } = require('../controllers/unified/paymentController');
 
-router.post('/pay-lawyer', authenticateToken, createPayment);
+router.use(authenticate);
+router.use((req, res, next) => {
+  if (req.user.type !== 'user') {
+    return res.status(403).json({ error: 'User access required' });
+  }
+  next();
+});
+
+router.post('/pay-lawyer', authorize('write', 'payments'), createPayment);
 
 module.exports = router;

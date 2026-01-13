@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const securityAudit = require('../utils/securityAudit');
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 
 // Security dashboard - get security events
-router.get('/security/events', authenticateToken, async (req, res) => {
+router.get('/security/events', authenticate, async (req, res) => {
   try {
     // Check if user is admin
     if (!req.user.is_admin) {
@@ -38,7 +38,7 @@ router.get('/security/events', authenticateToken, async (req, res) => {
 });
 
 // Chat audit logs
-router.get('/security/chat-audit', authenticateToken, async (req, res) => {
+router.get('/security/chat-audit', authenticate, async (req, res) => {
   try {
     if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
@@ -62,7 +62,7 @@ router.get('/security/chat-audit', authenticateToken, async (req, res) => {
 });
 
 // Security statistics
-router.get('/security/stats', authenticateToken, async (req, res) => {
+router.get('/security/stats', authenticate, async (req, res) => {
   try {
     if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
@@ -108,7 +108,7 @@ router.get('/security/stats', authenticateToken, async (req, res) => {
 });
 
 // Block user (emergency action)
-router.post('/security/block-user', authenticateToken, async (req, res) => {
+router.post('/security/block-user', authenticate, async (req, res) => {
   try {
     if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
@@ -142,7 +142,7 @@ router.post('/security/block-user', authenticateToken, async (req, res) => {
 });
 
 // Get quarantined files
-router.get('/security/quarantine', authenticateToken, async (req, res) => {
+router.get('/security/quarantine', authenticate, async (req, res) => {
   try {
     if (!req.user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });

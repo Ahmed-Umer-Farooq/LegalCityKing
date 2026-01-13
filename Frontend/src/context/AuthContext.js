@@ -16,73 +16,36 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for token in URL first
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('token');
-    
-    if (urlToken) {
-      // Decode JWT to get user data
-      try {
-        const payload = JSON.parse(atob(urlToken.split('.')[1]));
-        const userData = {
-          id: payload.id,
-          email: payload.email,
-          role: payload.role
-        };
-        
-        setToken(urlToken);
-        setUser(userData);
-        localStorage.setItem('token', urlToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return;
-      } catch (error) {
-        console.error('Error parsing URL token:', error);
-      }
-    }
-    
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('token');
     
     if (storedUser && storedToken) {
       try {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
+        const userData = JSON.parse(storedUser);
+        // Validate token is not expired
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        
+        if (payload.exp && payload.exp < currentTime) {
+          // Token expired, clear storage
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          setUser(null);
+          setToken(null);
+        } else {
+          setUser(userData);
+          setToken(storedToken);
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        setUser(null);
+        setToken(null);
       }
     }
     
-    // Listen for storage changes across tabs
-    const handleStorageChange = (e) => {
-      if (e.key === 'token' || e.key === 'user') {
-        const newToken = localStorage.getItem('token');
-        const newUser = localStorage.getItem('user');
-        
-        if (newToken && newUser) {
-          try {
-            setToken(newToken);
-            setUser(JSON.parse(newUser));
-          } catch (error) {
-            console.error('Error parsing user data:', error);
-          }
-        } else {
-          setToken(null);
-          setUser(null);
-        }
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
     setLoading(false);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
   const login = (token, userData) => {

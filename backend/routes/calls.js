@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { getAllCalls, createCall, updateCall, deleteCall } = require('../controllers/callController');
 
-router.get('/', authenticateToken, getAllCalls);
-router.post('/', authenticateToken, createCall);
-router.put('/:id', authenticateToken, updateCall);
-router.delete('/:id', authenticateToken, deleteCall);
+router.get('/', authenticate, getAllCalls);
+router.post('/', authenticate, createCall);
+router.put('/:id', authenticate, updateCall);
+router.delete('/:id', authenticate, deleteCall);
 
 module.exports = router;

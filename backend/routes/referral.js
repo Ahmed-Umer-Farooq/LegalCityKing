@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getReferralData } = require('../controllers/referralController');
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 
 // Get referral data
-router.get('/data', authenticateToken, getReferralData);
+router.get('/data', authenticate, getReferralData);
 
 module.exports = router;

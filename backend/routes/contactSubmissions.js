@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth, requireAdmin } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const {
   submitContactForm,
   getAllSubmissions,
@@ -13,9 +13,9 @@ const {
 router.post('/submit', submitContactForm);
 
 // Admin routes
-router.get('/', requireAuth, requireAdmin, getAllSubmissions);
-router.get('/stats', requireAuth, requireAdmin, getSubmissionStats);
-router.put('/:id', requireAuth, requireAdmin, updateSubmissionStatus);
-router.delete('/:id', requireAuth, requireAdmin, deleteSubmission);
+router.get('/', authenticate, authorize('manage', 'admin'), getAllSubmissions);
+router.get('/stats', authenticate, authorize('manage', 'admin'), getSubmissionStats);
+router.put('/:id', authenticate, authorize('manage', 'admin'), updateSubmissionStatus);
+router.delete('/:id', authenticate, authorize('manage', 'admin'), deleteSubmission);
 
 module.exports = router;

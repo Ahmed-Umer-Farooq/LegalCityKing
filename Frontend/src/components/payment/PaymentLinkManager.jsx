@@ -235,13 +235,6 @@ const PaymentLinkManager = () => {
                         >
                           <Users className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => window.open(`/user/payment/${link.link_id}`, '_blank')}
-                          className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                          title="Preview (login required)"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
                         {!link.is_paid && (
                           <>
                             <button

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const db = require('../db');
 
 // Get lawyer payment records with filters
-router.get('/records', authenticateToken, async (req, res) => {
+router.get('/records', authenticate, async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const { page = 1, limit = 20, period = 'all', status = 'all' } = req.query;
@@ -125,7 +125,7 @@ router.get('/records', authenticateToken, async (req, res) => {
 });
 
 // Export payment records to CSV
-router.get('/export', authenticateToken, async (req, res) => {
+router.get('/export', authenticate, async (req, res) => {
   try {
     const lawyerId = req.user.id;
     const { period = 'all' } = req.query;

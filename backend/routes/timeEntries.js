@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { getAllTimeEntries, createTimeEntry, updateTimeEntry, deleteTimeEntry, startTimer, stopTimer } = require('../controllers/timeEntryController');
 
-router.get('/', authenticateToken, getAllTimeEntries);
-router.post('/', authenticateToken, createTimeEntry);
-router.post('/start-timer', authenticateToken, startTimer);
-router.put('/:id', authenticateToken, updateTimeEntry);
-router.put('/:id/stop-timer', authenticateToken, stopTimer);
-router.delete('/:id', authenticateToken, deleteTimeEntry);
+router.get('/', authenticate, getAllTimeEntries);
+router.post('/', authenticate, createTimeEntry);
+router.post('/start-timer', authenticate, startTimer);
+router.put('/:id', authenticate, updateTimeEntry);
+router.put('/:id/stop-timer', authenticate, stopTimer);
+router.delete('/:id', authenticate, deleteTimeEntry);
 
 module.exports = router;

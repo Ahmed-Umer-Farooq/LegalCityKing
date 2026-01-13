@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, requireLawyer, authenticateLawyerSpecific } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const {
   submitQuestion,
   getQuestions,
@@ -19,7 +19,7 @@ router.get('/questions', getQuestions);
 router.get('/questions/:id', getQuestionById);
 
 // Lawyer routes (require authentication and lawyer role)
-router.get('/lawyer/questions', authenticateLawyerSpecific, requireLawyer, getLawyerQuestions);
+router.get('/lawyer/questions', authenticate, authorize('manage', 'cases'), getLawyerQuestions);
 // Temporary debug route
 router.get('/debug/questions', (req, res) => {
   // Return all pending questions for debugging
@@ -34,7 +34,7 @@ router.get('/debug/questions', (req, res) => {
       res.status(500).json({ error: err.message });
     });
 });
-router.post('/questions/:questionId/answers', authenticateLawyerSpecific, requireLawyer, submitAnswer);
+router.post('/questions/:questionId/answers', authenticate, authorize('manage', 'cases'), submitAnswer);
 
 // Admin routes (for admin panel)
 router.get('/admin/questions', getAdminQuestions);

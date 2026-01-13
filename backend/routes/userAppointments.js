@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { 
   getUserAppointments, 
   createUserAppointment, 
@@ -9,10 +9,10 @@ const {
   getUpcomingUserAppointments 
 } = require('../controllers/userAppointmentController');
 
-router.get('/', authenticateToken, getUserAppointments);
-router.get('/upcoming', authenticateToken, getUpcomingUserAppointments);
-router.post('/', authenticateToken, createUserAppointment);
-router.put('/:secure_id', authenticateToken, updateUserAppointment);
-router.delete('/:secure_id', authenticateToken, deleteUserAppointment);
+router.get('/', authenticate, getUserAppointments);
+router.get('/upcoming', authenticate, getUpcomingUserAppointments);
+router.post('/', authenticate, createUserAppointment);
+router.put('/:secure_id', authenticate, updateUserAppointment);
+router.delete('/:secure_id', authenticate, deleteUserAppointment);
 
 module.exports = router;

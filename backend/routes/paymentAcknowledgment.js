@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const db = require('../db');
 
 // Acknowledge payment
-router.post('/acknowledge/:transactionId', authenticateToken, async (req, res) => {
+router.post('/acknowledge/:transactionId', authenticate, async (req, res) => {
   try {
     const { transactionId } = req.params;
     const lawyerId = req.user.id;
@@ -44,7 +44,7 @@ router.post('/acknowledge/:transactionId', authenticateToken, async (req, res) =
 });
 
 // Get unacknowledged payments for lawyer
-router.get('/unacknowledged', authenticateToken, async (req, res) => {
+router.get('/unacknowledged', authenticate, async (req, res) => {
   try {
     const lawyerId = req.user.id;
     

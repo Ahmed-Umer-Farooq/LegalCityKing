@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const formsController = require('../controllers/formsController');
-const { requireAuth, requireLawyer, requireAdmin } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -44,17 +44,17 @@ router.get('/public/:id', formsController.getForm);
 router.get('/download/:id', formsController.downloadForm);
 
 // Lawyer routes
-router.get('/my-forms', requireAuth, formsController.getMyForms);
-router.post('/create', requireAuth, upload.single('file'), formsController.createForm);
-router.put('/:id', requireAuth, upload.single('file'), formsController.updateForm);
-router.delete('/:id', requireAuth, formsController.deleteForm);
+router.get('/my-forms', authenticate, formsController.getMyForms);
+router.post('/create', authenticate, upload.single('file'), formsController.createForm);
+router.put('/:id', authenticate, upload.single('file'), formsController.updateForm);
+router.delete('/:id', authenticate, formsController.deleteForm);
 
 // Admin routes
-router.get('/admin/all', requireAuth, requireAdmin, formsController.getAllForms);
-router.get('/admin/stats', requireAuth, requireAdmin, formsController.getFormStats);
-router.post('/admin/create', requireAuth, requireAdmin, upload.single('file'), formsController.createForm);
-router.put('/admin/:id/approve', requireAuth, requireAdmin, formsController.approveForm);
-router.put('/admin/:id/reject', requireAuth, requireAdmin, formsController.rejectForm);
-router.delete('/admin/:id', requireAuth, requireAdmin, formsController.deleteForm);
+router.get('/admin/all', authenticate, authorize('manage', 'admin'), formsController.getAllForms);
+router.get('/admin/stats', authenticate, authorize('manage', 'admin'), formsController.getFormStats);
+router.post('/admin/create', authenticate, authorize('manage', 'admin'), upload.single('file'), formsController.createForm);
+router.put('/admin/:id/approve', authenticate, authorize('manage', 'admin'), formsController.approveForm);
+router.put('/admin/:id/reject', authenticate, authorize('manage', 'admin'), formsController.rejectForm);
+router.delete('/admin/:id', authenticate, authorize('manage', 'admin'), formsController.deleteForm);
 
 module.exports = router;

@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../db');
-const { generateToken } = require('../utils/token');
+const { hashPassword, verifyPassword, generateToken, logger, auditLog } = require('../middleware/security');
+const { validateUser } = require('../middleware/validation');
 const { sendVerificationEmail, sendResetPasswordEmail } = require('../utils/mailer');
 const { getRedirectPath } = require('../utils/redirectLogic');
 
@@ -26,21 +27,38 @@ const login = async (req, res) => {
   try {
     const { email, password, registration_id } = req.body;
 
-    // Input validation
+    // Enhanced input validation
     if (!email && !registration_id) {
-      return res.status(400).json({ message: 'Email or registration ID is required' });
+      auditLog('login_failed', {
+        reason: 'missing_credentials',
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      return res.status(400).json({ error: 'Email or registration ID is required' });
     }
+    
     if (!password) {
-      return res.status(400).json({ message: 'Password is required' });
+      auditLog('login_failed', {
+        reason: 'missing_password',
+        email: email || 'unknown',
+        ip: req.ip
+      });
+      return res.status(400).json({ error: 'Password is required' });
     }
+
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ message: 'Valid email is required' });
+      auditLog('login_failed', {
+        reason: 'invalid_email_format',
+        email,
+        ip: req.ip
+      });
+      return res.status(400).json({ error: 'Valid email is required' });
     }
 
     let user;
     let role;
 
-    // For lawyer login, BOTH email AND registration_id must be provided and match
+    // Enhanced lawyer login with security logging
     if (registration_id) {
       user = await db('lawyers').where({ 
         email: email,
@@ -49,76 +67,120 @@ const login = async (req, res) => {
       
       if (user) {
         role = 'lawyer';
+        auditLog('lawyer_login_attempt', {
+          userId: user.id,
+          email: user.email,
+          registration_id,
+          ip: req.ip
+        });
       } else {
-        return res.status(401).json({ message: 'Invalid email or registration ID' });
+        auditLog('login_failed', {
+          reason: 'invalid_lawyer_credentials',
+          email,
+          registration_id,
+          ip: req.ip
+        });
+        return res.status(401).json({ error: 'Invalid email or registration ID' });
       }
     }
     
-    // For regular user login (no registration_id provided)
+    // Enhanced user login with security checks
     if (!user && email && !registration_id) {
       user = await db('users').where({ email }).first();
       if (user) {
-        // Prevent clients from logging in
+        // Enhanced client account check
         if (user.role === 'client') {
-          return res.status(401).json({ message: 'Client accounts cannot login directly. Please contact your lawyer.' });
+          auditLog('client_login_blocked', {
+            userId: user.id,
+            email: user.email,
+            ip: req.ip
+          });
+          return res.status(401).json({ error: 'Client accounts cannot login directly. Please contact your lawyer.' });
         }
-        // Prevent inactive accounts from logging in
+        
+        // Enhanced inactive account check
         if (user.is_active === 0) {
-          return res.status(401).json({ message: 'Account is inactive. Please contact support.' });
+          auditLog('inactive_account_login', {
+            userId: user.id,
+            email: user.email,
+            ip: req.ip
+          });
+          return res.status(401).json({ error: 'Account is inactive. Please contact support.' });
         }
         role = 'user';
       }
     }
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      auditLog('login_failed', {
+        reason: 'user_not_found',
+        email: email || 'unknown',
+        ip: req.ip
+      });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Debug logging for verification status
-    console.log('User verification status:', user.email_verified, typeof user.email_verified);
-
-    // Check email verification - handle both boolean and integer values
+    // Enhanced email verification check
     const isVerified = user.email_verified === 1 || user.email_verified === true;
     if (!isVerified) {
-      return res.status(403).json({ message: 'Please verify your email first' });
+      auditLog('unverified_login_attempt', {
+        userId: user.id,
+        email: user.email,
+        ip: req.ip
+      });
+      return res.status(403).json({ error: 'Please verify your email first' });
     }
 
-    // If this account was created via Google OAuth, it won't have a password
+    // Enhanced OAuth account check
     if (!user.password || user.password === '') {
-      return res.status(400).json({ message: 'This account was created with Google. Please sign in with Google.' });
+      auditLog('oauth_password_login_attempt', {
+        userId: user.id,
+        email: user.email,
+        ip: req.ip
+      });
+      return res.status(400).json({ error: 'This account was created with Google. Please sign in with Google.' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Enhanced password verification with security logging
+    const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      auditLog('login_failed', {
+        reason: 'invalid_password',
+        userId: user.id,
+        email: user.email,
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Determine admin status - check multiple conditions
+    // Enhanced admin status determination
     const isAdmin = user.is_admin === 1 || user.is_admin === true || user.role === 'admin';
 
-    // Ensure role is set to 'admin' if user is admin
     if (isAdmin) {
       user.role = 'admin';
-      // Update the database to persist the role
       await db('users').where({ id: user.id }).update({ role: 'admin' });
     }
 
-    const token = generateToken(user);
+    // Generate secure JWT token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: isAdmin ? 'admin' : (role || user.role || 'user')
+    });
 
-    // Prepare user data for redirect logic
+    // Prepare enhanced user data
     const userData = {
       id: user.id,
       email: user.email,
       role: isAdmin ? 'admin' : (role || user.role || 'user'),
       is_admin: isAdmin,
       registration_id: user.registration_id || null,
-      redirect: user.redirect || null // Custom redirect if exists
+      redirect: user.redirect || null
     };
 
-    // Get redirect path using the utility function
     const redirectPath = getRedirectPath(userData);
 
-    // Include all required fields in response
     const userResponse = {
       id: userData.id,
       secure_id: user.secure_id,
@@ -129,12 +191,30 @@ const login = async (req, res) => {
       redirect: redirectPath
     };
 
-    console.log('Login response - Role:', userData.role, 'Registration ID:', userData.registration_id, 'Redirect:', redirectPath);
+    // Successful login audit
+    auditLog('login_successful', {
+      userId: user.id,
+      email: user.email,
+      role: userData.role,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    logger.info('User login successful', {
+      userId: user.id,
+      role: userData.role,
+      ip: req.ip
+    });
 
     res.json({ token, user: userResponse });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    logger.error('Login error:', error);
+    auditLog('login_error', {
+      error: error.message,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 

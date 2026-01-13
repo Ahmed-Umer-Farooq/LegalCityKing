@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const { getCases, getCaseById, createCase, updateCase, deleteCase, getCaseTimeline, getCaseStats } = require('../controllers/unified/caseController');
 
-router.get('/', authenticateToken, getCases);
-router.get('/stats', authenticateToken, getCaseStats);
-router.get('/:id', authenticateToken, getCaseById);
-router.get('/:id/timeline', authenticateToken, getCaseTimeline);
-router.post('/', authenticateToken, createCase);
-router.put('/:id', authenticateToken, updateCase);
-router.delete('/:id', authenticateToken, deleteCase);
+router.use(authenticate);
+
+router.get('/', authorize('read', 'cases'), getCases);
+router.get('/stats', authorize('read', 'cases'), getCaseStats);
+router.get('/:id', authorize('read', 'cases'), getCaseById);
+router.get('/:id/timeline', authorize('read', 'cases'), getCaseTimeline);
+router.post('/', authorize('write', 'cases'), createCase);
+router.put('/:id', authorize('write', 'cases'), updateCase);
+router.delete('/:id', authorize('write', 'cases'), deleteCase);
 
 module.exports = router;

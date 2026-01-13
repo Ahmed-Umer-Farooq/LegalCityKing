@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateToken, authenticateAdmin } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const {
   submitVerification,
   getVerificationStatus,
@@ -27,12 +27,12 @@ const handleMulterError = (err, req, res, next) => {
 };
 
 // Lawyer routes
-router.post('/submit', authenticateToken, upload.array('documents', 5), handleMulterError, submitVerification);
-router.get('/status', authenticateToken, getVerificationStatus);
+router.post('/submit', authenticate, upload.array('documents', 5), handleMulterError, submitVerification);
+router.get('/status', authenticate, getVerificationStatus);
 
 // Admin routes
-router.get('/pending', authenticateAdmin, getPendingVerifications);
-router.post('/approve/:lawyerId', authenticateAdmin, approveVerification);
-router.post('/reject/:lawyerId', authenticateAdmin, rejectVerification);
+router.get('/pending', authenticate, getPendingVerifications);
+router.post('/approve/:lawyerId', authenticate, approveVerification);
+router.post('/reject/:lawyerId', authenticate, rejectVerification);
 
 module.exports = router;

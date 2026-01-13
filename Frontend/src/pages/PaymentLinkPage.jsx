@@ -19,6 +19,14 @@ const SecurePaymentPage = () => {
       navigate('/login');
       return;
     }
+    
+    // Block lawyers from accessing payment links
+    if (user.role === 'lawyer') {
+      setError('Lawyers cannot access payment links. This page is for clients only.');
+      setLoading(false);
+      return;
+    }
+    
     fetchPaymentLink();
   }, [linkId, user]);
 
@@ -82,7 +90,13 @@ const SecurePaymentPage = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button 
-            onClick={() => navigate('/user-dashboard')}
+            onClick={() => {
+              if (user.role === 'lawyer') {
+                navigate('/lawyer-dashboard');
+              } else {
+                navigate('/user-dashboard');
+              }
+            }}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go to Dashboard

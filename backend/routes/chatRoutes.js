@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { chatRateLimit, validateContent, validateFile, verifyUserAccess, auditLog, encryptMessage, decryptMessage } = require('../middleware/chatSecurity');
 const { scanFile, quarantineFile } = require('../middleware/fileScanner');
 const multer = require('multer');
@@ -46,7 +46,7 @@ const upload = multer({
 });
 
 // Get all conversations for a user (including pending messages for lawyers)
-router.get('/conversations', authenticateToken, async (req, res) => {
+router.get('/conversations', authenticate, async (req, res) => {
   try {
     const { id: userId, role } = req.user;
     
@@ -178,7 +178,7 @@ router.get('/conversations', authenticateToken, async (req, res) => {
 });
 
 // Get messages between two users
-router.get('/messages/:partnerId/:partnerType', authenticateToken, async (req, res) => {
+router.get('/messages/:partnerId/:partnerType', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     
@@ -237,7 +237,7 @@ router.get('/messages/:partnerId/:partnerType', authenticateToken, async (req, r
 });
 
 // Mark conversation as read
-router.put('/messages/read/:partnerId/:partnerType', authenticateToken, async (req, res) => {
+router.put('/messages/read/:partnerId/:partnerType', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     
@@ -287,7 +287,7 @@ router.put('/messages/read/:partnerId/:partnerType', authenticateToken, async (r
 });
 
 // Get unread message count
-router.get('/unread-count', authenticateToken, async (req, res) => {
+router.get('/unread-count', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     
@@ -319,7 +319,7 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
 });
 
 // File upload endpoint with security scanning
-router.post('/upload', authenticateToken, chatRateLimit, auditLog, upload.single('file'), validateFile, async (req, res) => {
+router.post('/upload', authenticate, chatRateLimit, auditLog, upload.single('file'), validateFile, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -361,7 +361,7 @@ router.post('/upload', authenticateToken, chatRateLimit, auditLog, upload.single
 });
 
 // Send message via API with security validation
-router.post('/send', authenticateToken, chatRateLimit, auditLog, validateContent, verifyUserAccess, async (req, res) => {
+router.post('/send', authenticate, chatRateLimit, auditLog, validateContent, verifyUserAccess, async (req, res) => {
   try {
     let { sender_id, sender_type, receiver_id, receiver_type, content, message_type, file_url, file_name, file_size } = req.body;
     
@@ -429,7 +429,7 @@ router.post('/send', authenticateToken, chatRateLimit, auditLog, validateContent
 });
 
 // Save call history
-router.post('/call-history', authenticateToken, async (req, res) => {
+router.post('/call-history', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     
@@ -464,7 +464,7 @@ router.post('/call-history', authenticateToken, async (req, res) => {
 });
 
 // Get call history
-router.get('/call-history', authenticateToken, async (req, res) => {
+router.get('/call-history', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     
@@ -492,7 +492,7 @@ router.get('/call-history', authenticateToken, async (req, res) => {
 });
 
 // Delete conversation
-router.delete('/conversation/:partnerId/:partnerType', authenticateToken, async (req, res) => {
+router.delete('/conversation/:partnerId/:partnerType', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     

@@ -2,50 +2,37 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const cors = require('cors');
 const session = require('express-session');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const passport = require('./config/passport');
-const { generateCSRFToken, getCSRFToken } = require('./utils/csrf');
 const authRoutes = require('./routes/auth');
 const db = require('./db');
+
+// Import modern authentication
+const { authenticate } = require('./middleware/modernAuth');
+const rbacService = require('./services/rbacService');
+const cors = require('cors');
+const helmet = require('helmet');
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5001;
 
-// Security middleware - DISABLED FOR DEVELOPMENT
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-//       scriptSrc: ["'self'", "'unsafe-inline'"],
-//       imgSrc: ["'self'", "data:", "https:"],
-//       connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "https://localhost:*"],
-//     },
-//   },
-// }));
+// Security Headers
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet());
+  console.log('Security headers enabled for production');
+} else {
+  console.warn('Security headers disabled for development');
+}
 
-// Rate limiting - DISABLED FOR DEVELOPMENT
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 100, // limit each IP to 100 requests per windowMs
-//   message: 'Too many requests from this IP, please try again later.',
-//   standardHeaders: true,
-//   legacyHeaders: false,
-// });
-// app.use('/api/', limiter);
-
-// // Stricter rate limiting for auth endpoints
-// const authLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000,
-//   max: 5,
-//   message: 'Too many authentication attempts, please try again later.',
-// });
-// app.use('/api/auth/login', authLimiter);
-// app.use('/api/auth/register', authLimiter);
+// CORS Configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With']
+}));
 
 // Socket.io setup with CORS
 const io = socketIo(server, {
@@ -56,13 +43,14 @@ const io = socketIo(server, {
   }
 });
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security Middleware
+app.use(cookieParser());
+
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+console.log(`🔒 Security Configuration: ${process.env.NODE_ENV === 'production' ? 'ENABLED' : 'DEVELOPMENT MODE'}`);
 
 // Trust proxy (needed if behind reverse proxy for correct secure cookies)
 if (process.env.TRUST_PROXY === '1') {
@@ -89,16 +77,13 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// CSRF token generation - DISABLED FOR DEVELOPMENT
-// if (process.env.NODE_ENV === 'production') {
-//   app.use(generateCSRFToken);
-// }
-
-// All security headers disabled for development
-console.log('🔧 Backend Security: ALL FEATURES DISABLED FOR DEVELOPMENT');
-
 // CSRF token endpoint
-app.get('/api/csrf-token', getCSRFToken);
+app.get('/api/csrf-token', (req, res) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = require('crypto').randomBytes(32).toString('hex');
+  }
+  res.json({ csrfToken: req.session.csrfToken });
+});
 
 // Static file serving for uploads
 const path = require('path');
@@ -429,10 +414,6 @@ app.use('/api/contact-submissions', contactSubmissionsRoutes);
 const platformReviewsRoutes = require('./routes/platformReviews');
 app.use('/api/platform-reviews', platformReviewsRoutes);
 
-// Test Payment APIs routes
-const testPaymentRoutes = require('./routes/testPayments');
-app.use('/api/test-payments', testPaymentRoutes);
-
 // Payment capture routes
 const capturePaymentRoutes = require('./routes/capturePayment');
 app.use('/api/payment', capturePaymentRoutes);
@@ -455,6 +436,7 @@ app.use('/api/verification', verificationRoutes);
 
 // Profile routes
 const profileRoutes = require('./routes/profile');
+app.use('/api/profile', profileRoutes);
 app.use('/api/user/profile', profileRoutes);
 
 // Payment acknowledgment routes

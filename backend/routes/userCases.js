@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const {
   getCases,
   createCase,
@@ -10,11 +10,19 @@ const {
   getCaseStats
 } = require('../controllers/unified/caseController');
 
-router.get('/', authenticateToken, getCases);
-router.get('/stats', authenticateToken, getCaseStats);
-router.post('/', authenticateToken, createCase);
-router.put('/:secure_id', authenticateToken, updateCase);
-router.post('/:secure_id/documents', authenticateToken, addCaseDocument);
-router.post('/:secure_id/meetings', authenticateToken, addCaseMeeting);
+router.use(authenticate);
+router.use((req, res, next) => {
+  if (req.user.type !== 'user') {
+    return res.status(403).json({ error: 'User access required' });
+  }
+  next();
+});
+
+router.get('/', authorize('read', 'cases'), getCases);
+router.get('/stats', authorize('read', 'cases'), getCaseStats);
+router.post('/', authorize('write', 'cases'), createCase);
+router.put('/:secure_id', authorize('write', 'cases'), updateCase);
+router.post('/:secure_id/documents', authorize('write', 'documents'), addCaseDocument);
+router.post('/:secure_id/meetings', authorize('write', 'cases'), addCaseMeeting);
 
 module.exports = router;

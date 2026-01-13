@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { getAllContacts, createContact, updateContact, deleteContact } = require('../controllers/contactController');
 
-router.get('/', authenticateToken, getAllContacts);
-router.post('/', authenticateToken, createContact);
-router.put('/:id', authenticateToken, updateContact);
-router.delete('/:id', authenticateToken, deleteContact);
+router.get('/', authenticate, getAllContacts);
+router.post('/', authenticate, createContact);
+router.put('/:id', authenticate, updateContact);
+router.delete('/:id', authenticate, deleteContact);
 
 module.exports = router;

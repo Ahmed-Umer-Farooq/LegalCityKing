@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const router = express.Router();
 const blogController = require('../controllers/blogController');
-const { requireAuth, requireLawyer, requireVerifiedLawyer, checkBlogOwnership, authenticateLawyerSpecific } = require('../utils/middleware');
+const { authenticate, authorize, requireVerifiedLawyer } = require('../middleware/modernAuth');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -29,13 +29,13 @@ const upload = multer({
 
 // SPECIFIC ROUTES (must be before dynamic routes)
 // GET /api/blogs/analytics - Get lawyer's blog analytics (lawyers only)
-router.get('/analytics', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getLawyerBlogAnalytics);
+router.get('/analytics', authenticate, requireVerifiedLawyer, blogController.getLawyerBlogAnalytics);
 
 // GET /api/blogs/lawyer-blogs - Get lawyer's own blogs with secure_id (lawyers only)
-router.get('/lawyer-blogs', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getLawyerBlogs);
+router.get('/lawyer-blogs', authenticate, requireVerifiedLawyer, blogController.getLawyerBlogs);
 
 // GET /api/blogs/engagement-count - Get engagement count for notifications
-router.get('/engagement-count', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getEngagementCount);
+router.get('/engagement-count', authenticate, requireVerifiedLawyer, blogController.getEngagementCount);
 
 // GET /api/blogs/categories - Get blog categories
 router.get('/categories', blogController.getBlogCategories);
@@ -50,7 +50,7 @@ router.get('/tags', blogController.getBlogTags);
 router.get('/popular', blogController.getPopularPosts);
 
 // GET /api/blogs/reports/count - Get pending reports count (admin only)
-router.get('/reports/count', requireAuth, (req, res, next) => {
+router.get('/reports/count', authenticate, (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -58,7 +58,7 @@ router.get('/reports/count', requireAuth, (req, res, next) => {
 }, blogController.getPendingReportsCount);
 
 // GET /api/blogs/reports - Get all reports (admin only)
-router.get('/reports', requireAuth, (req, res, next) => {
+router.get('/reports', authenticate, (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -66,7 +66,7 @@ router.get('/reports', requireAuth, (req, res, next) => {
 }, blogController.getAllReports);
 
 // DELETE /api/blogs/admin/:id - Admin delete any blog
-router.delete('/admin/:id', requireAuth, (req, res, next) => {
+router.delete('/admin/:id', authenticate, (req, res, next) => {
   if (req.user.role !== 'admin' && !req.user.is_admin && !req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -75,19 +75,19 @@ router.delete('/admin/:id', requireAuth, (req, res, next) => {
 
 // LAWYER ROUTES
 // POST /api/blogs - Create new blog (lawyers only)
-router.post('/', authenticateLawyerSpecific, requireVerifiedLawyer, upload.single('image'), blogController.createBlog);
+router.post('/', authenticate, requireVerifiedLawyer, upload.single('image'), blogController.createBlog);
 
 // PUT /api/blogs/:id - Update own blog (author only)
-router.put('/:identifier', authenticateLawyerSpecific, requireVerifiedLawyer, checkBlogOwnership, blogController.updateBlog);
+router.put('/:identifier', authenticate, requireVerifiedLawyer, blogController.updateBlog);
 
 // DELETE /api/blogs/:id - Delete own blog (author only)
-router.delete('/:identifier', authenticateLawyerSpecific, requireVerifiedLawyer, checkBlogOwnership, blogController.deleteBlog);
+router.delete('/:identifier', authenticate, requireVerifiedLawyer, blogController.deleteBlog);
 
 // GET /api/blogs/:blog_id/analytics - Get detailed analytics for specific blog
-router.get('/:blog_id/analytics', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.getBlogDetailedAnalytics);
+router.get('/:blog_id/analytics', authenticate, requireVerifiedLawyer, blogController.getBlogDetailedAnalytics);
 
 // DELETE /api/blogs/comments/:comment_id/moderate - Delete comment as blog author
-router.delete('/comments/:comment_id/moderate', authenticateLawyerSpecific, requireVerifiedLawyer, blogController.deleteBlogCommentByAuthor);
+router.delete('/comments/:comment_id/moderate', authenticate, requireVerifiedLawyer, blogController.deleteBlogCommentByAuthor);
 
 // PUBLIC ROUTES (no auth required)
 // GET /api/blogs - Get all published blogs
@@ -101,25 +101,25 @@ router.get('/', blogController.getAllBlogs);
 router.get('/:blog_id/comments', blogController.getBlogComments);
 
 // POST /api/blogs/:blog_id/comments - Create comment (auth required)
-router.post('/:blog_id/comments', requireAuth, blogController.createBlogComment);
+router.post('/:blog_id/comments', authenticate, blogController.createBlogComment);
 
 // DELETE /api/blogs/comments/:comment_id - Delete own comment (auth required)
-router.delete('/comments/:comment_id', requireAuth, blogController.deleteBlogComment);
+router.delete('/comments/:comment_id', authenticate, blogController.deleteBlogComment);
 
 // POST /api/blogs/:blog_id/like - Toggle like (auth required)
-router.post('/:blog_id/like', requireAuth, blogController.toggleBlogLike);
+router.post('/:blog_id/like', authenticate, blogController.toggleBlogLike);
 
 // GET /api/blogs/:blog_id/like-status - Check like status (auth required)
-router.get('/:blog_id/like-status', requireAuth, blogController.checkLikeStatus);
+router.get('/:blog_id/like-status', authenticate, blogController.checkLikeStatus);
 
 // POST /api/blogs/:blog_id/save - Toggle save (auth required)
-router.post('/:blog_id/save', requireAuth, blogController.toggleBlogSave);
+router.post('/:blog_id/save', authenticate, blogController.toggleBlogSave);
 
 // GET /api/blogs/:blog_id/save-status - Check save status (auth required)
-router.get('/:blog_id/save-status', requireAuth, blogController.checkSaveStatus);
+router.get('/:blog_id/save-status', authenticate, blogController.checkSaveStatus);
 
 // PUT /api/blogs/reports/:report_id - Update report status (admin only)
-router.put('/reports/:report_id', requireAuth, (req, res, next) => {
+router.put('/reports/:report_id', authenticate, (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, authenticateAdmin } = require('../utils/middleware');
+const { authenticate, authorize } = require('../middleware/modernAuth');
 const {
   getStats,
   getUsers,
@@ -19,34 +19,16 @@ const {
   deleteEndorsement,
   getReviewStats
 } = require('../controllers/adminController');
-const { requireAdmin } = require('../utils/middleware');
 
 // All routes require admin authentication
-router.use(authenticateToken);
-// Note: Individual routes will use requireAdmin middleware
+router.use(authenticate);
+router.use(authorize('manage', 'admin'));
 
 // Dashboard statistics
-console.log('🔍 Registering /stats route');
-router.get('/stats', requireAdmin, (req, res) => {
-  console.log('📊 Admin stats endpoint hit');
-  getStats(req, res);
-});
+router.get('/stats', getStats);
 
 // User management
 router.get('/users', getUsers);
-router.get('/users/all', async (req, res) => {
-  try {
-    const users = await require('../db')('users')
-      .select('id', 'name', 'email', 'mobile_number', 'role', 'is_verified', 'is_active', 'google_id', 'created_at')
-      .orderBy('created_at', 'desc');
-    
-    console.log('All users debug:', users.length, 'users found');
-    res.json({ users, total: users.length });
-  } catch (error) {
-    console.error('Error fetching all users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
-});
 router.delete('/users/:id', deleteUser);
 router.put('/users/:id/make-admin', makeAdmin);
 router.put('/users/:id/remove-admin', removeAdmin);
@@ -64,7 +46,7 @@ router.get('/chat-messages', getAllChatMessages);
 router.get('/activity-logs', getActivityLogs);
 
 // Q&A Management
-router.get('/qa/questions', requireAdmin, async (req, res) => {
+router.get('/qa/questions', async (req, res) => {
   try {
     const { page = 1, limit = 20, status = 'all', search = '' } = req.query;
     const offset = (page - 1) * limit;
@@ -139,7 +121,7 @@ router.get('/qa/questions', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/qa/stats', requireAdmin, async (req, res) => {
+router.get('/qa/stats', async (req, res) => {
   try {
     const db = require('../db');
     const [totalQuestions, pendingQuestions, answeredQuestions, totalAnswers] = await Promise.all([
@@ -177,7 +159,7 @@ router.get('/qa/stats', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/qa/questions/:id', requireAdmin, async (req, res) => {
+router.put('/qa/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, is_public } = req.body;
@@ -207,7 +189,7 @@ router.put('/qa/questions/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.delete('/qa/questions/:id', requireAdmin, async (req, res) => {
+router.delete('/qa/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const db = require('../db');
@@ -280,12 +262,12 @@ router.put('/platform-reviews/:id/status', async (req, res) => {
 });
 
 // Lawyer Reviews Management
-router.get('/reviews', requireAdmin, getAllReviews);
-router.get('/reviews/stats', requireAdmin, getReviewStats);
-router.delete('/reviews/:id', requireAdmin, deleteReview);
+router.get('/reviews', getAllReviews);
+router.get('/reviews/stats', getReviewStats);
+router.delete('/reviews/:id', deleteReview);
 
 // Lawyer Endorsements Management
-router.get('/endorsements', requireAdmin, getAllEndorsements);
-router.delete('/endorsements/:id', requireAdmin, deleteEndorsement);
+router.get('/endorsements', getAllEndorsements);
+router.delete('/endorsements/:id', deleteEndorsement);
 
 module.exports = router;

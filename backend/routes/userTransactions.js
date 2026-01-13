@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
 const { getUserTransactions } = require('../controllers/userTransactionController');
 
-router.get('/', authenticateToken, getUserTransactions);
+router.get('/', authenticate, getUserTransactions);
 
 module.exports = router;

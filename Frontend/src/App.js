@@ -5,6 +5,7 @@ import { blockBrowserNotifications } from './utils/toastUtils';
 import './styles/toast.css';
 
 import LegalCityAuth from './LegalCityAuth';
+import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -108,7 +109,7 @@ function App() {
 
         
         {/* SEO-Friendly User Dashboard Routes */}
-        <Route element={<ProtectedRoute><SharedLayout /></ProtectedRoute>}>
+        <Route element={<RoleProtectedRoute allowedRoles={['user']}><SharedLayout /></RoleProtectedRoute>}>
 
           <Route path="/user/legal-blog" element={<BlogPage />} />
           <Route path="/user/legal-blog/:id/:slug?" element={<BlogDetail />} />

@@ -1,9 +1,9 @@
 const express = require('express');
 const passport = require('../config/passport');
 const db = require('../db');
-const { authenticateToken, authenticateAdmin } = require('../utils/middleware');
+const { authenticate } = require('../middleware/modernAuth');
+const rbacService = require('../services/rbacService');
 const { authLimiter } = require('../utils/limiter');
-const { getRedirectPath } = require('../utils/redirectLogic');
 const {
   login,
   verifyEmail,
@@ -21,23 +21,29 @@ const { registerLawyer, loginLawyer } = require('../controllers/lawyerController
 
 const router = express.Router();
 
-// Profile routes
-router.use('/profile', require('./profile'));
+// Registration with RBAC role assignment
+router.post('/register-user', authLimiter, async (req, res) => {
+  const result = await registerUser(req, res);
+  if (result && result.user) {
+    await rbacService.assignRole(result.user.id, 'user', 'user');
+  }
+});
 
-// Registration
-router.post('/register-user', authLimiter, registerUser);
-router.post('/register-lawyer', authLimiter, registerLawyer);
+router.post('/register-lawyer', authLimiter, async (req, res) => {
+  const result = await registerLawyer(req, res);
+  if (result && result.user) {
+    const roleName = result.user.is_verified ? 'verified_lawyer' : 'lawyer';
+    await rbacService.assignRole(result.user.id, 'lawyer', roleName);
+  }
+});
 
-// Unified register endpoint - intelligently routes to user or lawyer registration
+// Unified register endpoint
 router.post('/register', authLimiter, async (req, res) => {
-  // Detect if this is a lawyer registration by checking for lawyer-specific fields
   const isLawyer = req.body.registration_id || req.body.law_firm || req.body.speciality;
   
   if (isLawyer) {
-    console.log('🔵 Routing to lawyer registration');
     return registerLawyer(req, res);
   } else {
-    console.log('🔵 Routing to user registration');
     return registerUser(req, res);
   }
 });
@@ -52,19 +58,17 @@ router.post('/verify-email', verifyEmail);
 router.post('/send-otp', authLimiter, sendOtp);
 router.post('/verify-otp', verifyOtp);
 
-// Password reset with OTP
+// Password reset
 router.post('/forgot-password-otp', authLimiter, forgotPasswordOtp);
 router.post('/verify-forgot-password-otp', verifyForgotPasswordOtp);
-router.post('/forgot-password', authLimiter, forgotPasswordOtp);
 router.post('/reset-password', resetPassword);
 
 // Profile management
-router.get('/me', authenticateToken, getProfile);
-router.put('/me', authenticateToken, updateProfile);
-router.post('/submit-later', authenticateToken, (req, res) => require('../controllers/authController').submitLater(req, res));
-router.delete('/me', authenticateToken, deleteAccount);
+router.get('/me', authenticate, getProfile);
+router.put('/me', authenticate, updateProfile);
+router.delete('/me', authenticate, deleteAccount);
 
-// Logout endpoint
+// Logout
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });

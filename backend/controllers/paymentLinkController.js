@@ -120,6 +120,7 @@ const getPaymentLinkById = async (req, res) => {
     const { linkId } = req.params;
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userEmail = req.user.email;
 
     const paymentLink = await db('payment_links')
       .select('payment_links.*', 'lawyers.name as lawyer_name', 'lawyers.email as lawyer_email')
@@ -134,11 +135,19 @@ const getPaymentLinkById = async (req, res) => {
       });
     }
 
-    // Only allow lawyer who created it or authenticated users to view
-    if (userRole === 'lawyer' && paymentLink.lawyer_id !== userId) {
+    // SECURITY: Block lawyers from accessing payment links
+    if (userRole === 'lawyer') {
       return res.status(403).json({ 
         success: false, 
-        error: 'Access denied' 
+        error: 'Lawyers cannot access payment links. This link is for clients only.' 
+      });
+    }
+
+    // Only allow the specific client to access the payment link
+    if (paymentLink.client_email && userEmail !== paymentLink.client_email) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'This payment link is not for your account' 
       });
     }
 
