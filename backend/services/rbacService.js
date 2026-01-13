@@ -35,14 +35,9 @@ class RBACService {
 
     const roles = [...new Set(userRoles.map(r => r.role_name))];
     
+    // Super admin gets everything
     if (roles.includes('super_admin')) {
       can('manage', 'all');
-    }
-    
-    if (roles.includes('admin')) {
-      can('read', 'users');
-      can('manage', 'lawyers');
-      can('read', 'payments');
     }
 
     const ability = build();

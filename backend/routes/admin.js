@@ -22,7 +22,7 @@ const {
 
 // All routes require admin authentication
 router.use(authenticate);
-router.use(authorize('manage', 'admin'));
+router.use(authorize('manage', 'all')); // Use 'manage all' permission for admin access
 
 // Dashboard statistics
 router.get('/stats', getStats);
@@ -62,9 +62,9 @@ router.get('/qa/questions', async (req, res) => {
 
     if (status !== 'all') {
       if (status === 'answered') {
-        query = query.where('qa_questions.is_answered', 1);
+        query = query.where('qa_questions.status', 'answered');
       } else if (status === 'pending') {
-        query = query.where('qa_questions.is_answered', 0);
+        query = query.where('qa_questions.status', 'pending');
       }
     }
 
@@ -88,9 +88,9 @@ router.get('/qa/questions', async (req, res) => {
       .modify(function(queryBuilder) {
         if (status !== 'all') {
           if (status === 'answered') {
-            queryBuilder.where('qa_questions.is_answered', 1);
+            queryBuilder.where('qa_questions.status', 'answered');
           } else if (status === 'pending') {
-            queryBuilder.where('qa_questions.is_answered', 0);
+            queryBuilder.where('qa_questions.status', 'pending');
           }
         }
         if (search) {
@@ -126,8 +126,8 @@ router.get('/qa/stats', async (req, res) => {
     const db = require('../db');
     const [totalQuestions, pendingQuestions, answeredQuestions, totalAnswers] = await Promise.all([
       db('qa_questions').count('id as count').first(),
-      db('qa_questions').where('is_answered', 0).count('id as count').first(),
-      db('qa_questions').where('is_answered', 1).count('id as count').first(),
+      db('qa_questions').where('status', 'pending').count('id as count').first(),
+      db('qa_questions').where('status', 'answered').count('id as count').first(),
       db('qa_answers').count('id as count').first()
     ]);
 
@@ -136,7 +136,7 @@ router.get('/qa/stats', async (req, res) => {
       .select(
         'qa_questions.id',
         'qa_questions.question',
-        'qa_questions.is_answered',
+        'qa_questions.status',
         'qa_questions.created_at',
         'users.name as user_name'
       )
@@ -167,11 +167,7 @@ router.put('/qa/questions/:id', async (req, res) => {
 
     const updateData = {};
     if (status) {
-      if (status === 'answered') {
-        updateData.is_answered = 1;
-      } else if (status === 'pending') {
-        updateData.is_answered = 0;
-      }
+      updateData.status = status;
     }
     if (typeof is_public === 'boolean') updateData.is_public = is_public;
 

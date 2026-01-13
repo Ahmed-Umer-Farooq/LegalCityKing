@@ -37,7 +37,7 @@ const authenticate = async (req, res, next) => {
     }
 
     // Get user abilities
-    const abilities = await rbacService.getUserAbilities(decoded.id, userType, {
+    const abilities = await rbacService.getUserAbilities(decoded.id, userType === 'admin' ? 'user' : userType, {
       ip: req.ip,
       time: new Date(),
       userAgent: req.get('User-Agent')

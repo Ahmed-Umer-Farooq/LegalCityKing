@@ -50,11 +50,11 @@ router.put('/:id', authenticate, upload.single('file'), formsController.updateFo
 router.delete('/:id', authenticate, formsController.deleteForm);
 
 // Admin routes
-router.get('/admin/all', authenticate, authorize('manage', 'admin'), formsController.getAllForms);
-router.get('/admin/stats', authenticate, authorize('manage', 'admin'), formsController.getFormStats);
-router.post('/admin/create', authenticate, authorize('manage', 'admin'), upload.single('file'), formsController.createForm);
-router.put('/admin/:id/approve', authenticate, authorize('manage', 'admin'), formsController.approveForm);
-router.put('/admin/:id/reject', authenticate, authorize('manage', 'admin'), formsController.rejectForm);
-router.delete('/admin/:id', authenticate, authorize('manage', 'admin'), formsController.deleteForm);
+router.get('/admin/all', authenticate, authorize('manage', 'all'), formsController.getAllForms);
+router.get('/admin/stats', authenticate, authorize('manage', 'all'), formsController.getFormStats);
+router.post('/admin/create', authenticate, authorize('manage', 'all'), upload.single('file'), formsController.createForm);
+router.put('/admin/:id/approve', authenticate, authorize('manage', 'all'), formsController.approveForm);
+router.put('/admin/:id/reject', authenticate, authorize('manage', 'all'), formsController.rejectForm);
+router.delete('/admin/:id', authenticate, authorize('manage', 'all'), formsController.deleteForm);
 
 module.exports = router;

@@ -9,7 +9,7 @@ const authRoutes = require('./routes/auth');
 const db = require('./db');
 
 // Import modern authentication
-const { authenticate } = require('./middleware/modernAuth');
+const { authenticate, authorize } = require('./middleware/modernAuth');
 const rbacService = require('./services/rbacService');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -858,14 +858,13 @@ io.on('connection', (socket) => {
 
 // Legacy blog endpoints for compatibility
 const blogController = require('./controllers/blogController');
-const { requireAuth, requireLawyer } = require('./utils/middleware');
 app.get('/api/blog-categories', blogController.getBlogCategories);
 app.get('/api/blog-tags', blogController.getBlogTags);
 app.get('/api/blog-authors', blogController.getTopAuthors);
 app.get('/api/popular-blogs', blogController.getPopularPosts);
 
 // Lawyer blog management route
-app.get('/api/lawyer/blogs', requireAuth, requireLawyer, blogController.getLawyerBlogs);
+app.get('/api/lawyer/blogs', authenticate, authorize('read', 'blogs'), blogController.getLawyerBlogs);
 
 // Health check
 app.get('/health', (req, res) => {

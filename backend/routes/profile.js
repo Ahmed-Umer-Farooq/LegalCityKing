@@ -47,17 +47,9 @@ router.get('/', authorize('manage', 'profile'), async (req, res) => {
     
     let profile;
     if (userType === 'lawyer') {
-      const [rows] = await db.execute(
-        'SELECT * FROM lawyers WHERE id = ?',
-        [userId]
-      );
-      profile = rows[0];
+      profile = await db('lawyers').where('id', userId).first();
     } else {
-      const [rows] = await db.execute(
-        'SELECT * FROM users WHERE id = ?',
-        [userId]
-      );
-      profile = rows[0];
+      profile = await db('users').where('id', userId).first();
     }
     
     if (!profile) {
@@ -88,15 +80,9 @@ router.post('/upload-image', authorize('manage', 'profile'), upload.single('prof
 
     // Update profile image in database
     if (userType === 'lawyer') {
-      await db.execute(
-        'UPDATE lawyers SET profile_image = ? WHERE id = ?',
-        [imagePath, userId]
-      );
+      await db('lawyers').where('id', userId).update({ profile_image: imagePath });
     } else {
-      await db.execute(
-        'UPDATE users SET profile_image = ? WHERE id = ?',
-        [imagePath, userId]
-      );
+      await db('users').where('id', userId).update({ profile_image: imagePath });
     }
 
     res.json({ 
@@ -130,15 +116,8 @@ router.put('/', authorize('manage', 'profile'), upload.single('profile_image'), 
       return res.status(400).json({ error: 'No valid fields to update' });
     }
     
-    // Build dynamic query
-    const fields = Object.keys(updateData);
-    const values = Object.values(updateData);
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-    
     const table = (userType === 'lawyer') ? 'lawyers' : 'users';
-    const query = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
-    
-    await db.execute(query, [...values, userId]);
+    await db(table).where('id', userId).update(updateData);
     
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
@@ -155,23 +134,17 @@ router.delete('/delete-image', authorize('manage', 'profile'), async (req, res) 
     
     // Get current profile image
     const table = (userType === 'lawyer') ? 'lawyers' : 'users';
-    const [rows] = await db.execute(
-      `SELECT profile_image FROM ${table} WHERE id = ?`,
-      [userId]
-    );
+    const profile = await db(table).where('id', userId).first();
     
-    if (rows[0]?.profile_image) {
+    if (profile?.profile_image) {
       // Delete file from filesystem
-      const imagePath = path.join(__dirname, '..', rows[0].profile_image);
+      const imagePath = path.join(__dirname, '..', profile.profile_image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
       
       // Update database
-      await db.execute(
-        `UPDATE ${table} SET profile_image = NULL WHERE id = ?`,
-        [userId]
-      );
+      await db(table).where('id', userId).update({ profile_image: null });
     }
     
     res.json({ message: 'Profile image deleted successfully' });

@@ -183,6 +183,22 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Delete related records first (order matters for foreign keys)
+    await db('user_appointments').where('user_id', id).del();
+    await db('user_cases').where('user_id', id).del();
+    await db('user_tasks').where('user_id', id).del();
+    await db('user_transactions').where('user_id', id).del();
+    await db('chat_messages').where('sender_id', id).where('sender_type', 'user').del();
+    await db('chat_messages').where('receiver_id', id).where('receiver_type', 'user').del();
+    await db('blog_comments').where('user_id', id).del();
+    await db('blog_likes').where('user_id', id).del();
+    await db('blog_saves').where('user_id', id).del();
+    await db('blog_reports').where('user_id', id).del();
+    await db('lawyer_reviews').where('user_id', id).del();
+    await db('qa_questions').where('user_id', id).del();
+    await db('user_roles').where('user_id', id).where('user_type', 'user').del();
+    
+    // Finally delete the user
     const deleted = await db('users').where('id', id).del();
     
     if (deleted) {
@@ -200,6 +216,31 @@ const deleteLawyer = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Delete related records first (order matters for foreign keys)
+    await db('cases').where('lawyer_id', id).del();
+    await db('events').where('lawyer_id', id).del();
+    await db('tasks').where('created_by', id).del();
+    await db('documents').where('uploaded_by', id).del();
+    await db('invoices').where('lawyer_id', id).del();
+    await db('time_entries').where('lawyer_id', id).del();
+    await db('expenses').where('created_by', id).del();
+    await db('notes').where('created_by', id).del();
+    await db('contacts').where('created_by', id).del();
+    await db('calls').where('lawyer_id', id).del();
+    await db('messages').where('lawyer_id', id).del();
+    await db('payments').where('recorded_by', id).del();
+    await db('intakes').where('assigned_to', id).del();
+    await db('chat_messages').where('sender_id', id).where('sender_type', 'lawyer').del();
+    await db('chat_messages').where('receiver_id', id).where('receiver_type', 'lawyer').del();
+    await db('blogs').where('author_id', id).del();
+    await db('lawyer_reviews').where('lawyer_id', id).del();
+    await db('lawyer_endorsements').where('endorser_lawyer_id', id).del();
+    await db('lawyer_endorsements').where('endorsed_lawyer_id', id).del();
+    await db('qa_answers').where('lawyer_id', id).del();
+    await db('platform_reviews').where('lawyer_id', id).del();
+    await db('user_roles').where('user_id', id).where('user_type', 'lawyer').del();
+    
+    // Finally delete the lawyer
     const deleted = await db('lawyers').where('id', id).del();
     
     if (deleted) {
@@ -217,12 +258,27 @@ const makeAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Update user table
     await db('users').where('id', id).update({
       is_admin: 1,
       role: 'admin',
       updated_at: db.fn.now()
     });
-
+    
+    // Get admin role ID
+    const adminRole = await db('roles').where('name', 'admin').first();
+    if (adminRole) {
+      // Remove existing roles for this user
+      await db('user_roles').where('user_id', id).where('user_type', 'user').del();
+      
+      // Add admin role
+      await db('user_roles').insert({
+        user_id: id,
+        user_type: 'user',
+        role_id: adminRole.id
+      });
+    }
+    
     res.json({ message: 'Admin access granted successfully' });
   } catch (error) {
     console.error('Error granting admin access:', error);
@@ -234,12 +290,27 @@ const removeAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Update user table
     await db('users').where('id', id).update({
       is_admin: 0,
       role: 'user',
       updated_at: db.fn.now()
     });
-
+    
+    // Get user role ID
+    const userRole = await db('roles').where('name', 'user').first();
+    if (userRole) {
+      // Remove existing roles for this user
+      await db('user_roles').where('user_id', id).where('user_type', 'user').del();
+      
+      // Add user role
+      await db('user_roles').insert({
+        user_id: id,
+        user_type: 'user',
+        role_id: userRole.id
+      });
+    }
+    
     res.json({ message: 'Admin access removed successfully' });
   } catch (error) {
     console.error('Error removing admin access:', error);
