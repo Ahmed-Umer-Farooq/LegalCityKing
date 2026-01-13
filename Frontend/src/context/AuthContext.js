@@ -19,6 +19,15 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('token');
     
+    // Clean up any multi-session data
+    localStorage.removeItem('multiSessions');
+    localStorage.removeItem('token_user');
+    localStorage.removeItem('token_lawyer');
+    localStorage.removeItem('token_admin');
+    localStorage.removeItem('user_user');
+    localStorage.removeItem('user_lawyer');
+    localStorage.removeItem('user_admin');
+    
     if (storedUser && storedToken) {
       try {
         const userData = JSON.parse(storedUser);
@@ -61,8 +70,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Clean up any remaining multi-session data
+    localStorage.removeItem('multiSessions');
+    localStorage.removeItem('returnPath');
+    localStorage.removeItem('navigatedFromDashboard');
     sessionStorage.clear();
-    // Don't redirect automatically - let components handle navigation
   };
 
   const value = {

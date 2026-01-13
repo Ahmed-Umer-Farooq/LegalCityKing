@@ -102,7 +102,6 @@ const AuthContent = () => {
               onSwitchToRegister={() => { setAuthMode('register'); navigate('/register'); }}
               onSwitchToForgot={() => setAuthMode('forgot')}
               onLoginSuccess={handleLoginSuccess}
-
             />
           ) : authMode === 'forgot' ? (
             <ForgotPassword onSwitchToLogin={() => { setAuthMode('login'); navigate('/login'); }} />

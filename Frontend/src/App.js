@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { blockBrowserNotifications } from './utils/toastUtils';
 import './styles/toast.css';
 
+import { AuthProvider } from './context/AuthContext';
 import LegalCityAuth from './LegalCityAuth';
 import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -63,30 +64,31 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <Toaster 
-        position="top-right" 
-        richColors={false}
-        closeButton 
-        duration={4000}
-        expand={false}
-        visibleToasts={3}
-        theme="light"
-        toastOptions={{
-          style: {
-            fontSize: '14px',
-            fontWeight: '500',
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            color: '#374151',
-          },
-          className: 'sonner-toast',
-          descriptionClassName: 'sonner-toast-description',
-        }}
-      />
-      <Routes>
+    <AuthProvider>
+      <div className="App">
+        <Toaster 
+          position="top-right" 
+          richColors={false}
+          closeButton 
+          duration={4000}
+          expand={false}
+          visibleToasts={3}
+          theme="light"
+          toastOptions={{
+            style: {
+              fontSize: '14px',
+              fontWeight: '500',
+              background: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              color: '#374151',
+            },
+            className: 'sonner-toast',
+            descriptionClassName: 'sonner-toast-description',
+          }}
+        />
+        <Routes>
         {/* Auth routes - No header/footer */}
         <Route path="/login" element={<LegalCityAuth />} />
         <Route path="/register" element={<LegalCityAuth />} />
@@ -161,8 +163,9 @@ function App() {
         
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
+        </Routes>
+      </div>
+    </AuthProvider>
   );
 }
 

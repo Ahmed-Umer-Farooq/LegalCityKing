@@ -58,8 +58,9 @@ const login = async (req, res) => {
     let user;
     let role;
 
-    // Enhanced lawyer login with security logging
+    // Strict role-based login - only check appropriate table
     if (registration_id) {
+      // Lawyer login - only check lawyers table
       user = await db('lawyers').where({ 
         email: email,
         registration_id: registration_id 
@@ -80,12 +81,10 @@ const login = async (req, res) => {
           registration_id,
           ip: req.ip
         });
-        return res.status(401).json({ error: 'Invalid email or registration ID' });
+        return res.status(401).json({ error: 'Invalid lawyer credentials' });
       }
-    }
-    
-    // Enhanced user login with security checks
-    if (!user && email && !registration_id) {
+    } else {
+      // User login - only check users table
       user = await db('users').where({ email }).first();
       if (user) {
         // Enhanced client account check
@@ -107,17 +106,15 @@ const login = async (req, res) => {
           });
           return res.status(401).json({ error: 'Account is inactive. Please contact support.' });
         }
-        role = 'user';
+        role = user.is_admin ? 'admin' : 'user';
+      } else {
+        auditLog('login_failed', {
+          reason: 'invalid_user_credentials',
+          email,
+          ip: req.ip
+        });
+        return res.status(401).json({ error: 'Invalid user credentials' });
       }
-    }
-
-    if (!user) {
-      auditLog('login_failed', {
-        reason: 'user_not_found',
-        email: email || 'unknown',
-        ip: req.ip
-      });
-      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Enhanced email verification check

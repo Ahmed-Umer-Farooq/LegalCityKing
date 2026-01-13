@@ -14,20 +14,26 @@ const authenticate = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from appropriate table
+    // Get user from appropriate table based on JWT role claim
     let user;
-    let userType = 'user';
+    let userType = decoded.role || 'user'; // Use role from JWT
     
-    user = await db('users').where({ id: decoded.id }).first();
-    if (!user) {
+    // Validate user exists in correct table based on their role
+    if (userType === 'lawyer') {
       user = await db('lawyers').where({ id: decoded.id }).first();
-      if (user) {
-        userType = 'lawyer';
+      if (!user) {
+        return res.status(403).json({ error: 'Lawyer account not found' });
       }
-    }
-
-    if (!user) {
-      return res.status(403).json({ error: 'User not found' });
+    } else if (userType === 'admin') {
+      user = await db('users').where({ id: decoded.id, is_admin: 1 }).first();
+      if (!user) {
+        return res.status(403).json({ error: 'Admin account not found' });
+      }
+    } else {
+      user = await db('users').where({ id: decoded.id, is_admin: 0 }).first();
+      if (!user) {
+        return res.status(403).json({ error: 'User account not found' });
+      }
     }
 
     // Get user abilities
@@ -41,6 +47,7 @@ const authenticate = async (req, res, next) => {
       id: decoded.id,
       email: user.email,
       type: userType,
+      role: userType,  // Add role property for compatibility
       abilities,
       ...user
     };

@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/modernAuth');
+const { enforceUserType } = require('../middleware/userTypeEnforcement');
 const {
   getDashboardStats,
   getCases,
@@ -16,22 +17,17 @@ const router = express.Router();
 
 // All routes require lawyer authentication
 router.use(authenticate);
-router.use((req, res, next) => {
-  if (req.user.type !== 'lawyer') {
-    return res.status(403).json({ error: 'Lawyer access required' });
-  }
-  next();
-});
+router.use(enforceUserType('lawyer'));
 
-// Dashboard routes
-router.get('/dashboard/stats', getDashboardStats);
-router.get('/cases', authorize('manage', 'cases'), getCases);
-router.post('/cases', authorize('manage', 'cases'), createCase);
-router.get('/clients', getClients);
-router.get('/appointments', getAppointments);
+// Dashboard routes with proper authorization
+router.get('/dashboard/stats', authorize('read', 'dashboard'), getDashboardStats);
+router.get('/cases', authorize('read', 'cases'), getCases);
+router.post('/cases', authorize('write', 'cases'), createCase);
+router.get('/clients', authorize('read', 'clients'), getClients);
+router.get('/appointments', authorize('read', 'appointments'), getAppointments);
 router.get('/documents', authorize('read', 'documents'), getDocuments);
-router.get('/invoices', getInvoices);
-router.get('/profile', getProfile);
-router.get('/upcoming-events', getUpcomingEvents);
+router.get('/invoices', authorize('read', 'invoices'), getInvoices);
+router.get('/profile', authorize('read', 'profile'), getProfile);
+router.get('/upcoming-events', authorize('read', 'events'), getUpcomingEvents);
 
 module.exports = router;
