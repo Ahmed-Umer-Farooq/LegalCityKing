@@ -5,7 +5,7 @@ const winston = require('winston');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
-const { Enforcer } = require('casbin');
+const { newEnforcer } = require('casbin');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const DOMPurify = require('dompurify');
@@ -47,7 +47,7 @@ const logger = winston.createLogger({
 let enforcer;
 const initializeCasbin = async () => {
   try {
-    enforcer = await Enforcer.newEnforcer(
+    enforcer = await newEnforcer(
       path.join(__dirname, '../config/rbac_model.conf'),
       path.join(__dirname, '../config/rbac_policy.csv')
     );

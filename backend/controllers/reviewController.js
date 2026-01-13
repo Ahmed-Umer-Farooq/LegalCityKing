@@ -89,6 +89,11 @@ const createEndorsement = async (req, res) => {
     const { endorsed_lawyer_secure_id, endorsement_text, relationship } = req.body;
     const endorser_id = req.user.id;
 
+    // Only lawyers can endorse other lawyers (using modern auth system)
+    if (req.user.type !== 'lawyer') {
+      return res.status(403).json({ message: 'Only lawyers can endorse other lawyers' });
+    }
+
     if (!endorsed_lawyer_secure_id || !endorsement_text || !relationship) {
       return res.status(400).json({ message: 'All fields are required' });
     }
