@@ -121,11 +121,16 @@ const requireVerifiedLawyer = async (req, res, next) => {
 
   // Check subscription status
   try {
-    const subscription = await db('user_subscriptions')
-      .where({ user_id: req.user.id, status: 'active' })
+    // For lawyers, subscription info is in the lawyers table
+    const lawyer = await db('lawyers')
+      .where({ id: req.user.id })
       .first();
     
-    req.user.subscription = subscription;
+    req.user.subscription = {
+      tier: lawyer.subscription_tier,
+      status: lawyer.subscription_status,
+      expires_at: lawyer.subscription_expires_at
+    };
   } catch (error) {
     console.error('Subscription check error:', error);
   }
