@@ -23,9 +23,11 @@ const SubscriptionManagement = () => {
     name: '',
     price: '',
     billing_cycle: 'monthly',
-    features: '',
-    stripe_price_id: ''
+    features: [],
+    stripe_price_id: '',
+    is_free: false
   });
+  const [newFeature, setNewFeature] = useState('');
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
@@ -91,14 +93,15 @@ const SubscriptionManagement = () => {
 
   const handleCreatePlan = async () => {
     try {
-      const featuresArray = planForm.features.split('\n').filter(f => f.trim());
       await api.post('/admin/subscription-plans', {
         ...planForm,
-        features: featuresArray
+        price: planForm.is_free ? 0 : planForm.price,
+        features: planForm.features
       });
       showToast.success('Plan created successfully');
       setShowPlanModal(false);
-      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: [], stripe_price_id: '', is_free: false });
+      setNewFeature('');
       fetchPlans();
     } catch (error) {
       showToast.error('Failed to create plan');
@@ -107,16 +110,17 @@ const SubscriptionManagement = () => {
 
   const handleUpdatePlan = async () => {
     try {
-      const featuresArray = planForm.features.split('\n').filter(f => f.trim());
       await api.put(`/admin/subscription-plans/${editingPlan.id}`, {
         ...planForm,
-        features: featuresArray,
+        price: planForm.is_free ? 0 : planForm.price,
+        features: planForm.features,
         active: true
       });
       showToast.success('Plan updated successfully');
       setShowPlanModal(false);
       setEditingPlan(null);
-      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: [], stripe_price_id: '', is_free: false });
+      setNewFeature('');
       fetchPlans();
     } catch (error) {
       showToast.error('Failed to update plan');
@@ -136,15 +140,44 @@ const SubscriptionManagement = () => {
   };
 
   const openEditModal = (plan) => {
+    const featuresString = plan.features || '';
+    let featuresArray = [];
+    
+    try {
+      if (typeof featuresString === 'string') {
+        if (featuresString.startsWith('[')) {
+          featuresArray = JSON.parse(featuresString);
+        } else {
+          featuresArray = featuresString.split(', ').filter(f => f.trim());
+        }
+      } else if (Array.isArray(featuresString)) {
+        featuresArray = featuresString;
+      }
+    } catch (e) {
+      featuresArray = [];
+    }
+    
     setEditingPlan(plan);
     setPlanForm({
       name: plan.name,
       price: plan.price,
       billing_cycle: plan.billing_cycle,
-      features: plan.features.replace(/, /g, '\n'),
-      stripe_price_id: plan.stripe_price_id || ''
+      features: featuresArray,
+      stripe_price_id: plan.stripe_price_id || '',
+      is_free: plan.price === 0
     });
     setShowPlanModal(true);
+  };
+
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      setPlanForm({...planForm, features: [...planForm.features, newFeature.trim()]});
+      setNewFeature('');
+    }
+  };
+
+  const removeFeature = (index) => {
+    setPlanForm({...planForm, features: planForm.features.filter((_, i) => i !== index)});
   };
 
   const formatCurrency = (amount) => {
@@ -501,76 +534,139 @@ const SubscriptionManagement = () => {
       {/* Plan Modal */}
       {showPlanModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold mb-4">{editingPlan ? 'Edit Plan' : 'Create Plan'}</h3>
-            <div className="space-y-4">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-6 text-gray-900">{editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}</h3>
+            
+            <div className="space-y-5">
+              {/* Plan Name */}
               <div>
-                <label className="block text-sm font-medium mb-1">Plan Name</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Plan Name *</label>
                 <input
                   type="text"
                   value={planForm.name}
                   onChange={(e) => setPlanForm({...planForm, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="Professional"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Professional, Premium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Price</label>
+
+              {/* Free Plan Toggle */}
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={planForm.price}
-                  onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="49.99"
+                  type="checkbox"
+                  id="is_free"
+                  checked={planForm.is_free}
+                  onChange={(e) => setPlanForm({...planForm, is_free: e.target.checked, price: e.target.checked ? '0' : planForm.price})}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                 />
+                <label htmlFor="is_free" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  This is a Free Plan (No charge)
+                </label>
               </div>
+
+              {/* Price */}
+              {!planForm.is_free && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price (USD) *</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={planForm.price}
+                      onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
+                      className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="49.99"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Billing Cycle */}
               <div>
-                <label className="block text-sm font-medium mb-1">Billing Cycle</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Billing Cycle *</label>
                 <select
                   value={planForm.billing_cycle}
                   onChange={(e) => setPlanForm({...planForm, billing_cycle: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
+                  <option value="free">Free (Lifetime)</option>
                 </select>
               </div>
+
+              {/* Stripe Price ID */}
               <div>
-                <label className="block text-sm font-medium mb-1">Stripe Price ID</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Stripe Price ID</label>
                 <input
                   type="text"
                   value={planForm.stripe_price_id}
                   onChange={(e) => setPlanForm({...planForm, stripe_price_id: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="price_xxxxx"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="price_1234567890abcdef"
                 />
+                <p className="text-xs text-gray-500 mt-1">Get this from your Stripe Dashboard</p>
               </div>
+
+              {/* Features */}
               <div>
-                <label className="block text-sm font-medium mb-1">Features (one per line)</label>
-                <textarea
-                  value={planForm.features}
-                  onChange={(e) => setPlanForm({...planForm, features: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  rows="4"
-                  placeholder="Feature 1\nFeature 2\nFeature 3"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Plan Features</label>
+                
+                {/* Feature List */}
+                <div className="space-y-2 mb-3">
+                  {Array.isArray(planForm.features) && planForm.features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg group">
+                      <span className="flex-1 text-sm text-gray-700">✓ {feature}</span>
+                      <button
+                        onClick={() => removeFeature(index)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-red-600 hover:bg-red-100 rounded transition-all"
+                        type="button"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Feature Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter a feature"
+                  />
+                  <button
+                    onClick={addFeature}
+                    type="button"
+                    className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+                  >
+                    <span className="text-lg">+</span> Add
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Press Enter or click Add to include a feature</p>
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-8 pt-6 border-t">
               <button
                 onClick={editingPlan ? handleUpdatePlan : handleCreatePlan}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 font-medium transition-all shadow-sm"
               >
-                {editingPlan ? 'Update' : 'Create'}
+                {editingPlan ? 'Update Plan' : 'Create Plan'}
               </button>
               <button
                 onClick={() => {
                   setShowPlanModal(false);
                   setEditingPlan(null);
-                  setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+                  setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: [], stripe_price_id: '', is_free: false });
+                  setNewFeature('');
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all"
               >
                 Cancel
               </button>
