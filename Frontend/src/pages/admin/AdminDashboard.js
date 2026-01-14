@@ -2184,6 +2184,16 @@ const AdminDashboard = ({ activeTabProp }) => {
                     <button
                       onClick={() => {
                         setShowProfileDropdown(false);
+                        handleTabChange('settings');
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
                         handleLogout();
                       }}
                       className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"

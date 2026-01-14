@@ -243,14 +243,7 @@ const DocumentManagement = () => {
                   </td>
                 </tr>
               ) : (
-                // Sample data since backend might not be fully implemented
-                [
-                  { id: 1, name: 'Legal Contract Template.pdf', type: 'PDF', size: 2.4 * 1024 * 1024, owner: 'John Doe', created: '2024-01-15' },
-                  { id: 2, name: 'Client Agreement.docx', type: 'DOC', size: 1.2 * 1024 * 1024, owner: 'Jane Smith', created: '2024-01-14' },
-                  { id: 3, name: 'Evidence Photo.jpg', type: 'IMG', size: 800 * 1024, owner: 'Mike Johnson', created: '2024-01-13' },
-                  { id: 4, name: 'Case Notes.txt', type: 'TXT', size: 50 * 1024, owner: 'Sarah Wilson', created: '2024-01-12' },
-                  { id: 5, name: 'Court Filing.pdf', type: 'PDF', size: 3.1 * 1024 * 1024, owner: 'David Brown', created: '2024-01-11' }
-                ].map(doc => (
+                documents.map(doc => (
                   <tr key={doc.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="flex items-center gap-3">
