@@ -280,7 +280,139 @@ router.get('/endorsements', getAllEndorsements);
 router.delete('/endorsements/:id', deleteEndorsement);
 
 // Enterprise-level Analytics Routes
-router.get('/analytics/financial', getFinancialAnalytics);
+router.get('/analytics/financial', async (req, res) => {
+  try {
+    const { period = '30d' } = req.query;
+    
+    // Calculate date range
+    let daysBack = 30;
+    if (period === '7d') daysBack = 7;
+    else if (period === '90d') daysBack = 90;
+    else if (period === '1y') daysBack = 365;
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+
+    // Get revenue data from transactions
+    const [totalRevenue, monthlyRevenue, previousRevenue] = await Promise.all([
+      db('transactions')
+        .where('status', 'completed')
+        .where('created_at', '>=', startDate)
+        .sum('amount as total')
+        .first(),
+      db('transactions')
+        .where('status', 'completed')
+        .where('created_at', '>=', db.raw('DATE_SUB(NOW(), INTERVAL 30 DAY)'))
+        .sum('amount as total')
+        .first(),
+      db('transactions')
+        .where('status', 'completed')
+        .where('created_at', '>=', db.raw('DATE_SUB(NOW(), INTERVAL 60 DAY)'))
+        .where('created_at', '<', db.raw('DATE_SUB(NOW(), INTERVAL 30 DAY)'))
+        .sum('amount as total')
+        .first()
+    ]);
+
+    // Get daily revenue trends
+    const revenueTrends = await db('transactions')
+      .select(db.raw('DATE(created_at) as date'))
+      .sum('amount as amount')
+      .where('status', 'completed')
+      .where('created_at', '>=', startDate)
+      .groupBy(db.raw('DATE(created_at)'))
+      .orderBy('date', 'asc');
+
+    // Get transaction stats
+    const [transactionStats] = await Promise.all([
+      db('transactions')
+        .select('status')
+        .count('id as count')
+        .where('created_at', '>=', startDate)
+        .groupBy('status')
+    ]);
+
+    const transactions = {
+      total: transactionStats.reduce((sum, t) => sum + t.count, 0),
+      successful: transactionStats.find(t => t.status === 'completed')?.count || 0,
+      failed: transactionStats.find(t => t.status === 'failed')?.count || 0,
+      pending: transactionStats.find(t => t.status === 'pending')?.count || 0
+    };
+
+    // Get subscription metrics
+    const [activeSubs, totalSubs, tierCounts] = await Promise.all([
+      db('lawyers').where('subscription_status', 'active').count('id as count').first(),
+      db('lawyers').count('id as count').first(),
+      db('lawyers')
+        .select('subscription_tier')
+        .count('id as count')
+        .where('subscription_status', 'active')
+        .groupBy('subscription_tier')
+    ]);
+
+    const tierPricing = { 'professional': 49.99, 'premium': 99.99 };
+    let mrr = 0;
+    tierCounts.forEach(tier => {
+      const price = tierPricing[tier.subscription_tier?.toLowerCase()] || 0;
+      mrr += price * tier.count;
+    });
+
+    const churnRate = totalSubs.count > 0 
+      ? ((totalSubs.count - activeSubs.count) / totalSubs.count) * 100
+      : 0;
+
+    // Get top performing lawyers
+    const topPerformers = await db('transactions')
+      .select('lawyers.id', 'lawyers.name', 'lawyers.email')
+      .sum('transactions.lawyer_earnings as revenue')
+      .count('transactions.id as transactions')
+      .leftJoin('lawyers', 'transactions.lawyer_id', 'lawyers.id')
+      .where('transactions.status', 'completed')
+      .where('transactions.created_at', '>=', startDate)
+      .whereNotNull('transactions.lawyer_id')
+      .groupBy('lawyers.id', 'lawyers.name', 'lawyers.email')
+      .orderBy('revenue', 'desc')
+      .limit(5);
+
+    // Calculate growth
+    const currentRev = parseFloat(monthlyRevenue.total) || 0;
+    const prevRev = parseFloat(previousRevenue.total) || 0;
+    const growth = prevRev > 0 ? ((currentRev - prevRev) / prevRev) * 100 : 0;
+
+    // Calculate LTV (simple: average transaction * average transactions per customer)
+    const avgTransaction = transactions.total > 0 ? currentRev / transactions.successful : 0;
+    const ltv = avgTransaction * 3; // Simplified LTV calculation
+
+    res.json({
+      analytics: {
+        revenue: {
+          total: parseFloat(totalRevenue.total) || 0,
+          monthly: currentRev,
+          growth: growth,
+          trends: revenueTrends.map(t => ({
+            date: t.date,
+            amount: parseFloat(t.amount) || 0
+          }))
+        },
+        transactions,
+        subscriptions: {
+          mrr: mrr,
+          arr: mrr * 12,
+          churn: churnRate,
+          ltv: ltv
+        },
+        topPerformers: topPerformers.map(p => ({
+          name: p.name,
+          email: p.email,
+          revenue: parseFloat(p.revenue) || 0,
+          transactions: p.transactions
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching financial analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch financial analytics' });
+  }
+});
 router.get('/analytics/system', getSystemMetrics);
 router.get('/analytics/business', getBusinessIntelligence);
 
