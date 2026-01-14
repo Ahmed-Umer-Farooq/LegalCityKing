@@ -48,10 +48,24 @@ const SubscriptionManagement = () => {
   const fetchLawyerData = async () => {
     try {
       const response = await api.get('/lawyer/profile');
-      setLawyer(response.data);
+      if (response.data) {
+        setLawyer(response.data);
+      } else {
+        // Fallback to localStorage if API returns null
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (storedUser && storedUser.id) {
+          setLawyer(storedUser);
+        }
+      }
     } catch (error) {
       console.error('Error fetching lawyer data:', error);
-      toast.error('Failed to load profile data');
+      // Try localStorage as fallback
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (storedUser && storedUser.id) {
+        setLawyer(storedUser);
+      } else {
+        toast.error('Failed to load profile data');
+      }
     } finally {
       setLoading(false);
     }

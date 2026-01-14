@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
+import RestrictedFeature from '../../components/RestrictedFeature';
 
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
@@ -287,13 +288,13 @@ export default function LawyerDashboard() {
                 { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, verificationRequired: !isVerified },
                 { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, verificationRequired: !isVerified },
                 { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, verificationRequired: !isVerified },
-                { id: 'payment-links', label: 'Pay Links', icon: CreditCard, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, verificationRequired: !isVerified },
+                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
                 { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
                 { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, verificationRequired: !isVerified },
                 { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, verificationRequired: !isVerified },
                 { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, subscriptionRequired: !isPremium },
                 { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, subscriptionRequired: !isPremium },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, verificationRequired: !isVerified },
                 { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
@@ -434,29 +435,67 @@ export default function LawyerDashboard() {
 
       {/* MAIN CONTENT */}
       <main className="w-full px-4 md:px-6 lg:px-8 pb-16 max-w-screen-2xl mx-auto">
-        {activeNavItem === 'contacts' && <ContactsPage />}
+        {activeNavItem === 'contacts' && (
+          <RestrictedFeature featureName="contacts" lawyer={currentUser}>
+            <ContactsPage />
+          </RestrictedFeature>
+        )}
         {activeNavItem === 'calendar' && (
-          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
-            <CalendarPage />
-          </React.Suspense>
+          <RestrictedFeature featureName="calendar" lawyer={currentUser}>
+            <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+              <CalendarPage />
+            </React.Suspense>
+          </RestrictedFeature>
         )}
         {activeNavItem === 'payment-links' && (
-          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
-            <PaymentLinkManager />
-          </React.Suspense>
+          <RestrictedFeature featureName="payment-links" lawyer={currentUser}>
+            <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+              <PaymentLinkManager />
+            </React.Suspense>
+          </RestrictedFeature>
         )}
         {activeNavItem === 'payment-records' && (
-          <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
-            <PaymentRecords />
-          </React.Suspense>
+          <RestrictedFeature featureName="payment-records" lawyer={currentUser}>
+            <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>
+              <PaymentRecords />
+            </React.Suspense>
+          </RestrictedFeature>
         )}
-        {activeNavItem === 'reports' && <ReportsPage />}
-        {activeNavItem === 'tasks' && <TasksPage />}
-        {activeNavItem === 'documents' && <DocumentsPage />}
-        {activeNavItem === 'forms' && <FormsManagement />}
-        {activeNavItem === 'blogs' && <BlogManagement />}
-        {activeNavItem === 'messages' && <ChatPage key="lawyer-chat" />}
-        {activeNavItem === 'qa' && <QAAnswers />}
+        {activeNavItem === 'reports' && (
+          <RestrictedFeature featureName="reports" lawyer={currentUser}>
+            <ReportsPage />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'tasks' && (
+          <RestrictedFeature featureName="tasks" lawyer={currentUser}>
+            <TasksPage />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'documents' && (
+          <RestrictedFeature featureName="documents" lawyer={currentUser}>
+            <DocumentsPage />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'forms' && (
+          <RestrictedFeature featureName="forms" lawyer={currentUser}>
+            <FormsManagement />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'blogs' && (
+          <RestrictedFeature featureName="blogs" lawyer={currentUser}>
+            <BlogManagement />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'messages' && (
+          <RestrictedFeature featureName="messages" lawyer={currentUser}>
+            <ChatPage key="lawyer-chat" />
+          </RestrictedFeature>
+        )}
+        {activeNavItem === 'qa' && (
+          <RestrictedFeature featureName="qa" lawyer={currentUser}>
+            <QAAnswers />
+          </RestrictedFeature>
+        )}
         
         {activeNavItem === 'profile' && (
           <React.Suspense fallback={<div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6"><div className="animate-pulse h-32 bg-gray-200 rounded"></div></div>}>

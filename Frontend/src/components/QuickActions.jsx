@@ -33,12 +33,12 @@ export default function QuickActions({ onSuccess }) {
 
     { id: 'payment-records', label: 'Payment Records', icon: CreditCard, color: 'bg-violet-500' },
     { id: 'reports', label: 'View Reports', icon: BarChart3, color: 'bg-indigo-600' },
-    { id: 'qa', label: 'Answer Q&A', icon: HelpCircle, color: 'bg-blue-600' }
+    { id: 'qa', label: 'Q&A Answers', icon: HelpCircle, color: 'bg-blue-600' }
   ];
 
   const handleActionClick = (actionId) => {
     if (actionId === 'qa') {
-      navigate('/lawyer/qa-answers');
+      navigate('/lawyer-dashboard?tab=qa');
     } else if (actionId === 'message') {
       navigate('/lawyer-dashboard?tab=messages');
     } else if (actionId === 'reports') {
