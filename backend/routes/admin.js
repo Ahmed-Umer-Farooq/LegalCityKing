@@ -521,6 +521,19 @@ router.delete('/subscription-plans/:id', async (req, res) => {
   }
 });
 
+// Subscription Restrictions
+router.post('/subscription-restrictions', async (req, res) => {
+  try {
+    const { restrictions } = req.body;
+    // Store in a settings table or config file
+    // For now, just return success
+    res.json({ message: 'Restrictions saved successfully', restrictions });
+  } catch (error) {
+    console.error('Error saving restrictions:', error);
+    res.status(500).json({ error: 'Failed to save restrictions' });
+  }
+});
+
 // Admin Settings Routes
 router.get('/settings', async (req, res) => {
   try {

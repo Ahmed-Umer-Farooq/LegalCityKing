@@ -94,7 +94,7 @@ const getVerificationStatus = async (req, res) => {
 const getPendingVerifications = async (req, res) => {
   try {
     const pending = await db('lawyers')
-      .select('id', 'name', 'email', 'verification_status', 'verification_submitted_at', 'verification_documents')
+      .select('id', 'name', 'email', 'verification_status', 'verification_submitted_at', 'verification_documents', 'feature_restrictions')
       .where('verification_status', 'submitted')
       .orderBy('verification_submitted_at', 'asc');
 
@@ -117,10 +117,23 @@ const getPendingVerifications = async (req, res) => {
   }
 };
 
+const getAllLawyers = async (req, res) => {
+  try {
+    const lawyers = await db('lawyers')
+      .select('id', 'name', 'email', 'verification_status', 'is_verified', 'feature_restrictions', 'verification_notes')
+      .orderBy('name', 'asc');
+
+    res.json(lawyers);
+  } catch (error) {
+    console.error('Get all lawyers error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const approveVerification = async (req, res) => {
   try {
     const { lawyerId } = req.params;
-    const { notes } = req.body;
+    const { notes, restrictions } = req.body;
     const adminId = req.user.id;
 
     await db('lawyers')
@@ -130,7 +143,8 @@ const approveVerification = async (req, res) => {
         is_verified: true,
         verification_notes: notes,
         verification_approved_at: new Date(),
-        verified_by: adminId
+        verified_by: adminId,
+        feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
       });
 
     res.json({ message: 'Lawyer verification approved' });
@@ -160,11 +174,31 @@ const rejectVerification = async (req, res) => {
   }
 };
 
+const updateRestrictions = async (req, res) => {
+  try {
+    const { lawyerId } = req.params;
+    const { restrictions } = req.body;
+
+    await db('lawyers')
+      .where('id', lawyerId)
+      .update({
+        feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
+      });
+
+    res.json({ message: 'Restrictions updated successfully' });
+  } catch (error) {
+    console.error('Update restrictions error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   submitVerification,
   getVerificationStatus,
   getPendingVerifications,
+  getAllLawyers,
   approveVerification,
   rejectVerification,
+  updateRestrictions,
   upload
 };
