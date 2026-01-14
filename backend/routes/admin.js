@@ -236,40 +236,6 @@ router.get('/call-history', async (req, res) => {
   }
 });
 
-// Platform Reviews Management
-router.get('/platform-reviews', async (req, res) => {
-  try {
-    const reviews = await db('platform_reviews')
-      .leftJoin('lawyers', 'platform_reviews.lawyer_id', 'lawyers.id')
-      .select(
-        'platform_reviews.*',
-        'lawyers.name as lawyer_name'
-      )
-      .orderBy('platform_reviews.created_at', 'desc');
-
-    res.json({ reviews });
-  } catch (error) {
-    console.error('Error fetching platform reviews:', error);
-    res.status(500).json({ error: 'Failed to fetch platform reviews' });
-  }
-});
-
-router.put('/platform-reviews/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { is_approved, is_featured } = req.body;
-
-    await db('platform_reviews')
-      .where({ id })
-      .update({ is_approved, is_featured });
-
-    res.json({ message: 'Review status updated successfully' });
-  } catch (error) {
-    console.error('Error updating review status:', error);
-    res.status(500).json({ error: 'Failed to update review status' });
-  }
-});
-
 // Lawyer Reviews Management
 router.get('/reviews', getAllReviews);
 router.get('/reviews/stats', getReviewStats);

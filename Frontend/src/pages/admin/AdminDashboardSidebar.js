@@ -217,15 +217,6 @@ const AdminDashboardSidebar = () => {
               <span>Document Management</span>
             </button>
           </div>
-
-          {/* External Links */}
-          <div className="mb-4 pt-2 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">External</p>
-            <button onClick={() => navigate('/admin/platform-reviews')} className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-              <Eye className="w-4 h-4" />
-              <span>Platform Reviews</span>
-            </button>
-          </div>
         </nav>
 
 
