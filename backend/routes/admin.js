@@ -386,15 +386,24 @@ router.get('/transaction-stats', async (req, res) => {
 // Subscription Stats Route
 router.get('/subscription-stats', async (req, res) => {
   try {
-    const [totalSubs, activeSubs, monthlyRevenue] = await Promise.all([
+    const [totalSubs, activeSubs, tierCounts] = await Promise.all([
       db('lawyers').count('id as count').first(),
       db('lawyers').where('subscription_status', 'active').count('id as count').first(),
-      db('payments').where('status', 'completed')
-        .where('created_at', '>=', db.raw('DATE_SUB(NOW(), INTERVAL 30 DAY)'))
-        .sum('amount as total').first()
+      db('lawyers')
+        .select('subscription_tier')
+        .count('id as count')
+        .where('subscription_status', 'active')
+        .groupBy('subscription_tier')
     ]);
 
-    // Calculate churn rate (simplified)
+    // Calculate monthly revenue based on tier pricing
+    const tierPricing = { 'basic': 29.99, 'professional': 49.99, 'premium': 99.99 };
+    let monthlyRevenue = 0;
+    tierCounts.forEach(tier => {
+      const price = tierPricing[tier.subscription_tier?.toLowerCase()] || 0;
+      monthlyRevenue += price * tier.count;
+    });
+
     const churnRate = totalSubs.count > 0 
       ? Math.round(((totalSubs.count - activeSubs.count) / totalSubs.count) * 100)
       : 0;
@@ -403,7 +412,7 @@ router.get('/subscription-stats', async (req, res) => {
       stats: {
         totalSubscriptions: totalSubs.count || 0,
         activeSubscriptions: activeSubs.count || 0,
-        monthlyRevenue: parseFloat(monthlyRevenue.total) || 0,
+        monthlyRevenue: monthlyRevenue,
         churnRate
       }
     });
@@ -417,51 +426,98 @@ router.get('/subscription-stats', async (req, res) => {
 router.get('/subscription-plans', async (req, res) => {
   try {
     const plans = await db('subscription_plans')
-      .leftJoin(
-        db('lawyers').select('subscription_plan_id').count('id as active_users').groupBy('subscription_plan_id').as('plan_users'),
-        'subscription_plans.id', 'plan_users.subscription_plan_id'
-      )
-      .select(
-        'subscription_plans.*',
-        db.raw('COALESCE(plan_users.active_users, 0) as active_users')
-      )
-      .orderBy('subscription_plans.price');
+      .select('*')
+      .where('active', 1)
+      .orderBy('price');
 
-    res.json({ plans });
+    const planCounts = await db('lawyers')
+      .select('subscription_tier')
+      .count('id as active_users')
+      .where('subscription_status', 'active')
+      .groupBy('subscription_tier');
+
+    const planCountMap = {};
+    planCounts.forEach(pc => {
+      planCountMap[pc.subscription_tier?.toLowerCase()] = pc.active_users;
+    });
+
+    const plansWithCounts = plans.map(plan => {
+      const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
+      return {
+        id: plan.id,
+        name: plan.name,
+        price: parseFloat(plan.price),
+        billing_cycle: plan.billing_cycle || plan.billing_period,
+        features: Array.isArray(features) ? features.join(', ') : features,
+        is_active: plan.active === 1,
+        active_users: planCountMap[plan.name?.toLowerCase()] || 0,
+        stripe_price_id: plan.stripe_price_id
+      };
+    });
+
+    res.json({ plans: plansWithCounts });
   } catch (error) {
     console.error('Error fetching subscription plans:', error);
-    // Return mock data if table doesn't exist
-    res.json({
-      plans: [
-        {
-          id: 1,
-          name: 'Basic',
-          price: 29.99,
-          billing_cycle: 'month',
-          features: 'Basic case management, Document storage, Email support',
-          is_active: true,
-          active_users: 45
-        },
-        {
-          id: 2,
-          name: 'Professional',
-          price: 79.99,
-          billing_cycle: 'month',
-          features: 'Advanced case management, Unlimited storage, Priority support, Analytics',
-          is_active: true,
-          active_users: 23
-        },
-        {
-          id: 3,
-          name: 'Premium',
-          price: 149.99,
-          billing_cycle: 'month',
-          features: 'Enterprise features, Custom integrations, Dedicated support, White-label',
-          is_active: true,
-          active_users: 12
-        }
-      ]
+    res.status(500).json({ error: 'Failed to fetch subscription plans' });
+  }
+});
+
+// Create Subscription Plan
+router.post('/subscription-plans', async (req, res) => {
+  try {
+    const { name, price, billing_cycle, features, stripe_price_id } = req.body;
+    
+    const [id] = await db('subscription_plans').insert({
+      name,
+      price,
+      billing_cycle,
+      billing_period: billing_cycle,
+      features: JSON.stringify(features),
+      stripe_price_id,
+      active: 1,
+      created_at: new Date(),
+      updated_at: new Date()
     });
+
+    res.json({ message: 'Plan created successfully', id });
+  } catch (error) {
+    console.error('Error creating plan:', error);
+    res.status(500).json({ error: 'Failed to create plan' });
+  }
+});
+
+// Update Subscription Plan
+router.put('/subscription-plans/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, billing_cycle, features, active } = req.body;
+    
+    await db('subscription_plans').where('id', id).update({
+      name,
+      price,
+      billing_cycle,
+      billing_period: billing_cycle,
+      features: JSON.stringify(features),
+      active: active ? 1 : 0,
+      updated_at: new Date()
+    });
+
+    res.json({ message: 'Plan updated successfully' });
+  } catch (error) {
+    console.error('Error updating plan:', error);
+    res.status(500).json({ error: 'Failed to update plan' });
+  }
+});
+
+// Delete Subscription Plan
+router.delete('/subscription-plans/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db('subscription_plans').where('id', id).update({ active: 0 });
+    res.json({ message: 'Plan deactivated successfully' });
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    res.status(500).json({ error: 'Failed to delete plan' });
   }
 });
 

@@ -17,6 +17,15 @@ const SubscriptionManagement = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('subscriptions');
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    price: '',
+    billing_cycle: 'monthly',
+    features: '',
+    stripe_price_id: ''
+  });
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
@@ -78,6 +87,64 @@ const SubscriptionManagement = () => {
     } catch (error) {
       console.error('Error fetching subscription stats:', error);
     }
+  };
+
+  const handleCreatePlan = async () => {
+    try {
+      const featuresArray = planForm.features.split('\n').filter(f => f.trim());
+      await api.post('/admin/subscription-plans', {
+        ...planForm,
+        features: featuresArray
+      });
+      showToast.success('Plan created successfully');
+      setShowPlanModal(false);
+      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+      fetchPlans();
+    } catch (error) {
+      showToast.error('Failed to create plan');
+    }
+  };
+
+  const handleUpdatePlan = async () => {
+    try {
+      const featuresArray = planForm.features.split('\n').filter(f => f.trim());
+      await api.put(`/admin/subscription-plans/${editingPlan.id}`, {
+        ...planForm,
+        features: featuresArray,
+        active: true
+      });
+      showToast.success('Plan updated successfully');
+      setShowPlanModal(false);
+      setEditingPlan(null);
+      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+      fetchPlans();
+    } catch (error) {
+      showToast.error('Failed to update plan');
+    }
+  };
+
+  const handleDeletePlan = async (planId) => {
+    if (window.confirm('Are you sure you want to deactivate this plan?')) {
+      try {
+        await api.delete(`/admin/subscription-plans/${planId}`);
+        showToast.success('Plan deactivated successfully');
+        fetchPlans();
+      } catch (error) {
+        showToast.error('Failed to delete plan');
+      }
+    }
+  };
+
+  const openEditModal = (plan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      price: plan.price,
+      billing_cycle: plan.billing_cycle,
+      features: plan.features.replace(/, /g, '\n'),
+      stripe_price_id: plan.stripe_price_id || ''
+    });
+    setShowPlanModal(true);
   };
 
   const formatCurrency = (amount) => {
@@ -298,26 +365,24 @@ const SubscriptionManagement = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                          {formatCurrency(subscription.amount)}
+                          {subscription.amount > 0 ? formatCurrency(subscription.amount) : 'Free'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(subscription.start_date).toLocaleDateString()}
+                          {subscription.start_date ? new Date(subscription.start_date).toLocaleDateString() : 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {subscription.next_billing_date ? new Date(subscription.next_billing_date).toLocaleDateString() : 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => {
-                                showToast.info(`Subscription Details:\nUser: ${subscription.user_name}\nPlan: ${subscription.plan_name}\nStatus: ${subscription.status}`);
-                              }}
-                              className="p-1 text-blue-600 hover:text-blue-800"
-                              title="View Details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              showToast.info(`Subscription Details:\nUser: ${subscription.user_name}\nPlan: ${subscription.plan_name}\nStatus: ${subscription.status}`);
+                            }}
+                            className="p-1 text-blue-600 hover:text-blue-800"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -364,13 +429,25 @@ const SubscriptionManagement = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Subscription Plans</h3>
-                <button
-                  onClick={fetchPlans}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingPlan(null);
+                      setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+                      setShowPlanModal(true);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+                  >
+                    + Add Plan
+                  </button>
+                  <button
+                    onClick={fetchPlans}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -393,37 +470,23 @@ const SubscriptionManagement = () => {
                       
                       <div className="space-y-3 mb-6">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Features:</span>
-                          <span className="font-medium">{plan.features?.split(',').length || 0} included</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Active Users:</span>
                           <span className="font-medium">{plan.active_users || 0}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Status:</span>
-                          <span className={`px-2 py-1 text-xs rounded-full ${plan.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {plan.is_active ? 'Active' : 'Inactive'}
-                          </span>
                         </div>
                       </div>
 
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => {
-                            showToast.info(`Plan: ${plan.name}\nPrice: ${formatCurrency(plan.price)}\nFeatures: ${plan.features || 'None listed'}`);
-                          }}
+                          onClick={() => openEditModal(plan)}
                           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
                         >
-                          View Details
+                          Edit
                         </button>
                         <button
-                          onClick={() => {
-                            showToast.success('Plan editing feature coming soon');
-                          }}
-                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-sm"
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-all text-sm"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -434,6 +497,87 @@ const SubscriptionManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Plan Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">{editingPlan ? 'Edit Plan' : 'Create Plan'}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Plan Name</label>
+                <input
+                  type="text"
+                  value={planForm.name}
+                  onChange={(e) => setPlanForm({...planForm, name: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Professional"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={planForm.price}
+                  onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="49.99"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Billing Cycle</label>
+                <select
+                  value={planForm.billing_cycle}
+                  onChange={(e) => setPlanForm({...planForm, billing_cycle: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Stripe Price ID</label>
+                <input
+                  type="text"
+                  value={planForm.stripe_price_id}
+                  onChange={(e) => setPlanForm({...planForm, stripe_price_id: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="price_xxxxx"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Features (one per line)</label>
+                <textarea
+                  value={planForm.features}
+                  onChange={(e) => setPlanForm({...planForm, features: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  rows="4"
+                  placeholder="Feature 1\nFeature 2\nFeature 3"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={editingPlan ? handleUpdatePlan : handleCreatePlan}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                {editingPlan ? 'Update' : 'Create'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowPlanModal(false);
+                  setEditingPlan(null);
+                  setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: '', stripe_price_id: '' });
+                }}
+                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

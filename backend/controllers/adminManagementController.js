@@ -64,55 +64,63 @@ const getDocumentManagement = async (req, res) => {
 // Subscription and billing management
 const getSubscriptionManagement = async (req, res) => {
   try {
-    // Subscription overview
-    const [subscriptionStats, revenueByTier, churnAnalysis] = await Promise.all([
-      db('lawyers')
-        .select('subscription_tier', 'subscription_status')
-        .count('id as count')
-        .groupBy('subscription_tier', 'subscription_status'),
-      
-      db('lawyers')
-        .leftJoin('invoices', 'lawyers.id', 'invoices.lawyer_id')
-        .select('lawyers.subscription_tier')
-        .sum('invoices.amount as total_revenue')
-        .count('invoices.id as invoice_count')
-        .where('invoices.status', 'paid')
-        .groupBy('lawyers.subscription_tier'),
-      
-      db('lawyers')
-        .select(
-          db.raw('DATE_FORMAT(subscription_cancelled_at, "%Y-%m") as month'),
-          db.raw('COUNT(*) as churned_count')
-        )
-        .where('subscription_status', 'cancelled')
-        .whereNotNull('subscription_cancelled_at')
-        .groupBy('month')
-        .orderBy('month', 'desc')
-        .limit(12)
-    ]);
+    const { page = 1, limit = 20, search = '', status = 'all' } = req.query;
+    const offset = (page - 1) * limit;
 
-    // Upcoming renewals and expirations
-    const upcomingRenewals = await db('lawyers')
-      .select('id', 'name', 'email', 'subscription_tier', 'subscription_expires_at')
-      .where('subscription_status', 'active')
-      .where('subscription_expires_at', '<=', db.raw('DATE_ADD(NOW(), INTERVAL 30 DAY)'))
-      .orderBy('subscription_expires_at', 'asc')
-      .limit(20);
+    const tierPricing = {
+      'basic': { price: 0, billing_cycle: 'free' },
+      'free': { price: 0, billing_cycle: 'free' },
+      'professional': { price: 49.99, billing_cycle: 'month' },
+      'premium': { price: 99.99, billing_cycle: 'month' }
+    };
 
-    // Payment failures and issues
-    const paymentIssues = await db('invoices')
-      .leftJoin('lawyers', 'invoices.lawyer_id', 'lawyers.id')
-      .select('invoices.*', 'lawyers.name as lawyer_name', 'lawyers.email')
-      .whereIn('invoices.status', ['failed', 'overdue'])
-      .orderBy('invoices.due_date', 'asc')
-      .limit(20);
+    let query = db('lawyers')
+      .select(
+        'lawyers.id',
+        'lawyers.name as user_name',
+        'lawyers.email as user_email',
+        'lawyers.subscription_tier as plan_name',
+        'lawyers.subscription_status as status',
+        'lawyers.subscription_created_at as start_date',
+        'lawyers.subscription_expires_at as next_billing_date'
+      );
+
+    if (search) {
+      query = query.where(function() {
+        this.where('lawyers.name', 'like', `%${search}%`)
+            .orWhere('lawyers.email', 'like', `%${search}%`)
+            .orWhere('lawyers.subscription_tier', 'like', `%${search}%`);
+      });
+    }
+
+    if (status !== 'all') {
+      query = query.where('lawyers.subscription_status', status);
+    }
+
+    const total = await query.clone().count('lawyers.id as count').first();
+    const lawyers = await query
+      .orderBy('lawyers.subscription_created_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    const subscriptions = lawyers.map(lawyer => {
+      const tier = lawyer.plan_name?.toLowerCase() || 'free';
+      const pricing = tierPricing[tier] || tierPricing['free'];
+      return {
+        ...lawyer,
+        amount: pricing.price,
+        billing_cycle: pricing.billing_cycle
+      };
+    });
 
     res.json({
-      subscriptionStats,
-      revenueByTier,
-      churnAnalysis,
-      upcomingRenewals,
-      paymentIssues
+      subscriptions,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total.count,
+        totalPages: Math.ceil(total.count / limit)
+      }
     });
   } catch (error) {
     console.error('Error fetching subscription management:', error);
