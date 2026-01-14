@@ -117,6 +117,18 @@ export default function ProfileManagement() {
       const response = await api.get('/lawyer/profile');
       const data = response.data;
       
+      // If no data from API, try localStorage
+      if (!data || !data.id) {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (storedUser && storedUser.id) {
+          setProfileData({
+            ...profileData,
+            ...storedUser
+          });
+          return;
+        }
+      }
+      
       setProfileData({
         ...profileData,
         ...data,
@@ -138,6 +150,14 @@ export default function ProfileManagement() {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      // Fallback to localStorage
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (storedUser && storedUser.id) {
+        setProfileData({
+          ...profileData,
+          ...storedUser
+        });
+      }
     }
   };
 
