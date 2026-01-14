@@ -62,19 +62,24 @@ const getDashboardStats = async (req, res) => {
       .groupBy('type');
 
     // Get monthly revenue data for chart (last 12 months)
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1);
+    const monthlyRevenueQuery = await db('invoices')
+      .select(db.raw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(amount) as total'))
+      .where({ lawyer_id: lawyerId, status: 'paid' })
+      .whereBetween('created_at', [startDate, currentDate])
+      .groupBy(db.raw('YEAR(created_at), MONTH(created_at)'))
+      .orderBy(db.raw('YEAR(created_at), MONTH(created_at)'));
+
     const monthlyRevenueData = [];
     for (let i = 11; i >= 0; i--) {
       const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
-      
-      const monthRevenue = await db('invoices')
-        .where({ lawyer_id: lawyerId, status: 'paid' })
-        .whereBetween('created_at', [monthStart, monthEnd])
-        .sum('amount as total').first();
+      const monthData = monthlyRevenueQuery.find(item => 
+        item.year === monthStart.getFullYear() && item.month === monthStart.getMonth() + 1
+      );
       
       monthlyRevenueData.push({
         month: monthStart.toLocaleString('default', { month: 'short' }),
-        revenue: parseFloat(monthRevenue.total) || 0
+        revenue: parseFloat(monthData?.total) || 0
       });
     }
 
@@ -169,9 +174,10 @@ const getClients = async (req, res) => {
       .limit(3);
 
     if (search) {
+      const searchTerm = `%${search}%`;
       query = query.where(function() {
-        this.where('users.name', 'like', `%${search}%`)
-            .orWhere('users.email', 'like', `%${search}%`);
+        this.whereRaw('users.name LIKE ?', [searchTerm])
+            .orWhereRaw('users.email LIKE ?', [searchTerm]);
       });
     }
 
