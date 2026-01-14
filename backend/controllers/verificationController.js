@@ -27,9 +27,29 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    // Allowed MIME types
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'application/pdf'
+    ];
+    
+    // Allowed extensions
+    const allowedExts = /\.(jpeg|jpg|png|pdf)$/i;
+    
+    const extname = allowedExts.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedMimes.includes(file.mimetype);
+    
+    // Check for null bytes (directory traversal attempt)
+    if (file.originalname.includes('\0')) {
+      return cb(new Error('Invalid filename'));
+    }
+    
+    // Check for path traversal patterns
+    if (file.originalname.includes('..') || file.originalname.includes('/') || file.originalname.includes('\\')) {
+      return cb(new Error('Invalid filename'));
+    }
     
     if (mimetype && extname) {
       return cb(null, true);
@@ -121,10 +141,22 @@ const getPendingVerifications = async (req, res) => {
 const getAllLawyers = async (req, res) => {
   try {
     const lawyers = await db('lawyers')
-      .select('id', 'name', 'email', 'verification_status', 'is_verified', 'feature_restrictions', 'verification_notes')
+      .select('id', 'name', 'email', 'verification_status', 'is_verified', 'feature_restrictions', 'verification_notes', 'verification_documents')
       .orderBy('name', 'asc');
 
-    res.json(lawyers);
+    // Parse documents for each lawyer
+    const parsedLawyers = lawyers.map(lawyer => {
+      if (lawyer.verification_documents) {
+        try {
+          lawyer.verification_documents = JSON.parse(lawyer.verification_documents);
+        } catch (e) {
+          lawyer.verification_documents = [];
+        }
+      }
+      return lawyer;
+    });
+
+    res.json(parsedLawyers);
   } catch (error) {
     console.error('Get all lawyers error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -244,6 +276,71 @@ const updateUserRestrictions = async (req, res) => {
   }
 };
 
+const getVerificationDocument = async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    console.log('Document request - User:', req.user);
+    console.log('Requested filename:', filename);
+    
+    // Verify admin access
+    if (!req.user) {
+      console.log('No user in request');
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    // Check if user is admin
+    const isAdmin = req.user.is_admin === 1 || req.user.is_admin === true || req.user.type === 'admin';
+    if (!isAdmin) {
+      console.log('User is not admin:', req.user);
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    // Sanitize filename - prevent directory traversal
+    const sanitizedFilename = path.basename(filename);
+    
+    // Additional security checks
+    if (sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
+      return res.status(400).json({ message: 'Invalid filename' });
+    }
+    
+    // Verify file extension
+    const ext = path.extname(sanitizedFilename).toLowerCase();
+    const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png'];
+    if (!allowedExts.includes(ext)) {
+      return res.status(400).json({ message: 'Invalid file type' });
+    }
+
+    const filePath = path.join(__dirname, '../uploads/verification/', sanitizedFilename);
+    console.log('File path:', filePath);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.log('File not found at path:', filePath);
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    // Set appropriate content type and security headers
+    const contentTypes = {
+      '.pdf': 'application/pdf',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png'
+    };
+
+    res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${sanitizedFilename}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    
+    console.log('Sending file:', filePath);
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Get verification document error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   submitVerification,
   getVerificationStatus,
@@ -254,5 +351,6 @@ module.exports = {
   rejectVerification,
   updateRestrictions,
   updateUserRestrictions,
+  getVerificationDocument,
   upload
 };

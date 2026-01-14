@@ -365,6 +365,43 @@ export default function VerificationManagement() {
               <p><strong>Verified:</strong> {selectedLawyer.is_verified ? 'Yes' : 'No'}</p>
             </div>
 
+            {selectedLawyer.verification_documents && selectedLawyer.verification_documents.length > 0 && (
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Submitted Documents
+                </h4>
+                <div className="space-y-2">
+                  {selectedLawyer.verification_documents.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                      <span className="text-sm text-gray-700 truncate flex-1">{doc}</span>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(`http://localhost:5001/api/verification/document/${doc}`, {
+                              headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (!response.ok) throw new Error('Failed to load document');
+                            const blob = await response.blob();
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                          } catch (error) {
+                            console.error('Error viewing document:', error);
+                            showToast.error('Failed to load document');
+                          }
+                        }}
+                        className="ml-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 flex items-center gap-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                        View
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Admin Notes:</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full p-2 border rounded-lg" rows="3" />

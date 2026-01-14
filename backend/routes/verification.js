@@ -10,6 +10,7 @@ const {
   rejectVerification,
   updateRestrictions,
   updateUserRestrictions,
+  getVerificationDocument,
   upload
 } = require('../controllers/verificationController');
 
@@ -38,6 +39,7 @@ router.get('/status', authenticate, getVerificationStatus);
 router.get('/pending', authenticate, getPendingVerifications);
 router.get('/all-lawyers', authenticate, getAllLawyers);
 router.get('/all-users', authenticate, getAllUsers);
+router.get('/document/:filename', authenticate, getVerificationDocument);
 router.post('/approve/:lawyerId', authenticate, approveVerification);
 router.post('/reject/:lawyerId', authenticate, rejectVerification);
 router.post('/update-restrictions/:lawyerId', authenticate, updateRestrictions);

@@ -85,9 +85,18 @@ app.get('/api/csrf-token', (req, res) => {
   res.json({ csrfToken: req.session.csrfToken });
 });
 
-// Static file serving for uploads
+// Static file serving for uploads with security
 const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve general uploads (blogs, profiles, etc.)
+app.use('/uploads', (req, res, next) => {
+  // Block direct access to verification folder via general uploads route
+  if (req.path.startsWith('/verification/')) {
+    return res.status(403).json({ message: 'Access denied. Use API endpoint for verification documents.' });
+  }
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
+
 console.log('📁 Serving uploads from:', path.join(__dirname, 'uploads'));
 
 // Routes
