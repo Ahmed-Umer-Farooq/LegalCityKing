@@ -128,10 +128,18 @@ export default function LawyerDashboard() {
     const handleOpenEventModal = () => {
       setShowEventModal(true);
     };
+    
+    // Listen for verification modal open requests
+    const handleOpenVerificationModal = () => {
+      setShowVerificationModal(true);
+    };
+    
     window.addEventListener('openEventModal', handleOpenEventModal);
+    window.addEventListener('openVerificationModal', handleOpenVerificationModal);
     
     return () => {
       window.removeEventListener('openEventModal', handleOpenEventModal);
+      window.removeEventListener('openVerificationModal', handleOpenVerificationModal);
     };
   }, []);
 
