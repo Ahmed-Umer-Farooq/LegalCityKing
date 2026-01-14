@@ -5,9 +5,11 @@ const {
   getVerificationStatus,
   getPendingVerifications,
   getAllLawyers,
+  getAllUsers,
   approveVerification,
   rejectVerification,
   updateRestrictions,
+  updateUserRestrictions,
   upload
 } = require('../controllers/verificationController');
 
@@ -35,8 +37,10 @@ router.get('/status', authenticate, getVerificationStatus);
 // Admin routes
 router.get('/pending', authenticate, getPendingVerifications);
 router.get('/all-lawyers', authenticate, getAllLawyers);
+router.get('/all-users', authenticate, getAllUsers);
 router.post('/approve/:lawyerId', authenticate, approveVerification);
 router.post('/reject/:lawyerId', authenticate, rejectVerification);
 router.post('/update-restrictions/:lawyerId', authenticate, updateRestrictions);
+router.post('/update-user-restrictions/:userId', authenticate, updateUserRestrictions);
 
 module.exports = router;

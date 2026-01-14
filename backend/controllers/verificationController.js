@@ -130,6 +130,20 @@ const getAllLawyers = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await db('users')
+      .select('id', 'name', 'first_name', 'last_name', 'email', 'feature_restrictions')
+      .where('role', 'user')
+      .orderBy('name', 'asc');
+
+    res.json(users);
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const approveVerification = async (req, res) => {
   try {
     const { lawyerId } = req.params;
@@ -192,13 +206,33 @@ const updateRestrictions = async (req, res) => {
   }
 };
 
+const updateUserRestrictions = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { restrictions } = req.body;
+
+    await db('users')
+      .where('id', userId)
+      .update({
+        feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
+      });
+
+    res.json({ message: 'User restrictions updated successfully' });
+  } catch (error) {
+    console.error('Update user restrictions error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   submitVerification,
   getVerificationStatus,
   getPendingVerifications,
   getAllLawyers,
+  getAllUsers,
   approveVerification,
   rejectVerification,
   updateRestrictions,
+  updateUserRestrictions,
   upload
 };

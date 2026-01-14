@@ -6,8 +6,10 @@ import { showToast } from '../../utils/toastUtils';
 export default function VerificationManagement() {
   const [pendingVerifications, setPendingVerifications] = useState([]);
   const [allLawyers, setAllLawyers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLawyer, setSelectedLawyer] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [notes, setNotes] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [restrictions, setRestrictions] = useState({
@@ -15,12 +17,19 @@ export default function VerificationManagement() {
     payment_links: false, quick_actions: false, payment_records: false,
     calendar: false, contacts: false, messages: false
   });
+  const [userRestrictions, setUserRestrictions] = useState({
+    dashboard: false, calendar: false, cases: false, tasks: false, forms: false,
+    messages: false, qa: false, blog: false, directory: false, refer: false,
+    accounting: false, social_media: false
+  });
 
   useEffect(() => {
     if (activeTab === 'pending') {
       fetchPendingVerifications();
-    } else {
+    } else if (activeTab === 'all') {
       fetchAllLawyers();
+    } else if (activeTab === 'users') {
+      fetchAllUsers();
     }
   }, [activeTab]);
 
@@ -42,6 +51,19 @@ export default function VerificationManagement() {
       setAllLawyers(response.data);
     } catch (error) {
       console.error('Error fetching lawyers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/verification/all-users');
+      setAllUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setAllUsers([]);
     } finally {
       setLoading(false);
     }
@@ -86,13 +108,19 @@ export default function VerificationManagement() {
     try {
       await api.post(`/verification/update-restrictions/${lawyerId}`, { restrictions });
       showToast.success('Restrictions updated successfully');
-      if (activeTab === 'pending') {
-        fetchPendingVerifications();
-      } else {
-        fetchAllLawyers();
-      }
+      fetchAllLawyers();
     } catch (error) {
       showToast.error('Failed to update restrictions');
+    }
+  };
+
+  const updateUserRestrictions = async (userId) => {
+    try {
+      await api.post(`/verification/update-user-restrictions/${userId}`, { restrictions: userRestrictions });
+      showToast.success('User restrictions updated successfully');
+      fetchAllUsers();
+    } catch (error) {
+      showToast.error('Failed to update user restrictions');
     }
   };
 
@@ -100,7 +128,6 @@ export default function VerificationManagement() {
     setSelectedLawyer(lawyer);
     setNotes(lawyer.verification_notes || '');
     
-    // Load existing restrictions
     if (lawyer.feature_restrictions) {
       try {
         const parsed = typeof lawyer.feature_restrictions === 'string' 
@@ -123,13 +150,37 @@ export default function VerificationManagement() {
     }
   };
 
+  const openUserModal = (user) => {
+    setSelectedUser(user);
+    
+    if (user.feature_restrictions) {
+      try {
+        const parsed = typeof user.feature_restrictions === 'string' 
+          ? JSON.parse(user.feature_restrictions) 
+          : user.feature_restrictions;
+        setUserRestrictions(parsed);
+      } catch (e) {
+        setUserRestrictions({
+          dashboard: false, calendar: false, cases: false, tasks: false, forms: false,
+          messages: false, qa: false, blog: false, directory: false, refer: false,
+          accounting: false, social_media: false
+        });
+      }
+    } else {
+      setUserRestrictions({
+        dashboard: false, calendar: false, cases: false, tasks: false, forms: false,
+        messages: false, qa: false, blog: false, directory: false, refer: false,
+        accounting: false, social_media: false
+      });
+    }
+  };
+
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Lawyer Verification & Restrictions Management</h2>
+      <h2 className="text-2xl font-bold mb-6">Verification & Restrictions Management</h2>
       
-      {/* Tabs */}
       <div className="mb-6 flex gap-2">
         <button
           onClick={() => setActiveTab('pending')}
@@ -145,7 +196,15 @@ export default function VerificationManagement() {
             activeTab === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          All Lawyers - Manage Restrictions
+          Lawyers Restrictions
+        </button>
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Users Restrictions
         </button>
       </div>
       
@@ -174,21 +233,19 @@ export default function VerificationManagement() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openLawyerModal(lawyer)}
-                      className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Review
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openLawyerModal(lawyer)}
+                    className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Review
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )
-      ) : (
+      ) : activeTab === 'all' ? (
         <div className="bg-white border rounded-lg overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -246,141 +303,140 @@ export default function VerificationManagement() {
             </tbody>
           </table>
         </div>
+      ) : (
+        <div className="bg-white border rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Restrictions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {allUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-4 py-8 text-center text-gray-500">No users found</td>
+                </tr>
+              ) : (
+                allUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.feature_restrictions ? (
+                        <Lock className="w-5 h-5 text-red-600" />
+                      ) : (
+                        <Unlock className="w-5 h-5 text-green-600" />
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => openUserModal(user)}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
+                      >
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      {/* Review Modal */}
       {selectedLawyer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Manage Lawyer - {selectedLawyer.name}</h3>
-              <button
-                onClick={() => setSelectedLawyer(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ×
-              </button>
+              <button onClick={() => setSelectedLawyer(null)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
 
             <div className="mb-4 p-3 bg-gray-50 rounded">
               <p><strong>Email:</strong> {selectedLawyer.email}</p>
               <p><strong>Status:</strong> <span className="capitalize">{selectedLawyer.verification_status || 'pending'}</span></p>
               <p><strong>Verified:</strong> {selectedLawyer.is_verified ? 'Yes' : 'No'}</p>
-              {selectedLawyer.verification_submitted_at && (
-                <p><strong>Submitted:</strong> {new Date(selectedLawyer.verification_submitted_at).toLocaleString()}</p>
-              )}
             </div>
-
-            {selectedLawyer.verification_documents && (
-              <div className="mb-4">
-                <h4 className="font-medium mb-2">Uploaded Documents:</h4>
-                <div className="space-y-2">
-                  {(() => {
-                    try {
-                      const docs = JSON.parse(selectedLawyer.verification_documents);
-                      return Array.isArray(docs) ? docs.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            <span className="text-sm">{doc}</span>
-                          </div>
-                          <button
-                            onClick={() => window.open(`http://localhost:5001/uploads/verification/${doc}`, '_blank')}
-                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                          >
-                            Open
-                          </button>
-                        </div>
-                      )) : (
-                        <div className="p-2 bg-yellow-50 rounded text-sm text-yellow-700">
-                          Invalid document format
-                        </div>
-                      );
-                    } catch (error) {
-                      // Handle concatenated filenames
-                      const docString = String(selectedLawyer.verification_documents || '');
-                      const docs = docString.match(/verification-[^.]+\.(png|jpg|jpeg|pdf|doc|docx)/gi) || [docString];
-                      
-                      return docs.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            <span className="text-sm">{doc}</span>
-                          </div>
-                          <button
-                            onClick={() => window.open(`http://localhost:5001/uploads/verification/${doc}`, '_blank')}
-                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                          >
-                            Open
-                          </button>
-                        </div>
-                      ));
-                    }
-                  })()}
-                </div>
-              </div>
-            )}
 
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Admin Notes:</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full p-2 border rounded-lg"
-                rows="3"
-                placeholder="Add notes for approval/rejection..."
-              />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full p-2 border rounded-lg" rows="3" />
             </div>
 
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <h4 className="font-medium mb-3 flex items-center gap-2">
                 <Lock className="w-4 h-4" />
-                Feature Restrictions (Lock features until verified)
+                Feature Restrictions
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {Object.keys(restrictions).map(feature => (
                   <label key={feature} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-white rounded">
-                    <input
-                      type="checkbox"
-                      checked={restrictions[feature]}
-                      onChange={(e) => setRestrictions({...restrictions, [feature]: e.target.checked})}
-                      className="w-4 h-4 text-red-600 rounded"
-                    />
+                    <input type="checkbox" checked={restrictions[feature]} onChange={(e) => setRestrictions({...restrictions, [feature]: e.target.checked})} className="w-4 h-4 text-red-600 rounded" />
                     <span className="text-sm capitalize">{feature.replace('_', ' ')}</span>
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">Check to LOCK features (lawyer cannot access)</p>
+              <p className="text-xs text-gray-500 mt-2">Check to LOCK features</p>
             </div>
 
             <div className="flex gap-3">
-              <button
-                onClick={() => handleApprove(selectedLawyer.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Approve & Apply Restrictions
+              <button onClick={() => handleApprove(selectedLawyer.id)} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                <CheckCircle className="w-4 h-4" />Approve
               </button>
-              <button
-                onClick={() => updateRestrictions(selectedLawyer.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                <Unlock className="w-4 h-4" />
-                Update Restrictions Only
+              <button onClick={() => updateRestrictions(selectedLawyer.id)} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <Unlock className="w-4 h-4" />Update
               </button>
-              <button
-                onClick={() => handleReject(selectedLawyer.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                <XCircle className="w-4 h-4" />
-                Reject
+              <button onClick={() => handleReject(selectedLawyer.id)} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                <XCircle className="w-4 h-4" />Reject
               </button>
-              <button
-                onClick={() => setSelectedLawyer(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-              >
-                Cancel
+              <button onClick={() => setSelectedLawyer(null)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Manage User - {selectedUser.first_name} {selectedUser.last_name}</h3>
+              <button onClick={() => setSelectedUser(null)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+
+            <div className="mb-4 p-3 bg-gray-50 rounded">
+              <p><strong>Email:</strong> {selectedUser.email}</p>
+              <p><strong>Name:</strong> {selectedUser.name || `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || 'N/A'}</p>
+              <p><strong>User ID:</strong> {selectedUser.id}</p>
+            </div>
+
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                User Dashboard Restrictions
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.keys(userRestrictions).map(feature => (
+                  <label key={feature} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-white rounded">
+                    <input type="checkbox" checked={userRestrictions[feature]} onChange={(e) => setUserRestrictions({...userRestrictions, [feature]: e.target.checked})} className="w-4 h-4 text-red-600 rounded" />
+                    <span className="text-sm capitalize">{feature.replace('_', ' ')}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Check to LOCK features</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => updateUserRestrictions(selectedUser.id)} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <Unlock className="w-4 h-4" />Update Restrictions
               </button>
+              <button onClick={() => setSelectedUser(null)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancel</button>
             </div>
           </div>
         </div>
