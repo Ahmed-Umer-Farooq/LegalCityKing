@@ -18,6 +18,15 @@ const FormsManagement = React.lazy(() => import('./FormsManagement'));
 const ContactSubmissions = React.lazy(() => import('./ContactSubmissions'));
 const VerificationManagement = React.lazy(() => import('./VerificationManagement'));
 const SecurityMonitor = React.lazy(() => import('../../components/admin/SecurityMonitor'));
+const PaymentManagement = React.lazy(() => import('./PaymentManagement'));
+const SubscriptionManagement = React.lazy(() => import('./SubscriptionManagement'));
+const FinancialAnalytics = React.lazy(() => import('./FinancialAnalytics'));
+const BusinessIntelligence = React.lazy(() => import('./BusinessIntelligence'));
+const SystemMetrics = React.lazy(() => import('./SystemMetrics'));
+const UserBehaviorAnalytics = React.lazy(() => import('./UserBehaviorAnalytics'));
+const PlatformHealth = React.lazy(() => import('./PlatformHealth'));
+const DocumentManagement = React.lazy(() => import('./DocumentManagement'));
+const AdminSettings = React.lazy(() => import('./AdminSettings'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -26,15 +35,22 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ activeTabProp }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(activeTabProp || searchParams.get('tab') || 'dashboard');
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Update activeTab when activeTabProp changes
+  useEffect(() => {
+    if (activeTabProp) {
+      setActiveTab(activeTabProp);
+    }
+  }, [activeTabProp]);
   
   // Dashboard stats
   const [stats, setStats] = useState({
@@ -2100,195 +2116,9 @@ const AdminDashboard = () => {
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg fixed h-full overflow-y-auto">
-          {/* Logo/Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-xs text-gray-500">Legal City</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="p-4 space-y-1">
-            <button
-              onClick={() => handleTabChange('dashboard')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'dashboard'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <TrendingUp className="w-5 h-5" />
-              <span className="text-sm">Dashboard</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('users')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'users'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Users className="w-5 h-5" />
-              <span className="text-sm">Users</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('lawyers')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'lawyers'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Briefcase className="w-5 h-5" />
-              <span className="text-sm">Lawyers</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('blogs')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'blogs'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="w-5 h-5" />
-              <span className="text-sm">Blogs</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('messages')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'messages'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-sm">Messages</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('activity')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'activity'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Activity className="w-5 h-5" />
-              <span className="text-sm">Activity Logs</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('security')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'security'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Shield className="w-5 h-5" />
-              <span className="text-sm">Security Monitor</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('calls')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'calls'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Phone className="w-5 h-5" />
-              <span className="text-sm">Voice Calls</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('qa')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'qa'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <AlertTriangle className="w-5 h-5" />
-              <span className="text-sm">Q&A</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('forms')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'forms'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="w-5 h-5" />
-              <span className="text-sm">Forms</span>
-            </button>
-            <button
-              onClick={() => {
-                handleTabChange('reports');
-                setTimeout(fetchPendingReportsCount, 1000);
-              }}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'reports'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <Flag className="w-5 h-5" />
-                <span className="text-sm">Reports</span>
-              </div>
-              {pendingReportsCount > 0 && (
-                <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {pendingReportsCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => handleTabChange('contact')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'contact'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Mail className="w-5 h-5" />
-              <span className="text-sm">Contact</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('verification')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'verification'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-sm">Verification</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('reviews')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'reviews'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Star className="w-5 h-5" />
-              <span className="text-sm">Reviews</span>
-            </button>
-          </nav>
-
-
-        </aside>
-
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Main Content */}
-        <main className="flex-1 ml-64 overflow-x-hidden">
+        <main className="overflow-x-hidden">
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
             <div className="flex items-center justify-between">
@@ -2366,7 +2196,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </header>
-          <div className="p-8 max-w-[calc(100vw-16rem)] overflow-x-auto">
+          <div className="p-8 max-w-[calc(100vw-2rem)] overflow-x-auto">
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'lawyers' && renderLawyers()}
@@ -2757,6 +2587,51 @@ const AdminDashboard = () => {
               )}
             </div>
           </div>
+        )}
+        {activeTab === 'payments' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PaymentManagement />
+          </Suspense>
+        )}
+        {activeTab === 'subscriptions' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SubscriptionManagement />
+          </Suspense>
+        )}
+        {activeTab === 'financial-analytics' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <FinancialAnalytics />
+          </Suspense>
+        )}
+        {activeTab === 'business-intelligence' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <BusinessIntelligence />
+          </Suspense>
+        )}
+        {activeTab === 'system-metrics' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SystemMetrics />
+          </Suspense>
+        )}
+        {activeTab === 'user-behavior' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <UserBehaviorAnalytics />
+          </Suspense>
+        )}
+        {activeTab === 'platform-health' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PlatformHealth />
+          </Suspense>
+        )}
+        {activeTab === 'documents' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <DocumentManagement />
+          </Suspense>
+        )}
+        {activeTab === 'settings' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <AdminSettings />
+          </Suspense>
         )}
           </div>
         </main>

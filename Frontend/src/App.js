@@ -8,7 +8,7 @@ import { AuthProvider } from './context/AuthContext';
 import LegalCityAuth from './LegalCityAuth';
 import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboardSidebar from './pages/admin/AdminDashboardSidebar';
 import AdminProfile from './pages/admin/AdminProfile';
 import GoogleUserSetup from './pages/auth/GoogleUserSetup';
 import GoogleLawyerSetup from './pages/auth/GoogleLawyerSetup';
@@ -106,7 +106,7 @@ function App() {
         <Route path="/lawyer-dashboard/subscription/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/lawyer/qa-answers" element={<ProtectedRoute><QAAnswers /></ProtectedRoute>} />
         <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
-        <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboardSidebar /></ProtectedRoute>} />
         <Route path="/admin/profile" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
 
         

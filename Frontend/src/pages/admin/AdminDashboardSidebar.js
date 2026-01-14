@@ -1,12 +1,15 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../utils/api';
 import {
   Users, UserCheck, UserX, Briefcase, CheckCircle, 
   XCircle, Trash2, Shield, ShieldOff, RefreshCw,
   TrendingUp, Activity, Clock, Search, ChevronLeft, ChevronRight,
-  FileText, Eye, Edit, MessageCircle, Flag, AlertTriangle, Phone
+  FileText, Eye, Edit, MessageCircle, Flag, AlertTriangle, Phone,
+  DollarSign, CreditCard, BarChart3, Settings, Database, 
+  Calendar, FolderOpen, Mail, Star, HelpCircle, Building,
+  Zap, Globe, Lock, Layers, PieChart, Target, Gauge
 } from 'lucide-react';
 
 // Import the original dashboard component
@@ -15,13 +18,37 @@ import AdminDashboard from './AdminDashboard';
 const AdminDashboardSidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Helper function for navigation button classes
+  const getNavButtonClasses = (tabName) => {
+    return `w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
+      activeTab === tabName 
+        ? 'bg-blue-50 text-blue-700 font-semibold' 
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+    }`;
+  };
 
   useEffect(() => {
     fetchPendingReportsCount();
   }, []);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const fetchPendingReportsCount = async () => {
     try {
@@ -69,64 +96,140 @@ const AdminDashboardSidebar = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <TrendingUp className="w-5 h-5" />
-            <span>Dashboard</span>
-          </button>
-          <button onClick={() => setActiveTab('users')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'users' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Users className="w-5 h-5" />
-            <span>Users</span>
-          </button>
-          <button onClick={() => setActiveTab('lawyers')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'lawyers' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Briefcase className="w-5 h-5" />
-            <span>Lawyers</span>
-          </button>
-          <button onClick={() => setActiveTab('blogs')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'blogs' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <FileText className="w-5 h-5" />
-            <span>Blogs</span>
-          </button>
-          <button onClick={() => setActiveTab('messages')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'messages' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <MessageCircle className="w-5 h-5" />
-            <span>Messages</span>
-          </button>
-          <button onClick={() => setActiveTab('activity')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'activity' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Activity className="w-5 h-5" />
-            <span>Activity Logs</span>
-          </button>
-          <button onClick={() => setActiveTab('security')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'security' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Shield className="w-5 h-5" />
-            <span>Security Monitor</span>
-          </button>
-          <button onClick={() => setActiveTab('calls')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'calls' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Phone className="w-5 h-5" />
-            <span>Voice Calls</span>
-          </button>
-          <button onClick={() => setActiveTab('qa')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'qa' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <AlertTriangle className="w-5 h-5" />
-            <span>Q&A</span>
-          </button>
-          <button onClick={() => setActiveTab('forms')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'forms' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <FileText className="w-5 h-5" />
-            <span>Forms</span>
-          </button>
-          <button onClick={() => { setActiveTab('reports'); setTimeout(fetchPendingReportsCount, 1000); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all relative ${activeTab === 'reports' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <Flag className="w-5 h-5" />
-            <span>Reports</span>
-            {pendingReportsCount > 0 && (
-              <span className="absolute right-4 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {pendingReportsCount}
-              </span>
-            )}
-          </button>
-          <button onClick={() => setActiveTab('contact')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'contact' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
-            <MessageCircle className="w-5 h-5" />
-            <span>Contact Us</span>
-          </button>
-          <button onClick={() => navigate('/admin/platform-reviews')} className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-            <Eye className="w-5 h-5" />
-            <span>Platform Reviews</span>
-          </button>
+        <nav className="p-4 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
+          {/* Core Management */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Core Management</p>
+            <button onClick={() => handleTabChange('dashboard')} className={getNavButtonClasses('dashboard')}>
+              <TrendingUp className="w-4 h-4" />
+              <span>Dashboard</span>
+            </button>
+            <button onClick={() => handleTabChange('users')} className={getNavButtonClasses('users')}>
+              <Users className="w-4 h-4" />
+              <span>Users</span>
+            </button>
+            <button onClick={() => handleTabChange('lawyers')} className={getNavButtonClasses('lawyers')}>
+              <Briefcase className="w-4 h-4" />
+              <span>Lawyers</span>
+            </button>
+            <button onClick={() => handleTabChange('verification')} className={getNavButtonClasses('verification')}>
+              <CheckCircle className="w-4 h-4" />
+              <span>Verification</span>
+            </button>
+          </div>
+
+          {/* Content Management */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Content</p>
+            <button onClick={() => handleTabChange('blogs')} className={getNavButtonClasses('blogs')}>
+              <FileText className="w-4 h-4" />
+              <span>Blogs</span>
+            </button>
+            <button onClick={() => handleTabChange('qa')} className={getNavButtonClasses('qa')}>
+              <HelpCircle className="w-4 h-4" />
+              <span>Q&A</span>
+            </button>
+            <button onClick={() => handleTabChange('forms')} className={getNavButtonClasses('forms')}>
+              <FolderOpen className="w-4 h-4" />
+              <span>Legal Forms</span>
+            </button>
+            <button onClick={() => handleTabChange('reviews')} className={getNavButtonClasses('reviews')}>
+              <Star className="w-4 h-4" />
+              <span>Reviews</span>
+            </button>
+            <button onClick={() => { handleTabChange('reports'); setTimeout(fetchPendingReportsCount, 1000); }} className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all text-sm ${activeTab === 'reports' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+              <div className="flex items-center space-x-3">
+                <Flag className="w-4 h-4" />
+                <span>Reports</span>
+              </div>
+              {pendingReportsCount > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {pendingReportsCount > 9 ? '9+' : pendingReportsCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Communication */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Communication</p>
+            <button onClick={() => handleTabChange('messages')} className={getNavButtonClasses('messages')}>
+              <MessageCircle className="w-4 h-4" />
+              <span>Messages</span>
+            </button>
+            <button onClick={() => handleTabChange('calls')} className={getNavButtonClasses('calls')}>
+              <Phone className="w-4 h-4" />
+              <span>Voice Calls</span>
+            </button>
+            <button onClick={() => handleTabChange('contact')} className={getNavButtonClasses('contact')}>
+              <Mail className="w-4 h-4" />
+              <span>Contact Us</span>
+            </button>
+          </div>
+
+          {/* Financial Management */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Financial</p>
+            <button onClick={() => handleTabChange('payments')} className={getNavButtonClasses('payments')}>
+              <DollarSign className="w-4 h-4" />
+              <span>Payments</span>
+            </button>
+            <button onClick={() => handleTabChange('subscriptions')} className={getNavButtonClasses('subscriptions')}>
+              <CreditCard className="w-4 h-4" />
+              <span>Subscriptions</span>
+            </button>
+            <button onClick={() => handleTabChange('financial-analytics')} className={getNavButtonClasses('financial-analytics')}>
+              <BarChart3 className="w-4 h-4" />
+              <span>Financial Analytics</span>
+            </button>
+          </div>
+
+          {/* Business Intelligence */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Analytics</p>
+            <button onClick={() => handleTabChange('business-intelligence')} className={getNavButtonClasses('business-intelligence')}>
+              <PieChart className="w-4 h-4" />
+              <span>Business Intelligence</span>
+            </button>
+            <button onClick={() => handleTabChange('system-metrics')} className={getNavButtonClasses('system-metrics')}>
+              <Gauge className="w-4 h-4" />
+              <span>System Metrics</span>
+            </button>
+            <button onClick={() => handleTabChange('user-behavior')} className={getNavButtonClasses('user-behavior')}>
+              <Target className="w-4 h-4" />
+              <span>User Behavior</span>
+            </button>
+          </div>
+
+          {/* System Management */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">System</p>
+            <button onClick={() => handleTabChange('activity')} className={getNavButtonClasses('activity')}>
+              <Activity className="w-4 h-4" />
+              <span>Activity Logs</span>
+            </button>
+            <button onClick={() => handleTabChange('security')} className={getNavButtonClasses('security')}>
+              <Shield className="w-4 h-4" />
+              <span>Security Monitor</span>
+            </button>
+            <button onClick={() => handleTabChange('platform-health')} className={getNavButtonClasses('platform-health')}>
+              <Zap className="w-4 h-4" />
+              <span>Platform Health</span>
+            </button>
+            <button onClick={() => handleTabChange('documents')} className={getNavButtonClasses('documents')}>
+              <Database className="w-4 h-4" />
+              <span>Document Management</span>
+            </button>
+          </div>
+
+          {/* External Links */}
+          <div className="mb-4 pt-2 border-t border-gray-200">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">External</p>
+            <button onClick={() => navigate('/admin/platform-reviews')} className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+              <Eye className="w-4 h-4" />
+              <span>Platform Reviews</span>
+            </button>
+          </div>
         </nav>
 
         {/* User Profile */}
@@ -142,9 +245,14 @@ const AdminDashboardSidebar = () => {
               </div>
             </div>
           </div>
-          <button onClick={handleLogout} className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-sm font-medium text-sm">
-            Logout
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => handleTabChange('settings')} className={`flex-1 px-3 py-2 rounded-lg transition-all text-sm ${activeTab === 'settings' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              <Settings className="w-4 h-4 mx-auto" />
+            </button>
+            <button onClick={handleLogout} className="flex-1 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-sm text-sm">
+              Logout
+            </button>
+          </div>
         </div>
       </aside>
 
