@@ -1,5 +1,6 @@
 const fs = require('fs');
 const db = require('../db');
+const rbacService = require('../services/rbacService');
 const multer = require('multer');
 const path = require('path');
 
@@ -150,6 +151,7 @@ const approveVerification = async (req, res) => {
     const { notes, restrictions } = req.body;
     const adminId = req.user.id;
 
+    // Update lawyer verification status and clear feature restrictions
     await db('lawyers')
       .where('id', lawyerId)
       .update({
@@ -160,6 +162,24 @@ const approveVerification = async (req, res) => {
         verified_by: adminId,
         feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
       });
+
+    // Assign verified_lawyer role
+    const verifiedRole = await db('roles').where('name', 'verified_lawyer').first();
+    if (verifiedRole) {
+      const existingRole = await db('user_roles')
+        .where({ user_id: lawyerId, user_type: 'lawyer', role_id: verifiedRole.id })
+        .first();
+      
+      if (!existingRole) {
+        await db('user_roles').insert({
+          user_id: lawyerId,
+          user_type: 'lawyer',
+          role_id: verifiedRole.id
+        });
+      }
+      
+      rbacService.clearUserCache(lawyerId, 'lawyer');
+    }
 
     res.json({ message: 'Lawyer verification approved' });
   } catch (error) {

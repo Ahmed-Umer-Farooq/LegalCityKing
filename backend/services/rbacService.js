@@ -9,7 +9,8 @@ class RBACService {
   async getUserAbilities(userId, userType, context = {}) {
     const cacheKey = `${userId}-${userType}`;
     
-    if (this.cache.has(cacheKey)) {
+    // Skip cache if forceRefresh is true
+    if (!context.forceRefresh && this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey);
     }
 

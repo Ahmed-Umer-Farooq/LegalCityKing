@@ -22,25 +22,29 @@ const authenticate = async (req, res, next) => {
     if (userType === 'lawyer') {
       user = await db('lawyers').where({ id: decoded.id }).first();
       if (!user) {
+        console.log(`Lawyer not found for ID: ${decoded.id}`);
         return res.status(403).json({ error: 'Lawyer account not found' });
       }
     } else if (userType === 'admin') {
       user = await db('users').where({ id: decoded.id, is_admin: 1 }).first();
       if (!user) {
+        console.log(`Admin not found for ID: ${decoded.id}`);
         return res.status(403).json({ error: 'Admin account not found' });
       }
     } else {
       user = await db('users').where({ id: decoded.id, is_admin: 0 }).first();
       if (!user) {
+        console.log(`User not found for ID: ${decoded.id}`);
         return res.status(403).json({ error: 'User account not found' });
       }
     }
 
-    // Get user abilities
+    // Get user abilities with forceRefresh for lawyers to always check latest permissions
     const abilities = await rbacService.getUserAbilities(decoded.id, userType === 'admin' ? 'user' : userType, {
       ip: req.ip,
       time: new Date(),
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
+      forceRefresh: userType === 'lawyer' // Always refresh for lawyers
     });
 
     req.user = {
@@ -54,6 +58,7 @@ const authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired' });
     }
@@ -88,16 +93,22 @@ const requireRole = (roleName) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const userRoles = await rbacService.getUserRoles(req.user.id, req.user.type);
-    const hasRole = userRoles.some(role => role.name === roleName);
+    try {
+      const userRoles = await rbacService.getUserRoles(req.user.id, req.user.type);
+      const hasRole = userRoles.some(role => role.name === roleName);
 
-    if (!hasRole) {
-      return res.status(403).json({ 
-        error: `Access denied: ${roleName} role required` 
-      });
+      if (!hasRole) {
+        console.log(`Role access denied: user ${req.user.id} lacks ${roleName} role`);
+        return res.status(403).json({ 
+          error: `Access denied: ${roleName} role required` 
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Role check error:', error);
+      return res.status(500).json({ error: 'Role verification failed' });
     }
-
-    next();
   };
 };
 
@@ -111,28 +122,48 @@ const requireVerifiedLawyer = async (req, res, next) => {
     return res.status(403).json({ error: 'Lawyer access required' });
   }
 
-  // Check verification status
-  if (!req.user.is_verified && !req.user.lawyer_verified) {
-    return res.status(403).json({ 
-      error: 'Account verification required',
-      code: 'VERIFICATION_REQUIRED'
-    });
-  }
-
-  // Check subscription status
   try {
-    // For lawyers, subscription info is in the lawyers table
+    // Get fresh lawyer data from database
     const lawyer = await db('lawyers')
       .where({ id: req.user.id })
       .first();
     
+    if (!lawyer) {
+      return res.status(404).json({ error: 'Lawyer account not found' });
+    }
+
+    // Check verification status - approved status is what matters
+    const isVerified = lawyer.verification_status === 'approved' || lawyer.is_verified === true;
+    
+    if (!isVerified) {
+      console.log(`Lawyer ${req.user.id} verification check failed:`, {
+        verification_status: lawyer.verification_status,
+        is_verified: lawyer.is_verified
+      });
+      return res.status(403).json({ 
+        error: 'Account verification required',
+        code: 'VERIFICATION_REQUIRED',
+        details: {
+          verification_status: lawyer.verification_status,
+          is_verified: lawyer.is_verified
+        }
+      });
+    }
+
+    // Add subscription info to user object
     req.user.subscription = {
       tier: lawyer.subscription_tier,
       status: lawyer.subscription_status,
       expires_at: lawyer.subscription_expires_at
     };
+    
+    // Update user object with fresh verification status
+    req.user.is_verified = true;
+    req.user.verification_status = lawyer.verification_status;
+    
   } catch (error) {
-    console.error('Subscription check error:', error);
+    console.error('Lawyer verification check error:', error);
+    return res.status(500).json({ error: 'Verification check failed' });
   }
 
   next();
@@ -144,16 +175,22 @@ const requirePaymentAccess = async (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  // Check payment permissions
-  const canAccess = req.user.abilities.can('write', 'payments') || req.user.abilities.can('read', 'payments');
-  
-  if (!canAccess) {
-    return res.status(403).json({ 
-      error: 'Payment access denied'
-    });
-  }
+  try {
+    // Check payment permissions
+    const canAccess = req.user.abilities.can('write', 'payments') || req.user.abilities.can('read', 'payments');
+    
+    if (!canAccess) {
+      console.log(`Payment access denied for user ${req.user.id} (${req.user.type})`);
+      return res.status(403).json({ 
+        error: 'Payment access denied'
+      });
+    }
 
-  next();
+    next();
+  } catch (error) {
+    console.error('Payment access check error:', error);
+    return res.status(500).json({ error: 'Payment access verification failed' });
+  }
 };
 
 // Resource ownership verification
