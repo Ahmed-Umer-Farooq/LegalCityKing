@@ -208,10 +208,6 @@ const AdminDashboardSidebar = () => {
               <Activity className="w-4 h-4" />
               <span>Activity Logs</span>
             </button>
-            <button onClick={() => handleTabChange('security')} className={getNavButtonClasses('security')}>
-              <Shield className="w-4 h-4" />
-              <span>Security Monitor</span>
-            </button>
             <button onClick={() => handleTabChange('platform-health')} className={getNavButtonClasses('platform-health')}>
               <Zap className="w-4 h-4" />
               <span>Platform Health</span>

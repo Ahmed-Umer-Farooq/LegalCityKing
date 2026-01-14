@@ -17,7 +17,6 @@ const QAManagement = React.lazy(() => import('./QAManagement'));
 const FormsManagement = React.lazy(() => import('./FormsManagement'));
 const ContactSubmissions = React.lazy(() => import('./ContactSubmissions'));
 const VerificationManagement = React.lazy(() => import('./VerificationManagement'));
-const SecurityMonitor = React.lazy(() => import('../../components/admin/SecurityMonitor'));
 const PaymentManagement = React.lazy(() => import('./PaymentManagement'));
 const SubscriptionManagement = React.lazy(() => import('./SubscriptionManagement'));
 const FinancialAnalytics = React.lazy(() => import('./FinancialAnalytics'));
@@ -2237,11 +2236,6 @@ const AdminDashboard = ({ activeTabProp }) => {
         {activeTab === 'verification' && (
           <Suspense fallback={<LoadingSpinner />}>
             <VerificationManagement />
-          </Suspense>
-        )}
-        {activeTab === 'security' && (
-          <Suspense fallback={<LoadingSpinner />}>
-            <SecurityMonitor />
           </Suspense>
         )}
         {activeTab === 'reviews' && (
