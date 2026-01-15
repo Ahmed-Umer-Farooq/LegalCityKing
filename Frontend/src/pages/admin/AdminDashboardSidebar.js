@@ -214,7 +214,7 @@ const AdminDashboardSidebar = () => {
             </button>
             <button onClick={() => handleTabChange('documents')} className={getNavButtonClasses('documents')}>
               <Database className="w-4 h-4" />
-              <span>Document Management</span>
+              <span>Documents</span>
             </button>
           </div>
         </nav>

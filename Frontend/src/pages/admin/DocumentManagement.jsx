@@ -42,15 +42,10 @@ const DocumentManagement = () => {
     try {
       const response = await api.get('/admin/document-stats');
       setStats(response.data?.stats || {
-        totalDocuments: 1250,
-        totalSize: 2.4 * 1024 * 1024 * 1024, // 2.4 GB
-        documentTypes: [
-          { type: 'PDF', count: 450, size: 1.2 * 1024 * 1024 * 1024 },
-          { type: 'DOC', count: 320, size: 800 * 1024 * 1024 },
-          { type: 'IMG', count: 280, size: 300 * 1024 * 1024 },
-          { type: 'TXT', count: 200, size: 100 * 1024 * 1024 }
-        ],
-        storageUsage: 65
+        totalDocuments: 0,
+        totalSize: 0,
+        documentTypes: [],
+        storageUsage: 0
       });
     } catch (error) {
       console.error('Error fetching document stats:', error);
@@ -226,20 +221,23 @@ const DocumentManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Owner</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                     Loading documents...
                   </td>
                 </tr>
               ) : documents.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                    No documents found
+                  <td colSpan="5" className="px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <FileText className="w-12 h-12 text-gray-300" />
+                      <p className="text-gray-500">No documents found</p>
+                      <p className="text-sm text-gray-400">Documents are stored in backend/uploads/ directory</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -260,31 +258,6 @@ const DocumentManagement = () => {
                     <td className="px-6 py-4 text-sm text-gray-500">{doc.owner}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {new Date(doc.created).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => showToast.info(`Viewing ${doc.name}`)}
-                          className="p-1 text-blue-600 hover:text-blue-800"
-                          title="View Document"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => showToast.success(`Downloading ${doc.name}`)}
-                          className="p-1 text-green-600 hover:text-green-800"
-                          title="Download"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDocument(doc.id)}
-                          className="p-1 text-red-600 hover:text-red-800"
-                          title="Delete Document"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))

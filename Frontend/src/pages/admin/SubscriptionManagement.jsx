@@ -126,7 +126,8 @@ const SubscriptionManagement = () => {
       setEditingPlan(null);
       setPlanForm({ name: '', price: '', billing_cycle: 'monthly', features: [], stripe_price_id: '', is_free: false });
       setNewFeature('');
-      fetchPlans();
+      await fetchPlans();
+      await fetchSubscriptionStats();
     } catch (error) {
       showToast.error('Failed to update plan');
     }
