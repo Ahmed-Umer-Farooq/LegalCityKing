@@ -7,6 +7,9 @@ const cookieParser = require('cookie-parser');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
 const db = require('./db');
+const socketUserManager = require('./utils/socketUserManager');
+const { startMemoryMonitoring } = require('./utils/memoryMonitor');
+const { startLogRotation } = require('./utils/logRotation');
 
 // Import modern authentication
 const { authenticate, authorize } = require('./middleware/modernAuth');
@@ -47,8 +50,8 @@ const io = socketIo(server, {
 app.use(cookieParser());
 
 // Body parsing with size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 console.log(`🔒 Security Configuration: ${process.env.NODE_ENV === 'production' ? 'ENABLED' : 'DEVELOPMENT MODE'}`);
 
@@ -205,23 +208,7 @@ app.get('/api/admin/lawyers', async (req, res) => {
 // Real-time call tracking
 app.get('/api/admin/active-calls', async (req, res) => {
   try {
-    console.log('Admin requesting active calls. Total active users:', activeUsers.size);
-    
-    // Get currently active calls from memory
-    const activeCalls = Array.from(activeUsers.entries())
-      .filter(([userId, userInfo]) => {
-        console.log(`User ${userId}: inCall=${userInfo.inCall}`);
-        return userInfo.inCall;
-      })
-      .map(([userId, userInfo]) => ({
-        userId,
-        userName: userInfo.userName,
-        userType: userInfo.userType,
-        callStartTime: userInfo.callStartTime,
-        partnerId: userInfo.partnerId,
-        partnerName: userInfo.partnerName
-      }));
-    
+    const activeCalls = activeUsers.getActiveCalls();
     console.log('Active calls found:', activeCalls.length);
     res.json(activeCalls);
   } catch (error) {
@@ -467,8 +454,8 @@ app.use('/api/payment-links', paymentLinksRoutes);
 // Make io available to routes
 app.set('io', io);
 
-// Store active users
-const activeUsers = new Map();
+// Use socketUserManager instead of Map
+const activeUsers = socketUserManager;
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -478,48 +465,16 @@ io.on('connection', (socket) => {
     const userId = typeof data === 'object' ? data.userId : data;
     const userType = typeof data === 'object' ? data.userType : 'user';
     
-    // Verify user exists and get correct type
-    let verifiedUserType = 'user';
-    let userName = 'Unknown';
-    try {
-      // Check if user is a lawyer first
-      const lawyer = await db('lawyers').select('name', 'id').where('id', userId).first();
-      if (lawyer) {
-        verifiedUserType = 'lawyer';
-        userName = lawyer.name;
-      } else {
-        // Check if user exists in users table
-        const user = await db('users').select('name', 'id').where('id', userId).first();
-        if (user) {
-          verifiedUserType = 'user';
-          userName = user.name;
-        } else {
-          console.error(`User ${userId} not found in either table`);
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Error verifying user:', error);
-      return;
-    }
+    await activeUsers.add(userId, socket.id, userType);
+    const userInfo = activeUsers.get(userId);
     
-    // Store user with verified type
-    activeUsers.set(userId, { 
-      socketId: socket.id, 
-      userType: verifiedUserType, 
-      userName,
-      inCall: false,
-      callStartTime: null,
-      partnerId: null,
-      partnerName: null
-    });
-    console.log(`User ${userId} (${verifiedUserType}) connected with socket ${socket.id}`);
+    console.log(`User ${userId} (${userInfo.userType}) connected with socket ${socket.id}`);
     io.emit('user_status', { userId, status: 'online' });
     
     // Send current unread count to user
     try {
       const unreadCount = await db('chat_messages')
-        .where({ receiver_id: userId, receiver_type: verifiedUserType, read_status: 0 })
+        .where({ receiver_id: userId, receiver_type: userInfo.userType, read_status: 0 })
         .count('id as count')
         .first();
       socket.emit('unread_count_update', { count: unreadCount.count });
@@ -768,34 +723,17 @@ io.on('connection', (socket) => {
     const callerInfo = activeUsers.get(data.from);
     
     if (receiverInfo && callerInfo) {
-      // Mark both users as in call
-      const callStartTime = new Date();
-      
-      activeUsers.set(data.to, {
-        ...receiverInfo,
-        inCall: true,
-        callStartTime,
-        partnerId: data.from,
-        partnerName: callerInfo.userName || 'Unknown'
-      });
-      
-      activeUsers.set(data.from, {
-        ...callerInfo,
-        inCall: true,
-        callStartTime,
-        partnerId: data.to,
-        partnerName: receiverInfo.userName || 'Unknown'
-      });
+      activeUsers.updateCallStatus(data.to, true, data.from, callerInfo.userName);
+      activeUsers.updateCallStatus(data.from, true, data.to, receiverInfo.userName);
       
       io.to(receiverInfo.socketId).emit('voice_call_answer', data);
       
       console.log(`📞 Call started between ${callerInfo.userType} (${data.from}) and ${receiverInfo.userType} (${data.to})`);
       
-      // Notify admin panel of new active call
       io.emit('admin_call_update', {
         type: 'call_started',
         users: [data.from, data.to],
-        startTime: callStartTime
+        startTime: Date.now()
       });
     }
   });
@@ -811,35 +749,19 @@ io.on('connection', (socket) => {
     const receiverInfo = activeUsers.get(data.to);
     const callerInfo = activeUsers.get(data.from);
     
-    // Clear call status for both users
     if (receiverInfo) {
-      activeUsers.set(data.to, {
-        ...receiverInfo,
-        inCall: false,
-        callStartTime: null,
-        partnerId: null,
-        partnerName: null
-      });
-      // Only send to the OTHER user, not the one who ended the call
+      activeUsers.updateCallStatus(data.to, false);
       io.to(receiverInfo.socketId).emit('call_ended', data);
     }
     
     if (callerInfo) {
-      activeUsers.set(data.from, {
-        ...callerInfo,
-        inCall: false,
-        callStartTime: null,
-        partnerId: null,
-        partnerName: null
-      });
-      // Don't send call_ended back to the user who initiated end_call
+      activeUsers.updateCallStatus(data.from, false);
     }
     
     const fromUserType = callerInfo?.userType || 'unknown';
     const toUserType = receiverInfo?.userType || 'unknown';
     console.log(`📞 Call ended between ${fromUserType} (${data.from}) and ${toUserType} (${data.to})`);
     
-    // Notify admin panel of call ended
     io.emit('admin_call_update', {
       type: 'call_ended',
       users: [data.from, data.to]
@@ -854,13 +776,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    for (let [userId, userInfo] of activeUsers.entries()) {
-      if (userInfo.socketId === socket.id) {
-        activeUsers.delete(userId);
-        io.emit('user_status', { userId, status: 'offline' });
-        console.log(`User ${userId} disconnected`);
-        break;
-      }
+    const userId = activeUsers.removeBySocketId(socket.id);
+    if (userId) {
+      io.emit('user_status', { userId, status: 'offline' });
+      console.log(`User ${userId} disconnected`);
     }
   });
 });
@@ -906,6 +825,12 @@ const { startMembershipExpiryJob, startHourlyMembershipCheck } = require('./util
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 
+  // Start memory monitoring
+  startMemoryMonitoring(10); // Log every 10 minutes
+
+  // Start log rotation
+  startLogRotation();
+
   // Start membership expiry cron jobs
   startMembershipExpiryJob();
   startHourlyMembershipCheck();
@@ -926,6 +851,27 @@ server.listen(PORT, () => {
     } else {
       console.log('✅ Email transporter is ready to send emails');
     }
+  });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  socketUserManager.destroy();
+  server.close(() => {
+    console.log('Server closed');
+    db.destroy();
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  socketUserManager.destroy();
+  server.close(() => {
+    console.log('Server closed');
+    db.destroy();
+    process.exit(0);
   });
 });
 
