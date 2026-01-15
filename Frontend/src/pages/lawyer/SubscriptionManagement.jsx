@@ -356,137 +356,83 @@ const SubscriptionManagement = () => {
           </div>
 
           {/* Plans */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Professional Plan */}
-            {(() => {
-              const professionalPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'professional' && p.billing_cycle === billingCycle);
-              const professionalFeatures = (() => {
-                try {
-                  if (typeof professionalPlan?.features === 'string') {
-                    if (professionalPlan.features.startsWith('[')) {
-                      return JSON.parse(professionalPlan.features);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {subscriptionPlans
+              .filter(plan => plan.billing_cycle === billingCycle && plan.name.toLowerCase() !== 'free')
+              .map((plan) => {
+                const features = (() => {
+                  try {
+                    if (typeof plan.features === 'string') {
+                      if (plan.features.startsWith('[')) {
+                        return JSON.parse(plan.features);
+                      }
+                      return plan.features.split(', ').filter(f => f.trim());
                     }
-                    return professionalPlan.features.split(', ').filter(f => f.trim());
-                  }
-                  if (Array.isArray(professionalPlan?.features)) {
-                    return professionalPlan.features;
-                  }
-                  return ['Enhanced profile management', 'Unlimited client messaging', 'Blog management system', 'Advanced reports & analytics', 'Email support'];
-                } catch (e) {
-                  return ['Enhanced profile management', 'Unlimited client messaging', 'Blog management system', 'Advanced reports & analytics', 'Email support'];
-                }
-              })();
-              
-              return (
-                <div className="relative bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-                  <div className="text-center mb-8">
-                    <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
-                    <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
-                      ${professionalPlan?.price || (billingCycle === 'monthly' ? '49.00' : '499.80')}
-                      <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
-                    </div>
-                    {billingCycle === 'yearly' && (
-                      <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save 15% annually</p>
-                    )}
-                  </div>
-                  
-                  <ul className="space-y-5 mb-8 flex-grow">
-                    {professionalFeatures.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-4">
-                        <div className="p-2 bg-blue-100 rounded-full">
-                          <Check className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <span className="text-slate-800 font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <button
-                    onClick={() => handleUpgrade('professional')}
-                    disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
-                    className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                      lawyer?.subscription_tier === 'professional'
-                        ? 'bg-emerald-500 text-white cursor-not-allowed'
-                        : lawyer?.subscription_tier === 'premium'
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
-                    }`}
-                  >
-                    {lawyer?.subscription_tier === 'professional' 
-                      ? 'Current Plan' 
-                      : lawyer?.subscription_tier === 'premium'
-                      ? 'Included in Premium'
-                      : 'Get Professional'
+                    if (Array.isArray(plan.features)) {
+                      return plan.features;
                     }
-                  </button>
-                </div>
-              );
-            })()}
+                    return [];
+                  } catch (e) {
+                    return [];
+                  }
+                })();
 
-            {/* Premium Plan */}
-            {(() => {
-              const premiumPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'premium' && p.billing_cycle === billingCycle);
-              const premiumFeatures = (() => {
-                try {
-                  if (typeof premiumPlan?.features === 'string') {
-                    if (premiumPlan.features.startsWith('[')) {
-                      return JSON.parse(premiumPlan.features);
-                    }
-                    return premiumPlan.features.split(', ').filter(f => f.trim());
-                  }
-                  if (Array.isArray(premiumPlan?.features)) {
-                    return premiumPlan.features;
-                  }
-                  return ['All Professional features', 'Q&A answer management', 'Verification badge system', 'Forms management system', 'Client management tools', 'Priority phone support'];
-                } catch (e) {
-                  return ['All Professional features', 'Q&A answer management', 'Verification badge system', 'Forms management system', 'Client management tools', 'Priority phone support'];
-                }
-              })();
-              
-              return (
-                <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 text-slate-800 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                      Most Popular
-                    </div>
-                  </div>
-                  
-                  <div className="text-center mb-8 mt-4">
-                    <h3 className="text-3xl font-bold mb-4">Premium</h3>
-                    <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                      ${premiumPlan?.price || (billingCycle === 'monthly' ? '99.00' : '1009.80')}
-                      <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
-                    </div>
-                    {billingCycle === 'yearly' && (
-                      <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save 15% annually</p>
-                    )}
-                  </div>
-                  
-                  <ul className="space-y-5 mb-8 flex-grow">
-                    {premiumFeatures.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-4">
-                        <div className="p-2 bg-purple-100 rounded-full">
-                          <Check className="w-5 h-5 text-purple-600" />
+                const isPremium = plan.name.toLowerCase() === 'premium';
+                const isCurrent = lawyer?.subscription_tier?.toLowerCase() === plan.name.toLowerCase();
+                const isDowngrade = lawyer?.subscription_tier === 'premium' && plan.name.toLowerCase() === 'professional';
+
+                return (
+                  <div key={plan.id} className={`relative backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full ${
+                    isPremium ? 'bg-gradient-to-br from-blue-600/20 to-purple-600/20' : 'bg-white/20'
+                  }`}>
+                    {isPremium && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                          Most Popular
                         </div>
-                        <span className="font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <button
-                    onClick={() => handleUpgrade('premium')}
-                    disabled={lawyer?.subscription_tier === 'premium'}
-                    className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                      lawyer?.subscription_tier === 'premium'
-                        ? 'bg-emerald-500 text-white cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                    }`}
-                  >
-                    {lawyer?.subscription_tier === 'premium' ? 'Current Plan' : 'Get Premium'}
-                  </button>
-                </div>
-              );
-            })()}
+                      </div>
+                    )}
+                    
+                    <div className={`text-center mb-8 ${isPremium ? 'mt-4' : ''}`}>
+                      <h3 className="text-3xl font-bold text-slate-800 mb-4">{plan.name}</h3>
+                      <div className={`text-5xl font-bold bg-gradient-to-r ${isPremium ? 'from-purple-600 to-blue-600' : 'from-blue-600 to-blue-700'} bg-clip-text text-transparent mb-2`}>
+                        ${plan.price}
+                        <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
+                      </div>
+                      {billingCycle === 'yearly' && (
+                        <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save 15% annually</p>
+                      )}
+                    </div>
+                    
+                    <ul className="space-y-5 mb-8 flex-grow">
+                      {features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-4">
+                          <div className={`p-2 ${isPremium ? 'bg-purple-100' : 'bg-blue-100'} rounded-full`}>
+                            <Check className={`w-5 h-5 ${isPremium ? 'text-purple-600' : 'text-blue-600'}`} />
+                          </div>
+                          <span className="text-slate-800 font-medium">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    <button
+                      onClick={() => handleUpgrade(plan.name.toLowerCase())}
+                      disabled={isCurrent || isDowngrade}
+                      className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                        isCurrent
+                          ? 'bg-emerald-500 text-white cursor-not-allowed'
+                          : isDowngrade
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : isPremium
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                      }`}
+                    >
+                      {isCurrent ? 'Current Plan' : isDowngrade ? 'Included in Premium' : `Get ${plan.name}`}
+                    </button>
+                  </div>
+                );
+              })}
           </div>
 
           {/* Trust Indicators */}
