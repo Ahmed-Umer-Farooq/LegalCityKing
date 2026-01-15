@@ -8,7 +8,7 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '', username: '', address: '', city: '', state: '', zipCode: '',
-    country: '', mobileNumber: '', email: '', password: '',
+    country: '', countryCode: '+1', mobileNumber: '', email: '', password: '',
     registrationId: '', firm: '', specialty: '', acceptTerms: false
   });
   const [errors, setErrors] = useState({});
@@ -31,6 +31,30 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
     'Privacy Law', 'Cybersecurity Law', 'Medical Malpractice', 'Product Liability', 'Workers Compensation',
     'Other'
   ];
+  const countryCodes = [
+    { code: '+1', country: 'US', flag: '🇺🇸', name: 'United States' },
+    { code: '+1', country: 'CA', flag: '🇨🇦', name: 'Canada' },
+    { code: '+44', country: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+    { code: '+91', country: 'IN', flag: '🇮🇳', name: 'India' },
+    { code: '+86', country: 'CN', flag: '🇨🇳', name: 'China' },
+    { code: '+81', country: 'JP', flag: '🇯🇵', name: 'Japan' },
+    { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Germany' },
+    { code: '+33', country: 'FR', flag: '🇫🇷', name: 'France' },
+    { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Italy' },
+    { code: '+55', country: 'BR', flag: '🇧🇷', name: 'Brazil' },
+    { code: '+61', country: 'AU', flag: '🇦🇺', name: 'Australia' },
+    { code: '+7', country: 'RU', flag: '🇷🇺', name: 'Russia' },
+    { code: '+82', country: 'KR', flag: '🇰🇷', name: 'South Korea' },
+    { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spain' },
+    { code: '+52', country: 'MX', flag: '🇲🇽', name: 'Mexico' },
+    { code: '+62', country: 'ID', flag: '🇮🇩', name: 'Indonesia' },
+    { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Netherlands' },
+    { code: '+966', country: 'SA', flag: '🇸🇦', name: 'Saudi Arabia' },
+    { code: '+90', country: 'TR', flag: '🇹🇷', name: 'Turkey' },
+    { code: '+92', country: 'PK', flag: '🇵🇰', name: 'Pakistan' },
+    { code: '+880', country: 'BD', flag: '🇧🇩', name: 'Bangladesh' },
+  ];
+
   const countries = [
     'United States', 'China', 'Japan', 'Germany', 'India', 'United Kingdom', 'France', 'Italy', 'Brazil', 'Canada',
     'Russia', 'South Korea', 'Australia', 'Spain', 'Mexico', 'Indonesia', 'Netherlands', 'Saudi Arabia', 'Turkey', 'Taiwan',
@@ -414,6 +438,13 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
     return '';
   };
 
+  const validateMobileNumber = (number) => {
+    if (!number) return 'Required';
+    const cleaned = number.replace(/\D/g, '');
+    if (cleaned.length < 7 || cleaned.length > 15) return 'Invalid phone number';
+    return '';
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
@@ -422,6 +453,8 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
       processedValue = value.toLowerCase().replace(/\s/g, '');
     } else if (name === 'registrationId') {
       processedValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    } else if (name === 'mobileNumber') {
+      processedValue = value.replace(/\D/g, '');
     }
     
     setFormData(prev => {
@@ -472,7 +505,8 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
       if (zipError) newErrors.zipCode = zipError;
     }
     if (!data.country.trim()) newErrors.country = 'Required';
-    if (!data.mobileNumber.trim()) newErrors.mobileNumber = 'Required';
+    const mobileError = validateMobileNumber(data.mobileNumber);
+    if (mobileError) newErrors.mobileNumber = mobileError;
     if (!data.email.trim()) newErrors.email = 'Required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) newErrors.email = 'Invalid email';
     const passwordError = validatePassword(data.password);
@@ -655,8 +689,17 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
 
             <div>
               <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-900 mb-2">Mobile Number</label>
-              <input id="mobileNumber" type="tel" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange}
-                className="w-full px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
+              <div className="flex gap-2">
+                <select name="countryCode" value={formData.countryCode} onChange={handleInputChange}
+                  className="w-32 px-2 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]">
+                  {countryCodes.map(c => (
+                    <option key={c.code + c.country} value={c.code}>{c.flag} {c.code}</option>
+                  ))}
+                </select>
+                <input id="mobileNumber" type="tel" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange}
+                  placeholder="1234567890"
+                  className="flex-1 px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
+              </div>
               {errors.mobileNumber && <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>}
             </div>
 
@@ -771,8 +814,17 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
             <div className="grid grid-cols-[1fr_1.5fr] gap-4">
               <div>
                 <label htmlFor="lawyer-mobileNumber" className="block text-sm font-medium text-gray-900 mb-2">Mobile Number</label>
-                <input id="lawyer-mobileNumber" type="tel" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange}
-                  className="w-full px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
+                <div className="flex gap-2">
+                  <select name="countryCode" value={formData.countryCode} onChange={handleInputChange}
+                    className="w-24 px-1 py-2.5 text-xs bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]">
+                    {countryCodes.map(c => (
+                      <option key={c.code + c.country} value={c.code}>{c.flag} {c.code}</option>
+                    ))}
+                  </select>
+                  <input id="lawyer-mobileNumber" type="tel" name="mobileNumber" value={formData.mobileNumber} onChange={handleInputChange}
+                    placeholder="1234567890"
+                    className="flex-1 px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
+                </div>
                 {errors.mobileNumber && <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>}
               </div>
               <div>

@@ -35,9 +35,10 @@ const Login = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    const newValue = name === 'registrationId' ? value.toUpperCase() : value;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -46,8 +47,12 @@ const Login = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess }) => {
     const newErrors = {};
     
     // Lawyer needs Registration ID
-    if (userType === 'lawyer' && !formData.registrationId.trim()) {
-      newErrors.registrationId = 'Registration ID is required';
+    if (userType === 'lawyer') {
+      if (!formData.registrationId.trim()) {
+        newErrors.registrationId = 'Registration ID is required';
+      } else if (!/^[A-Z]{2}\d{6}$/.test(formData.registrationId)) {
+        newErrors.registrationId = 'Must be 2 letters followed by 6 digits (e.g., AB123456)';
+      }
     }
     
     // Common validation
@@ -208,7 +213,9 @@ const Login = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess }) => {
                 value={formData.registrationId}
                 onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
-                className="w-full px-4 py-3 bg-gray-200 border-0 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                placeholder="AB123456"
+                maxLength="8"
+                className="w-full px-4 py-3 bg-gray-200 border-0 rounded-md text-gray-900 uppercase placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
               />
               {errors.registrationId && <p className="text-red-500 text-xs mt-1">{errors.registrationId}</p>}
             </div>
