@@ -67,18 +67,35 @@ const PaymentLinkManager = () => {
   };
 
   const handleDeleteLink = async (linkId) => {
-    if (!window.confirm('Are you sure you want to delete this payment link?')) {
-      return;
-    }
-
-    try {
-      await api.delete(`/payment-links/${linkId}`);
-      setPaymentLinks(paymentLinks.filter(link => link.id !== linkId));
-      toast.success('Payment link deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting payment link:', error);
-      toast.error(error.response?.data?.error || 'Failed to delete payment link');
-    }
+    toast.custom((t) => (
+      <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+        <p className="text-gray-900 font-medium mb-3">Are you sure you want to delete this payment link?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t);
+              try {
+                await api.delete(`/payment-links/${linkId}`);
+                setPaymentLinks(paymentLinks.filter(link => link.id !== linkId));
+                toast.success('Payment link deleted successfully!');
+              } catch (error) {
+                console.error('Error deleting payment link:', error);
+                toast.error(error.response?.data?.error || 'Failed to delete payment link');
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const copyToClipboard = async (url) => {

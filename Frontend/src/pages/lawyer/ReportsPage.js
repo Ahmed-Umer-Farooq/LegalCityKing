@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, FileText, Users, Clock, DollarSign, Phone, MessageCircle, File } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../../utils/api';
 
 export default function ReportsPage() {
@@ -83,7 +84,7 @@ export default function ReportsPage() {
                 if (onViewAll) {
                   onViewAll();
                 } else {
-                  alert('View All clicked!');
+                  toast.info('View All clicked!');
                 }
               }}
               className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer px-2 py-1 rounded hover:bg-blue-50"
@@ -101,7 +102,7 @@ export default function ReportsPage() {
                 if (onItemClick) {
                   onItemClick(item);
                 } else {
-                  alert(`Item: ${item.title || item.name || item.subject || item.description || 'Untitled'}`);
+                  toast.info(`Item: ${item.title || item.name || item.subject || item.description || 'Untitled'}`);
                 }
               }}
               className="text-sm text-gray-500 truncate hover:text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors border border-transparent hover:border-gray-200"
@@ -141,8 +142,8 @@ export default function ReportsPage() {
           icon={FileText}
           color="#3B82F6"
           items={data.cases}
-          onViewAll={() => alert('Navigate to Cases page - Click "Home" then scroll to Cases Management section')}
-          onItemClick={(item) => alert(`Case: ${item.title}\nType: ${item.type}\nStatus: ${item.status}\nFiled: ${item.filing_date}`)}
+          onViewAll={() => toast.info('Navigate to Cases page - Click "Home" then scroll to Cases Management section')}
+          onItemClick={(item) => toast.info(`Case: ${item.title}\nType: ${item.type}\nStatus: ${item.status}\nFiled: ${item.filing_date}`)}
         />
         <StatCard
           title="Contacts"
@@ -150,8 +151,8 @@ export default function ReportsPage() {
           icon={Users}
           color="#10B981"
           items={data.contacts}
-          onViewAll={() => alert('Click "Contacts" in the navigation menu to view all contacts')}
-          onItemClick={(item) => alert(`Contact: ${item.name}\nCompany: ${item.company || 'N/A'}\nType: ${item.type}\nEmail: ${item.email || 'N/A'}\nPhone: ${item.phone || 'N/A'}`)}
+          onViewAll={() => toast.info('Click "Contacts" in the navigation menu to view all contacts')}
+          onItemClick={(item) => toast.info(`Contact: ${item.name}\nCompany: ${item.company || 'N/A'}\nType: ${item.type}\nEmail: ${item.email || 'N/A'}\nPhone: ${item.phone || 'N/A'}`)}
         />
         <StatCard
           title="Tasks"
@@ -159,8 +160,8 @@ export default function ReportsPage() {
           icon={BarChart3}
           color="#F59E0B"
           items={data.tasks}
-          onViewAll={() => alert('Click "Tasks" in the navigation menu to view all tasks')}
-          onItemClick={(item) => alert(`Task: ${item.title}\nPriority: ${item.priority}\nStatus: ${item.status}\nDue: ${item.due_date || 'No due date'}\nDescription: ${item.description || 'No description'}`)}
+          onViewAll={() => toast.info('Click "Tasks" in the navigation menu to view all tasks')}
+          onItemClick={(item) => toast.info(`Task: ${item.title}\nPriority: ${item.priority}\nStatus: ${item.status}\nDue: ${item.due_date || 'No due date'}\nDescription: ${item.description || 'No description'}`)}
         />
         <StatCard
           title="Events"
@@ -168,8 +169,8 @@ export default function ReportsPage() {
           icon={Clock}
           color="#EF4444"
           items={data.events}
-          onViewAll={() => alert('Click "Calendar" in the navigation menu to view all events')}
-          onItemClick={(item) => alert(`Event: ${item.title}\nType: ${item.event_type}\nDate: ${item.start_date}\nTime: ${item.start_time} - ${item.end_time}\nLocation: ${item.location || 'No location'}`)}
+          onViewAll={() => toast.info('Click "Calendar" in the navigation menu to view all events')}
+          onItemClick={(item) => toast.info(`Event: ${item.title}\nType: ${item.event_type}\nDate: ${item.start_date}\nTime: ${item.start_time} - ${item.end_time}\nLocation: ${item.location || 'No location'}`)}
         />
       </div>
 
@@ -180,8 +181,8 @@ export default function ReportsPage() {
           icon={File}
           color="#8B5CF6"
           items={data.notes}
-          onViewAll={() => alert('Notes list coming soon! For now, notes are created via Quick Actions.')}
-          onItemClick={(item) => alert(`Note: ${item.title}\nPrivate: ${item.is_private ? 'Yes' : 'No'}\nContent: ${item.content}`)}
+          onViewAll={() => toast.info('Notes list coming soon! For now, notes are created via Quick Actions.')}
+          onItemClick={(item) => toast.info(`Note: ${item.title}\nPrivate: ${item.is_private ? 'Yes' : 'No'}\nContent: ${item.content}`)}
         />
         <StatCard
           title="Calls"
@@ -189,8 +190,8 @@ export default function ReportsPage() {
           icon={Phone}
           color="#06B6D4"
           items={data.calls}
-          onViewAll={() => alert('Call logs list coming soon! For now, calls are logged via Quick Actions.')}
-          onItemClick={(item) => alert(`Call: ${item.title}\nType: ${item.call_type}\nDate: ${item.call_date}\nDuration: ${item.duration_minutes} minutes\nBillable: ${item.is_billable ? 'Yes' : 'No'}`)}
+          onViewAll={() => toast.info('Call logs list coming soon! For now, calls are logged via Quick Actions.')}
+          onItemClick={(item) => toast.info(`Call: ${item.title}\nType: ${item.call_type}\nDate: ${item.call_date}\nDuration: ${item.duration_minutes} minutes\nBillable: ${item.is_billable ? 'Yes' : 'No'}`)}
         />
         <StatCard
           title="Messages"
@@ -198,8 +199,8 @@ export default function ReportsPage() {
           icon={MessageCircle}
           color="#84CC16"
           items={data.messages}
-          onViewAll={() => alert('Click "Messages" in the navigation menu to view all messages')}
-          onItemClick={(item) => alert(`Message: ${item.subject}\nType: ${item.message_type}\nContent: ${item.content}`)}
+          onViewAll={() => toast.info('Click "Messages" in the navigation menu to view all messages')}
+          onItemClick={(item) => toast.info(`Message: ${item.subject}\nType: ${item.message_type}\nContent: ${item.content}`)}
         />
         <StatCard
           title="Time Entries"
@@ -207,8 +208,8 @@ export default function ReportsPage() {
           icon={Clock}
           color="#F97316"
           items={data.timeEntries}
-          onViewAll={() => alert('Time tracking list coming soon! For now, time is tracked via Quick Actions.')}
-          onItemClick={(item) => alert(`Time Entry: ${item.description}\nHours: ${item.hours}\nDate: ${item.date}\nBillable: ${item.is_billable ? 'Yes' : 'No'}\nRate: $${item.billable_rate || 'N/A'}`)}
+          onViewAll={() => toast.info('Time tracking list coming soon! For now, time is tracked via Quick Actions.')}
+          onItemClick={(item) => toast.info(`Time Entry: ${item.description}\nHours: ${item.hours}\nDate: ${item.date}\nBillable: ${item.is_billable ? 'Yes' : 'No'}\nRate: $${item.billable_rate || 'N/A'}`)}
         />
       </div>
 
@@ -278,7 +279,7 @@ export default function ReportsPage() {
                       e.preventDefault();
                       e.stopPropagation();
                       const details = `Title: ${item.title || item.name || item.subject || 'Untitled'}\nDescription: ${item.description || item.email || item.content || 'No description'}\nCreated: ${new Date(item.created_at).toLocaleDateString()}`;
-                      alert(details);
+                      toast.info(details);
                     }}
                     className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer rounded px-2 transition-colors border border-transparent hover:border-gray-200"
                     style={{ userSelect: 'none' }}
