@@ -140,7 +140,18 @@ export default function ProfileManagement() {
         associations: data.associations ? JSON.parse(data.associations) : profileData.associations,
         publications: data.publications ? JSON.parse(data.publications) : profileData.publications,
         speaking: data.speaking ? JSON.parse(data.speaking) : profileData.speaking,
-        social_links: data.social_links ? (typeof data.social_links === 'string' ? JSON.parse(data.social_links) : data.social_links) : profileData.social_links,
+        social_links: data.social_links ? (typeof data.social_links === 'string' ? (() => {
+        try {
+          const parsed = JSON.parse(data.social_links);
+          // Check if it's an object with numeric keys (double stringified)
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).some(k => !isNaN(k))) {
+            return profileData.social_links; // Use default
+          }
+          return parsed;
+        } catch (e) {
+          return profileData.social_links;
+        }
+      })() : data.social_links) : profileData.social_links,
         office_hours: data.office_hours ? JSON.parse(data.office_hours) : profileData.office_hours,
         payment_options: data.payment_options ? JSON.parse(data.payment_options) : profileData.payment_options
       });
@@ -178,12 +189,15 @@ export default function ProfileManagement() {
         payment_options: JSON.stringify(profileData.payment_options)
       };
       
-      await api.put('/auth/me', dataToSave);
+      console.log('Saving profile data:', dataToSave);
+      const response = await api.put('/auth/me', dataToSave);
+      console.log('Profile save response:', response.data);
       toast.success('Profile updated successfully!');
       setIsEditing(false);
+      await fetchProfile();
     } catch (error) {
-      toast.error('Failed to update profile');
-      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.error || 'Failed to update profile');
+      console.error('Error updating profile:', error.response?.data || error);
     }
   };
 
@@ -1227,14 +1241,26 @@ export default function ProfileManagement() {
                           onChange={async (e) => {
                             const file = e.target.files[0];
                             if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error('Image size must be less than 5MB');
+                                return;
+                              }
                               const formData = new FormData();
                               formData.append('profileImage', file);
                               try {
-                                const response = await api.post('/auth/profile/upload-image', formData);
+                                console.log('Uploading image:', file.name, file.size);
+                                const response = await api.post('/profile/upload-image', formData, {
+                                  headers: {
+                                    'Content-Type': 'multipart/form-data'
+                                  }
+                                });
+                                console.log('Image upload response:', response.data);
                                 setImagePreview(`http://localhost:5001${response.data.imageUrl}`);
                                 toast.success('Profile image updated!');
+                                await fetchProfile();
                               } catch (error) {
-                                toast.error('Failed to upload image');
+                                console.error('Image upload error:', error.response?.data || error);
+                                toast.error(error.response?.data?.error || 'Failed to upload image');
                               }
                             }
                           }}

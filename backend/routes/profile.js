@@ -87,7 +87,7 @@ router.post('/upload-image', authorize('manage', 'profile'), upload.single('prof
 
     res.json({ 
       message: 'Profile image uploaded successfully',
-      imagePath: imagePath
+      imageUrl: imagePath
     });
   } catch (error) {
     console.error('Error uploading profile image:', error);

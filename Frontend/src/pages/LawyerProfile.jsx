@@ -206,28 +206,56 @@ export default function LawyerProfile() {
   
   const imageUrl = lawyer.profile_image && lawyer.profile_image !== 'null' && lawyer.profile_image.trim() !== ''
     ? (lawyer.profile_image.startsWith('http') ? lawyer.profile_image : `http://localhost:5001${lawyer.profile_image}`)
-    : getPlaceholderImage(lawyer.name, lawyer.id);
+    : getPlaceholderImage(lawyer.name);
   
+  // Safe JSON parse helper
+  const safeJsonParse = (data, fallback = []) => {
+    if (!data) return fallback;
+    if (typeof data !== 'string') return data;
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return fallback;
+    }
+  };
+
   // Format lawyer data for display
   const displayLawyer = {
     ...lawyer,
     title: lawyer.speciality || 'Attorney',
-    location: `${lawyer.city || 'Unknown'}, ${lawyer.state || 'Unknown'}`,
+    location: `${lawyer.city || ''}, ${lawyer.state || ''}`.replace(/^,\s*|,\s*$/g, '') || 'Location not specified',
     rating: parseFloat(lawyer.rating) || 0,
-    reviews: lawyer.reviews || 0,
-    phone: lawyer.mobile_number || 'Contact for phone',
+    reviews: lawyer.review_count || lawyer.reviews || 0,
+    phone: lawyer.mobile_number || lawyer.phone || 'Contact for phone',
     image: imageUrl,
-    yearsLicensed: Math.floor(Math.random() * 15) + 5,
-    freeConsultation: true,
+    yearsLicensed: lawyer.years_licensed || 1,
+    freeConsultation: safeJsonParse(lawyer.payment_options, {}).free_consultation !== false,
     virtualConsultation: true,
-    about: lawyer.description || `Experienced ${lawyer.speciality || 'legal'} attorney with expertise in various legal matters.`,
-    practiceAreas: [
-      { name: lawyer.speciality || 'General Practice', percentage: 100, years: Math.floor(Math.random() * 15) + 5 }
-    ],
+    about: lawyer.bio || lawyer.description || 'No bio provided',
+    practiceAreas: (() => {
+      const areas = safeJsonParse(lawyer.practice_areas, []);
+      if (areas.length === 0 && lawyer.speciality) {
+        return [{ name: lawyer.speciality, percentage: 100, years: lawyer.years_licensed || 1 }];
+      }
+      return areas.map(area => ({
+        name: area.area || area.name || 'General Practice',
+        percentage: area.percentage || 100,
+        years: area.years_experience || lawyer.years_licensed || 1
+      }));
+    })(),
     awards: ['Licensed Attorney', 'Verified Professional'],
-    hourlyRate: '$300-500',
-    address: `${lawyer.address || ''}, ${lawyer.city || ''}, ${lawyer.state || ''} ${lawyer.zip_code || ''}`.replace(/^,\s*|,\s*$/g, ''),
-    // Include subscription data
+    hourlyRate: lawyer.hourly_rate ? `$${lawyer.hourly_rate}` : '$300-500',
+    address: `${lawyer.address || ''}, ${lawyer.city || ''}, ${lawyer.state || ''} ${lawyer.zip_code || ''}`.replace(/^,\s*|,\s*$/g, '') || 'Address not provided',
+    education: safeJsonParse(lawyer.education, []),
+    experience: safeJsonParse(lawyer.experience, []),
+    certifications: safeJsonParse(lawyer.certifications, []),
+    languages: safeJsonParse(lawyer.languages, ['English']),
+    associations: safeJsonParse(lawyer.associations, []),
+    publications: safeJsonParse(lawyer.publications, []),
+    speaking: safeJsonParse(lawyer.speaking, []),
+    office_hours: safeJsonParse(lawyer.office_hours, null),
+    payment_options: safeJsonParse(lawyer.payment_options, {}),
     subscription_tier: lawyer.subscription_tier,
     subscription_status: lawyer.subscription_status
   };
@@ -460,169 +488,158 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-100">Professional Resume</h2>
               
-              {/* AVVO Rating */}
-              <div className="mb-8">
-                <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl">
-                  <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-2xl">10.0</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg">AVVO RATING</h3>
-                    <p className="text-orange-700 font-semibold text-lg">10.0 (Superb)</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-8">
                   {/* Work Experience */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-blue-600 rounded"></div>
-                      Work Experience
-                    </h3>
-                    <div className="border-l-4 border-blue-200 pl-6">
-                      <div className="relative">
-                        <div className="absolute -left-8 w-4 h-4 bg-blue-600 rounded-full"></div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-semibold text-gray-900 text-lg">Owner</h4>
-                          <p className="text-blue-600 font-medium">Family Law Center of the Rockies</p>
-                          <p className="text-gray-600">2006 - Present</p>
-                        </div>
+                  {displayLawyer.experience && displayLawyer.experience.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-6 bg-blue-600 rounded"></div>
+                        Work Experience
+                      </h3>
+                      <div className="border-l-4 border-blue-200 pl-6 space-y-4">
+                        {displayLawyer.experience.map((exp, index) => (
+                          <div key={index} className="relative">
+                            <div className="absolute -left-8 w-4 h-4 bg-blue-600 rounded-full"></div>
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-semibold text-gray-900 text-lg">{exp.position}</h4>
+                              <p className="text-blue-600 font-medium">{exp.company}</p>
+                              <p className="text-gray-600">{exp.start_year} - {exp.end_year || 'Present'}</p>
+                              {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Education */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-green-600 rounded"></div>
-                      Education
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="p-4 bg-gray-50 border-l-4 border-green-500 rounded-r-lg">
-                        <h4 className="font-semibold text-gray-900">Roger Williams University</h4>
-                        <p className="text-gray-600">JD - Juris Doctor</p>
-                        <p className="text-gray-500 text-sm">2006</p>
-                      </div>
-                      <div className="p-4 bg-gray-50 border-l-4 border-green-500 rounded-r-lg">
-                        <h4 className="font-semibold text-gray-900">University of Denver</h4>
-                        <p className="text-gray-600">JD - Juris Doctor</p>
-                        <p className="text-gray-500 text-sm">2006</p>
-                      </div>
-                      <div className="p-4 bg-gray-50 border-l-4 border-green-500 rounded-r-lg">
-                        <h4 className="font-semibold text-gray-900">Southern Illinois University</h4>
-                        <p className="text-gray-600">BS - Bachelor of Science</p>
-                        <p className="text-gray-500 text-sm">2003</p>
+                  {displayLawyer.education && displayLawyer.education.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-6 bg-green-600 rounded"></div>
+                        Education
+                      </h3>
+                      <div className="space-y-3">
+                        {displayLawyer.education.map((edu, index) => (
+                          <div key={index} className="p-4 bg-gray-50 border-l-4 border-green-500 rounded-r-lg">
+                            <h4 className="font-semibold text-gray-900">{edu.institution}</h4>
+                            <p className="text-gray-600">{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                            <p className="text-gray-500 text-sm">{edu.year}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Languages */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-purple-600 rounded"></div>
-                      Languages
-                    </h3>
-                    <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium border border-purple-200">
-                      English
-                    </span>
-                  </div>
+                  {displayLawyer.languages && displayLawyer.languages.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-6 bg-purple-600 rounded"></div>
+                        Languages
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {displayLawyer.languages.map((lang, index) => (
+                          <span key={index} className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium border border-purple-200">
+                            {lang}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column */}
                 <div className="space-y-8">
-                  {/* Honors and Awards */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-yellow-600 rounded"></div>
-                      Honors & Awards
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <Award className="w-6 h-6 text-yellow-600" />
-                        <div>
-                          <h4 className="font-semibold text-gray-900">Client Champion Platinum</h4>
-                          <p className="text-gray-600 text-sm">Martindale-Hubbell • 2022</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <Award className="w-6 h-6 text-yellow-600" />
-                        <div>
-                          <h4 className="font-semibold text-gray-900">AV Peer Review Rating</h4>
-                          <p className="text-gray-600 text-sm">Martindale-Hubbell • 2022</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <Award className="w-6 h-6 text-yellow-600" />
-                        <div>
-                          <h4 className="font-semibold text-gray-900">Client Champion Award</h4>
-                          <p className="text-gray-600 text-sm">Martindale-Hubbell • 2021</p>
-                        </div>
+                  {/* Certifications & Awards */}
+                  {displayLawyer.certifications && displayLawyer.certifications.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-6 bg-yellow-600 rounded"></div>
+                        Honors & Awards
+                      </h3>
+                      <div className="space-y-3">
+                        {displayLawyer.certifications.map((cert, index) => (
+                          <div key={index} className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <Award className="w-6 h-6 text-yellow-600" />
+                            <div>
+                              <h4 className="font-semibold text-gray-900">{cert.name}</h4>
+                              <p className="text-gray-600 text-sm">{cert.issuer} • {cert.year}</p>
+                              {cert.description && <p className="text-gray-600 text-xs mt-1">{cert.description}</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Professional Associations */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-indigo-600 rounded"></div>
-                      Professional Associations
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                        <h4 className="font-semibold text-gray-900">7th Judicial District Bar Association</h4>
-                        <p className="text-gray-600 text-sm">Member • 2017 - Present</p>
-                      </div>
-                      <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                        <h4 className="font-semibold text-gray-900">Southwestern Colorado Bar Association</h4>
-                        <p className="text-gray-600 text-sm">Member • 2017 - Present</p>
-                      </div>
-                      <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                        <h4 className="font-semibold text-gray-900">Heart of the Rockies Bar Association</h4>
-                        <p className="text-gray-600 text-sm">Member • 2017 - Present</p>
+                  {displayLawyer.associations && displayLawyer.associations.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-6 bg-indigo-600 rounded"></div>
+                        Professional Associations
+                      </h3>
+                      <div className="space-y-3">
+                        {displayLawyer.associations.map((assoc, index) => (
+                          <div key={index} className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <h4 className="font-semibold text-gray-900">{assoc.name}</h4>
+                            <p className="text-gray-600 text-sm">{assoc.role} • {assoc.start_year} - {assoc.end_year || 'Present'}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
               {/* Publications & Speaking - Full Width */}
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Publications */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-red-600 rounded"></div>
-                      Publications
-                    </h3>
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <h4 className="font-semibold text-gray-900">Top 100 Attorneys Magazine</h4>
-                      <p className="text-gray-600">Feature Article</p>
-                      <p className="text-gray-500 text-sm">2022</p>
-                    </div>
-                  </div>
+              {((displayLawyer.publications && displayLawyer.publications.length > 0) || (displayLawyer.speaking && displayLawyer.speaking.length > 0)) && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Publications */}
+                    {displayLawyer.publications && displayLawyer.publications.length > 0 && (
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                          <div className="w-2 h-6 bg-red-600 rounded"></div>
+                          Publications
+                        </h3>
+                        <div className="space-y-3">
+                          {displayLawyer.publications.map((pub, index) => (
+                            <div key={index} className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                              <h4 className="font-semibold text-gray-900">{pub.title}</h4>
+                              <p className="text-gray-600">{pub.publication}</p>
+                              <p className="text-gray-500 text-sm">{pub.year}</p>
+                              {pub.description && <p className="text-gray-600 text-sm mt-1">{pub.description}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                  {/* Speaking Engagements */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-6 bg-teal-600 rounded"></div>
-                      Speaking Engagements
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 text-sm">Stepparent Adoption in Colorado</h4>
-                        <p className="text-gray-600 text-sm">Legal Resource Day • 2021</p>
+                    {/* Speaking Engagements */}
+                    {displayLawyer.speaking && displayLawyer.speaking.length > 0 && (
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                          <div className="w-2 h-6 bg-teal-600 rounded"></div>
+                          Speaking Engagements
+                        </h3>
+                        <div className="space-y-3">
+                          {displayLawyer.speaking.map((speak, index) => (
+                            <div key={index} className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                              <h4 className="font-semibold text-gray-900 text-sm">{speak.title}</h4>
+                              <p className="text-gray-600 text-sm">{speak.event} • {speak.year}</p>
+                              {speak.description && <p className="text-gray-600 text-xs mt-1">{speak.description}</p>}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 text-sm">Getting Custody: Parents and Non-Parents</h4>
-                        <p className="text-gray-600 text-sm">Legal Resource Day • 2021</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Reviews */}
@@ -716,22 +733,25 @@ export default function LawyerProfile() {
 
           {/* Sidebar */}
           <div className="hidden lg:block space-y-6">
-            {/* Contact Info */}
+            {/* Contact Info - Hidden from public */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700">{displayLawyer.phone}</span>
+                  <span className="text-gray-700">Contact for phone number</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700">{displayLawyer.email}</span>
+                  <span className="text-gray-700">Contact for email</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                  <span className="text-gray-700">{displayLawyer.address}</span>
+                  <span className="text-gray-700">{displayLawyer.city}, {displayLawyer.state}</span>
                 </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">💡 Contact details are shared after you connect with the lawyer</p>
               </div>
             </div>
 
@@ -800,23 +820,21 @@ export default function LawyerProfile() {
             </div>
 
             {/* Office Hours */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Office Hours</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Monday - Friday</span>
-                  <span className="font-medium">9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Saturday</span>
-                  <span className="font-medium">10:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sunday</span>
-                  <span className="font-medium text-red-600">Closed</span>
+            {displayLawyer.office_hours && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Office Hours</h3>
+                <div className="space-y-2 text-sm">
+                  {Object.entries(displayLawyer.office_hours).map(([day, hours]) => (
+                    <div key={day} className="flex justify-between">
+                      <span className="text-gray-600 capitalize">{day}</span>
+                      <span className={`font-medium ${hours.closed ? 'text-red-600' : ''}`}>
+                        {hours.closed ? 'Closed' : `${hours.open} - ${hours.close}`}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Case Types */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -845,22 +863,30 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Payment Options</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">Credit Cards Accepted</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">Payment Plans Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">Contingency Fee Options</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">Free Initial Consultation</span>
-                </div>
+                {displayLawyer.payment_options?.credit_cards !== false && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Credit Cards Accepted</span>
+                  </div>
+                )}
+                {displayLawyer.payment_options?.payment_plans !== false && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Payment Plans Available</span>
+                  </div>
+                )}
+                {displayLawyer.payment_options?.contingency_fee !== false && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Contingency Fee Options</span>
+                  </div>
+                )}
+                {displayLawyer.payment_options?.free_consultation !== false && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-700">Free Initial Consultation</span>
+                  </div>
+                )}
               </div>
             </div>
 

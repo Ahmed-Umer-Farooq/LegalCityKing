@@ -503,7 +503,19 @@ const updateProfile = async (req, res) => {
       registration_id,
       law_firm,
       speciality,
-      verified
+      verified,
+      years_licensed,
+      hourly_rate,
+      education,
+      experience,
+      certifications,
+      languages,
+      practice_areas,
+      associations,
+      publications,
+      speaking,
+      office_hours,
+      payment_options
     } = req.body;
 
     console.log('Update profile request for user ID:', req.user.id);
@@ -546,9 +558,9 @@ const updateProfile = async (req, res) => {
         bio,
         job_title,
         company,
-        social_links: social_links ? JSON.stringify(social_links) : undefined,
-        interests: interests ? JSON.stringify(interests) : undefined,
-        privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : undefined,
+        social_links,
+        interests,
+        privacy_settings,
         profile_completed: 1
       };
 
@@ -593,28 +605,7 @@ const updateProfile = async (req, res) => {
         });
       }
     } else {
-      // For lawyers: include all common fields plus lawyer-specific fields
-      updateData = {
-        name,
-        email,
-        username,
-        registration_id,
-        law_firm,
-        speciality,
-        mobile_number,
-        address,
-        city,
-        state,
-        zip_code,
-        country,
-        date_of_birth,
-        bio,
-        social_links: social_links ? JSON.stringify(social_links) : undefined,
-        interests: interests ? JSON.stringify(interests) : undefined,
-        privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : undefined,
-        profile_completed: 1, // Mark profile as completed
-        updated_at: db.fn.now()
-      };
+      updateData = { name, email, username, registration_id, law_firm, speciality, years_licensed, hourly_rate, mobile_number, address, city, state, zip_code, country, date_of_birth, bio, education, experience, certifications, languages, practice_areas, associations, publications, speaking, social_links, office_hours, payment_options, interests, privacy_settings, profile_completed: 1, updated_at: db.fn.now() };
 
       // Remove undefined values
       Object.keys(updateData).forEach(key => {
@@ -835,3 +826,4 @@ module.exports = {
   verifyOtp,
   submitLater,
 };
+

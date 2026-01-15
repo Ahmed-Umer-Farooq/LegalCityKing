@@ -171,47 +171,19 @@ const getLawyersDirectory = async (req, res) => {
     const lawyers = await db('lawyers')
       .leftJoin('lawyer_reviews', 'lawyers.id', 'lawyer_reviews.lawyer_id')
       .select(
-        'lawyers.id', 'lawyers.secure_id', 'lawyers.name', 'lawyers.email', 'lawyers.address', 
-        'lawyers.rating', 'lawyers.experience', 'lawyers.speciality', 'lawyers.description', 
-        'lawyers.profile_image', 'lawyers.registration_id', 'lawyers.law_firm', 
-        'lawyers.is_verified', 'lawyers.lawyer_verified',
+        'lawyers.*',
         db.raw('COUNT(lawyer_reviews.id) as total_reviews'),
         db.raw('AVG(lawyer_reviews.rating) as average_rating')
       )
       .where('lawyers.is_verified', 1)
       .groupBy('lawyers.id');
 
-    const processedLawyers = lawyers.map(lawyer => {
-      const totalReviews = parseInt(lawyer.total_reviews) || 0;
-      const averageRating = lawyer.average_rating ? parseFloat(lawyer.average_rating).toFixed(1) : '0.0';
-      const yearsLicensed = parseInt(lawyer.experience?.replace(/\D/g, '')) || 10;
-      
-      return {
-        id: lawyer.secure_id,
-        name: lawyer.name,
-        email: lawyer.email,
-        location: lawyer.address,
-        address: lawyer.address,
-        rating: parseFloat(averageRating),
-        reviewCount: totalReviews,
-        reviews: totalReviews,
-        reviews_count: totalReviews,
-        reviewScore: parseFloat(averageRating),
-        yearsLicensed: yearsLicensed,
-        practiceAreas: lawyer.speciality ? [lawyer.speciality] : ['General Practice'],
-        practice_areas: lawyer.speciality || 'General Practice',
-        description: lawyer.description || 'Experienced attorney providing quality legal services.',
-        bio: lawyer.description || 'Experienced attorney providing quality legal services.',
-        imageUrl: lawyer.profile_image || 'https://via.placeholder.com/150',
-        profile_picture: lawyer.profile_image || 'https://via.placeholder.com/150',
-        category: lawyer.speciality || 'General Practice',
-        registration_id: lawyer.registration_id,
-        law_firm: lawyer.law_firm,
-        speciality: lawyer.speciality,
-        verified: lawyer.is_verified === 1,
-        lawyer_verified: lawyer.lawyer_verified === 1
-      };
-    });
+    const processedLawyers = lawyers.map(lawyer => ({
+      ...lawyer,
+      reviews: parseInt(lawyer.total_reviews) || 0,
+      review_count: parseInt(lawyer.total_reviews) || 0,
+      rating: lawyer.average_rating ? parseFloat(lawyer.average_rating).toFixed(1) : '0.0'
+    }));
 
     res.json(processedLawyers);
   } catch (error) {
@@ -224,12 +196,6 @@ const getLawyerById = async (req, res) => {
   try {
     const { secureId } = req.params;
     const lawyer = await db('lawyers')
-      .select(
-        'id', 'secure_id', 'name', 'email', 'address', 'rating', 'experience', 'speciality',
-        'description', 'profile_image', 'registration_id', 'law_firm',
-        'mobile_number', 'city', 'state', 'zip_code', 'country',
-        'subscription_tier', 'subscription_status', 'subscription_created_at'
-      )
       .where('secure_id', secureId)
       .where('is_verified', 1)
       .first();
@@ -249,35 +215,14 @@ const getLawyerById = async (req, res) => {
 
     const totalReviews = parseInt(reviewStats.total_reviews) || 0;
     const averageRating = reviewStats.average_rating ? parseFloat(reviewStats.average_rating).toFixed(1) : '0.0';
-    const yearsLicensed = parseInt(lawyer.experience?.replace(/\D/g, '')) || 10;
 
-    const processedLawyer = {
-      id: lawyer.secure_id,
-      name: lawyer.name,
-      email: lawyer.email,
-      location: lawyer.address,
-      rating: parseFloat(averageRating),
+    // Return all lawyer data
+    res.json({
+      ...lawyer,
       reviews: totalReviews,
-      reviewCount: totalReviews,
-      yearsLicensed: yearsLicensed,
-      practiceAreas: lawyer.speciality ? [lawyer.speciality] : ['General Practice'],
-      description: lawyer.description || 'Experienced attorney providing quality legal services.',
-      imageUrl: lawyer.profile_image || 'https://via.placeholder.com/150',
-      registration_id: lawyer.registration_id,
-      law_firm: lawyer.law_firm,
-      speciality: lawyer.speciality,
-      mobile_number: lawyer.mobile_number,
-      address: lawyer.address,
-      city: lawyer.city,
-      state: lawyer.state,
-      zip_code: lawyer.zip_code,
-      country: lawyer.country,
-      subscription_tier: lawyer.subscription_tier,
-      subscription_status: lawyer.subscription_status,
-      subscription_created_at: lawyer.subscription_created_at
-    };
-
-    res.json(processedLawyer);
+      review_count: totalReviews,
+      rating: parseFloat(averageRating)
+    });
   } catch (error) {
     console.error('Error fetching lawyer:', error);
     res.status(500).json({ message: 'Server error while fetching lawyer' });
