@@ -358,147 +358,135 @@ const SubscriptionManagement = () => {
           {/* Plans */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Professional Plan */}
-            <div className="relative bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-              <div className="text-center mb-8">
-                <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
-                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
-                  ${billingCycle === 'monthly' 
-                    ? (subscriptionPlans.find(p => p.name === 'Professional' && p.billing_cycle === 'monthly')?.price || '49.00')
-                    : (subscriptionPlans.find(p => p.name === 'Professional' && p.billing_cycle === 'yearly')?.price * 12 || '499.80').toFixed(0)
+            {(() => {
+              const professionalPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'professional' && p.billing_cycle === billingCycle);
+              const professionalFeatures = (() => {
+                try {
+                  if (typeof professionalPlan?.features === 'string') {
+                    if (professionalPlan.features.startsWith('[')) {
+                      return JSON.parse(professionalPlan.features);
+                    }
+                    return professionalPlan.features.split(', ').filter(f => f.trim());
                   }
-                  <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
-                </div>
-                {billingCycle === 'yearly' && (
-                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save $88 annually (15% off)</p>
-                )}
-              </div>
-              
-              <ul className="space-y-5 mb-8 flex-grow">
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Check className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-slate-800 font-medium">Enhanced profile management</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Check className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-slate-800 font-medium">Unlimited client messaging</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Check className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-slate-800 font-medium">Blog management system</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Check className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-slate-800 font-medium">Advanced reports & analytics</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Check className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-slate-800 font-medium">Email support</span>
-                </li>
-              </ul>
-              
-              <button
-                onClick={() => handleUpgrade('professional')}
-                disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
-                className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                  lawyer?.subscription_tier === 'professional'
-                    ? 'bg-emerald-500 text-white cursor-not-allowed'
-                    : lawyer?.subscription_tier === 'premium'
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
-                }`}
-              >
-                {lawyer?.subscription_tier === 'professional' 
-                  ? 'Current Plan' 
-                  : lawyer?.subscription_tier === 'premium'
-                  ? 'Included in Premium'
-                  : 'Get Professional'
+                  if (Array.isArray(professionalPlan?.features)) {
+                    return professionalPlan.features;
+                  }
+                  return ['Enhanced profile management', 'Unlimited client messaging', 'Blog management system', 'Advanced reports & analytics', 'Email support'];
+                } catch (e) {
+                  return ['Enhanced profile management', 'Unlimited client messaging', 'Blog management system', 'Advanced reports & analytics', 'Email support'];
                 }
-              </button>
-            </div>
+              })();
+              
+              return (
+                <div className="relative bg-white/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
+                  <div className="text-center mb-8">
+                    <h3 className="text-3xl font-bold text-slate-800 mb-4">Professional</h3>
+                    <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
+                      ${professionalPlan?.price || (billingCycle === 'monthly' ? '49.00' : '499.80')}
+                      <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
+                    </div>
+                    {billingCycle === 'yearly' && (
+                      <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save 15% annually</p>
+                    )}
+                  </div>
+                  
+                  <ul className="space-y-5 mb-8 flex-grow">
+                    {professionalFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-4">
+                        <div className="p-2 bg-blue-100 rounded-full">
+                          <Check className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <span className="text-slate-800 font-medium">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <button
+                    onClick={() => handleUpgrade('professional')}
+                    disabled={lawyer?.subscription_tier === 'professional' || lawyer?.subscription_tier === 'premium'}
+                    className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                      lawyer?.subscription_tier === 'professional'
+                        ? 'bg-emerald-500 text-white cursor-not-allowed'
+                        : lawyer?.subscription_tier === 'premium'
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                    }`}
+                  >
+                    {lawyer?.subscription_tier === 'professional' 
+                      ? 'Current Plan' 
+                      : lawyer?.subscription_tier === 'premium'
+                      ? 'Included in Premium'
+                      : 'Get Professional'
+                    }
+                  </button>
+                </div>
+              );
+            })()}
 
             {/* Premium Plan */}
-            <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 text-slate-800 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                  Most Popular
-                </div>
-              </div>
-              
-              <div className="text-center mb-8 mt-4">
-                <h3 className="text-3xl font-bold mb-4">Premium</h3>
-                <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                  ${billingCycle === 'monthly' 
-                    ? (subscriptionPlans.find(p => p.name === 'Premium' && p.billing_cycle === 'monthly')?.price || '99.00')
-                    : (subscriptionPlans.find(p => p.name === 'Premium' && p.billing_cycle === 'yearly')?.price * 12 || '1009.80').toFixed(0)
+            {(() => {
+              const premiumPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'premium' && p.billing_cycle === billingCycle);
+              const premiumFeatures = (() => {
+                try {
+                  if (typeof premiumPlan?.features === 'string') {
+                    if (premiumPlan.features.startsWith('[')) {
+                      return JSON.parse(premiumPlan.features);
+                    }
+                    return premiumPlan.features.split(', ').filter(f => f.trim());
                   }
-                  <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
+                  if (Array.isArray(premiumPlan?.features)) {
+                    return premiumPlan.features;
+                  }
+                  return ['All Professional features', 'Q&A answer management', 'Verification badge system', 'Forms management system', 'Client management tools', 'Priority phone support'];
+                } catch (e) {
+                  return ['All Professional features', 'Q&A answer management', 'Verification badge system', 'Forms management system', 'Client management tools', 'Priority phone support'];
+                }
+              })();
+              
+              return (
+                <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 text-slate-800 hover:shadow-3xl transition-all duration-300 flex flex-col h-full">
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                      Most Popular
+                    </div>
+                  </div>
+                  
+                  <div className="text-center mb-8 mt-4">
+                    <h3 className="text-3xl font-bold mb-4">Premium</h3>
+                    <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                      ${premiumPlan?.price || (billingCycle === 'monthly' ? '99.00' : '1009.80')}
+                      <span className="text-xl text-slate-600">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
+                    </div>
+                    {billingCycle === 'yearly' && (
+                      <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save 15% annually</p>
+                    )}
+                  </div>
+                  
+                  <ul className="space-y-5 mb-8 flex-grow">
+                    {premiumFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-4">
+                        <div className="p-2 bg-purple-100 rounded-full">
+                          <Check className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <span className="font-medium">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <button
+                    onClick={() => handleUpgrade('premium')}
+                    disabled={lawyer?.subscription_tier === 'premium'}
+                    className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
+                      lawyer?.subscription_tier === 'premium'
+                        ? 'bg-emerald-500 text-white cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                    }`}
+                  >
+                    {lawyer?.subscription_tier === 'premium' ? 'Current Plan' : 'Get Premium'}
+                  </button>
                 </div>
-                {billingCycle === 'yearly' && (
-                  <p className="text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full inline-block">Save $178 annually (15% off)</p>
-                )}
-              </div>
-              
-              <ul className="space-y-5 mb-8 flex-grow">
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">All Professional features</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">Q&A answer management</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">Verification badge system</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">Forms management system</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">Client management tools</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <Check className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <span className="font-medium">Priority phone support</span>
-                </li>
-              </ul>
-              
-              <button
-                onClick={() => handleUpgrade('premium')}
-                disabled={lawyer?.subscription_tier === 'premium'}
-                className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl mt-auto ${
-                  lawyer?.subscription_tier === 'premium'
-                    ? 'bg-emerald-500 text-white cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                }`}
-              >
-                {lawyer?.subscription_tier === 'premium' ? 'Current Plan' : 'Get Premium'}
-              </button>
-            </div>
+              );
+            })()}
           </div>
 
           {/* Trust Indicators */}
