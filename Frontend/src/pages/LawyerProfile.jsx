@@ -91,8 +91,8 @@ export default function LawyerProfile() {
       navigate('/login');
       return;
     }
-    if (user.role === 'lawyer') {
-      toast.error('Only users can write reviews');
+    if (user.role === 'lawyer' || user.registration_id) {
+      toast.error('Only clients can write reviews');
       return;
     }
     setShowReviewModal(true);
@@ -104,7 +104,7 @@ export default function LawyerProfile() {
       navigate('/login');
       return;
     }
-    if (user.role !== 'lawyer') {
+    if (user.role !== 'lawyer' && !user.registration_id) {
       toast.error('Only lawyers can endorse other lawyers');
       return;
     }
@@ -386,20 +386,24 @@ export default function LawyerProfile() {
                       <span>Login to Chat</span>
                     </button>
                   )}
-                  <button 
-                    onClick={handleReviewClick}
-                    className="flex items-center justify-center gap-3 border-2 border-blue-300 text-blue-700 px-8 py-4 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 font-medium"
-                  >
-                    <Star className="w-5 h-5" />
-                    {user && user.role !== 'lawyer' ? 'Write Review' : 'Login to Review'}
-                  </button>
-                  <button 
-                    onClick={handleEndorseClick}
-                    className="flex items-center justify-center gap-3 border-2 border-green-300 text-green-700 px-8 py-4 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 font-medium"
-                  >
-                    <Award className="w-5 h-5" />
-                    {user && user.role === 'lawyer' ? 'Endorse Lawyer' : 'Login to Endorse'}
-                  </button>
+                  {(!user || (user.role !== 'lawyer' && !user.registration_id)) && (
+                    <button 
+                      onClick={handleReviewClick}
+                      className="flex items-center justify-center gap-3 border-2 border-blue-300 text-blue-700 px-8 py-4 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 font-medium"
+                    >
+                      <Star className="w-5 h-5" />
+                      {user ? 'Write Review' : 'Login to Review'}
+                    </button>
+                  )}
+                  {(!user || user.role === 'lawyer' || user.registration_id) && (
+                    <button 
+                      onClick={handleEndorseClick}
+                      className="flex items-center justify-center gap-3 border-2 border-green-300 text-green-700 px-8 py-4 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 font-medium"
+                    >
+                      <Award className="w-5 h-5" />
+                      {user && (user.role === 'lawyer' || user.registration_id) ? 'Endorse Lawyer' : 'Login to Endorse'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -646,12 +650,14 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-900">Client Reviews</h2>
-                <button
-                  onClick={handleReviewClick}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                >
-                  Write Review
-                </button>
+                {(!user || (user.role !== 'lawyer' && !user.registration_id)) && (
+                  <button
+                    onClick={handleReviewClick}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                  >
+                    Write Review
+                  </button>
+                )}
               </div>
               {reviews.length > 0 ? (
                 <div className="space-y-6">
@@ -672,8 +678,8 @@ export default function LawyerProfile() {
                           {new Date(review.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      {review.review && (
-                        <p className="text-gray-700 mb-2">"{review.review}"</p>
+                      {review.review_text && (
+                        <p className="text-gray-700 mb-2">"{review.review_text}"</p>
                       )}
                       <p className="text-sm text-gray-500">- {review.user_name}</p>
                     </div>
@@ -688,12 +694,14 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Attorney Endorsements</h2>
-                <button
-                  onClick={handleEndorseClick}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
-                >
-                  Endorse Lawyer
-                </button>
+                {user && (user.role === 'lawyer' || user.registration_id) && (
+                  <button
+                    onClick={handleEndorseClick}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                  >
+                    Endorse Lawyer
+                  </button>
+                )}
               </div>
               
               {endorsements.length > 0 ? (

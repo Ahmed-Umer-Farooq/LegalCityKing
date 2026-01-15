@@ -383,14 +383,16 @@ function LawyerDirectory() {
           : getPlaceholderImage(lawyer.name, lawyer.id);
         
         return {
-          ...lawyer,
+          id: lawyer.secure_id || lawyer.id,
+          secure_id: lawyer.secure_id,
+          name: lawyer.name,
           practiceAreas: lawyer.speciality ? [lawyer.speciality] : ['General Practice'],
-          yearsLicensed: Math.floor(Math.random() * 15) + 5,
+          yearsLicensed: lawyer.years_licensed || Math.floor(Math.random() * 15) + 5,
           rating: parseFloat(lawyer.rating) || 0,
           reviewCount: lawyer.reviews || lawyer.reviewCount || 0,
           reviewScore: parseFloat(lawyer.rating) || 0,
           location: `${lawyer.city || 'Unknown'}, ${lawyer.state || 'Unknown'}`,
-          description: `Experienced ${lawyer.speciality || 'legal'} attorney with expertise in various legal matters.`,
+          description: lawyer.bio || `Experienced ${lawyer.speciality || 'legal'} attorney with expertise in various legal matters.`,
           imageUrl: imageUrl,
           category: lawyer.speciality || 'General Practice'
         };

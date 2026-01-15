@@ -5,6 +5,11 @@ const createReview = async (req, res) => {
     const { lawyer_secure_id, rating, review } = req.body;
     const user_id = req.user.id;
 
+    // Only non-lawyers can review
+    if (req.user.type === 'lawyer' || req.user.registration_id) {
+      return res.status(403).json({ message: 'Only clients can write reviews' });
+    }
+
     if (!lawyer_secure_id || !rating) {
       return res.status(400).json({ message: 'Lawyer ID and rating are required' });
     }
@@ -89,8 +94,8 @@ const createEndorsement = async (req, res) => {
     const { endorsed_lawyer_secure_id, endorsement_text, relationship } = req.body;
     const endorser_id = req.user.id;
 
-    // Only lawyers can endorse other lawyers (using modern auth system)
-    if (req.user.type !== 'lawyer') {
+    // Only lawyers can endorse other lawyers
+    if (req.user.type !== 'lawyer' && !req.user.registration_id) {
       return res.status(403).json({ message: 'Only lawyers can endorse other lawyers' });
     }
 

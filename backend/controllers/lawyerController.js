@@ -175,7 +175,6 @@ const getLawyersDirectory = async (req, res) => {
         db.raw('COUNT(lawyer_reviews.id) as total_reviews'),
         db.raw('AVG(lawyer_reviews.rating) as average_rating')
       )
-      .where('lawyers.is_verified', 1)
       .groupBy('lawyers.id');
 
     const processedLawyers = lawyers.map(lawyer => ({
@@ -197,7 +196,6 @@ const getLawyerById = async (req, res) => {
     const { secureId } = req.params;
     const lawyer = await db('lawyers')
       .where('secure_id', secureId)
-      .where('is_verified', 1)
       .first();
 
     if (!lawyer) {

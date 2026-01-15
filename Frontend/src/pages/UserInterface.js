@@ -216,7 +216,7 @@ const LawyerCard = React.memo(function LawyerCard({
   location,
   image,
   practiceAreas,
-  id = 1,
+  id,
 }) {
   const navigate = useNavigate();
   return (
