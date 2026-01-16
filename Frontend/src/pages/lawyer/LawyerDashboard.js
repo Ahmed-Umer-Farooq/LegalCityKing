@@ -433,7 +433,7 @@ export default function LawyerDashboard() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="w-full px-4 md:px-6 lg:px-8 pb-16 max-w-screen-2xl mx-auto">
+      <main className="w-full px-4 md:px-6 lg:px-8 pb-16 pt-6 max-w-screen-2xl mx-auto">
         {activeNavItem === 'contacts' && (
           <RestrictedFeature featureName="contacts" lawyer={currentUser}>
             <ContactsPage />
@@ -519,12 +519,12 @@ export default function LawyerDashboard() {
             <p className="text-[#737791] text-sm">Current Period Statistics</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#E2F1FF] rounded-xl p-4 relative overflow-hidden">
-              <div className="w-[34px] h-[34px] bg-[#007EF4] rounded-full mb-3 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-4 relative overflow-hidden border border-[#B8DAFF]">
+              <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-3 flex items-center justify-center shadow-md">
                 <FileText className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-[#03498B] text-xl font-semibold mb-2">Active Cases</h3>
-              <p className="text-[#03498B] text-2xl font-bold mb-1">{stats.activeCases}</p>
+              <h3 className="text-[#0052A3] text-xl font-semibold mb-2">Active Cases</h3>
+              <p className="text-[#0052A3] text-2xl font-bold mb-1">{stats.activeCases}</p>
               <div className="flex items-center text-xs">
                 <span className={`font-medium ${
                   stats.percentageChanges?.activeCases >= 0 ? 'text-green-600' : 'text-red-600'
@@ -533,14 +533,14 @@ export default function LawyerDashboard() {
                 </span>
                 <span className="text-[#737791] ml-1">from last month</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#007EF4]/10 rounded-full -mr-8 -mb-8"></div>
+              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#0066CC]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
-            <div className="bg-[#DCFCE7] rounded-xl p-4 relative overflow-hidden">
-              <div className="w-[34px] h-[34px] bg-[#16D959] rounded-full mb-3 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-[#E8F8F0] to-[#D9F3E8] rounded-xl p-4 relative overflow-hidden border border-[#A7E6C8]">
+              <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full mb-3 flex items-center justify-center shadow-md">
                 <Users className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-[#1F5632] text-xl font-semibold mb-2">Total Clients</h3>
-              <p className="text-[#1F5632] text-2xl font-bold mb-1">{stats.totalClients}</p>
+              <h3 className="text-[#047857] text-xl font-semibold mb-2">Total Clients</h3>
+              <p className="text-[#047857] text-2xl font-bold mb-1">{stats.totalClients}</p>
               <div className="flex items-center text-xs">
                 <span className={`font-medium ${
                   stats.percentageChanges?.totalClients >= 0 ? 'text-green-600' : 'text-red-600'
@@ -549,29 +549,29 @@ export default function LawyerDashboard() {
                 </span>
                 <span className="text-[#737791] ml-1">from last month</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#16D959]/10 rounded-full -mr-8 -mb-8"></div>
+              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#10B981]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
-            <div className="bg-[#FFE3E1] rounded-xl p-4 relative overflow-hidden">
-              <div className="w-[34px] h-[34px] bg-[#E6372B] rounded-full mb-3 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-[#F0F4FF] to-[#E5EDFF] rounded-xl p-4 relative overflow-hidden border border-[#C7D7FE]">
+              <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-full mb-3 flex items-center justify-center shadow-md">
                 <DollarSign className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-[#931B12] text-xl font-semibold mb-2">Total Earnings</h3>
-              <p className="text-[#931B12] text-2xl font-bold mb-1">${Number(earnings.total_earned || 0).toFixed(2)}</p>
+              <h3 className="text-[#4338CA] text-xl font-semibold mb-2">Total Earnings</h3>
+              <p className="text-[#4338CA] text-2xl font-bold mb-1">${Number(earnings.total_earned || 0).toFixed(2)}</p>
               <div className="flex items-center text-xs">
-                <span className="text-green-600 font-medium">Available: ${Number(earnings.available_balance || 0).toFixed(2)}</span>
+                <span className="text-[#10B981] font-medium">Available: ${Number(earnings.available_balance || 0).toFixed(2)}</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#E6372B]/10 rounded-full -mr-8 -mb-8"></div>
+              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#6366F1]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
-            <div className="bg-[#FFF4E0] rounded-xl p-4 relative overflow-hidden">
-              <div className="w-[34px] h-[34px] bg-[#F5AB23] rounded-full mb-3 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-[#FFF7ED] to-[#FFEDD5] rounded-xl p-4 relative overflow-hidden border border-[#FED7AA]">
+              <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full mb-3 flex items-center justify-center shadow-md">
                 <Calendar className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-[#654C1F] text-xl font-semibold mb-2">Upcoming Hearings</h3>
-              <p className="text-[#654C1F] text-2xl font-bold mb-1">{stats.upcomingHearings}</p>
+              <h3 className="text-[#C2410C] text-xl font-semibold mb-2">Upcoming Hearings</h3>
+              <p className="text-[#C2410C] text-2xl font-bold mb-1">{stats.upcomingHearings}</p>
               <div className="flex items-center text-xs">
-                <span className="text-orange-600 font-medium">{Math.min(stats.upcomingHearings, 7)} this week</span>
+                <span className="text-[#EA580C] font-medium">{Math.min(stats.upcomingHearings, 7)} this week</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#F5AB23]/10 rounded-full -mr-8 -mb-8"></div>
+              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#F97316]/10 rounded-full -mr-8 -mb-8"></div>
             </div>
           </div>
         </div>
@@ -940,7 +940,21 @@ export default function LawyerDashboard() {
         {/* Recent Notes, Calls */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Notes</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#181A2A] text-lg font-semibold">Recent Notes</h2>
+              <select 
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                onChange={(e) => {
+                  const limit = e.target.value === 'all' ? 100 : parseInt(e.target.value);
+                  api.get(`/notes?page=1&limit=${limit}`).then(res => {
+                    setNotes(Array.isArray(res.data?.data) ? res.data.data : []);
+                  }).catch(() => setNotes([]));
+                }}
+              >
+                <option value="3">Recent (3)</option>
+                <option value="all">All Notes</option>
+              </select>
+            </div>
             <div className="space-y-3">
               {loading ? (
                 <p className="text-center text-[#737791]">Loading...</p>

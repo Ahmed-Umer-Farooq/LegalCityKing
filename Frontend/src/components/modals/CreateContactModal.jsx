@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import api from '../../utils/api';
+import { showToast } from '../../utils/toastUtils';
 
 export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.phone || !formData.type) {
-      alert('Name, email, phone, and type are required');
+      showToast.warning('Name, email, phone, and type are required');
       return;
     }
 
@@ -26,13 +27,13 @@ export default function CreateContactModal({ isOpen, onClose, onSuccess }) {
       const submitData = { ...formData };
       const response = await api.post('/contacts', submitData);
       if (response.data?.success) {
-        alert('Contact created successfully!');
+        showToast.success('Contact created successfully!');
         onSuccess();
         onClose();
         setFormData({ name: '', email: '', phone: '', type: '', company: '', title: '', address: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create contact');
+      showToast.error(error.response?.data?.error || 'Failed to create contact');
     } finally {
       setLoading(false);
     }

@@ -33,6 +33,13 @@ export default function ContactsPage() {
     return matchesSearch && matchesFilter;
   });
 
+  const contactStats = {
+    total: contacts.length,
+    clients: contacts.filter(c => c.type === 'client').length,
+    witnesses: contacts.filter(c => c.type === 'witness').length,
+    others: contacts.filter(c => !['client', 'witness'].includes(c.type)).length
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -47,6 +54,41 @@ export default function ContactsPage() {
           <Plus className="w-4 h-4" />
           Add Contact
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-4 relative overflow-hidden border border-[#B8DAFF]">
+          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-3 flex items-center justify-center shadow-md">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-[#0052A3] text-xl font-semibold mb-2">Total Contacts</h3>
+          <p className="text-[#0052A3] text-2xl font-bold mb-1">{contactStats.total}</p>
+          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#0066CC]/10 rounded-full -mr-8 -mb-8"></div>
+        </div>
+        <div className="bg-gradient-to-br from-[#E8F8F0] to-[#D9F3E8] rounded-xl p-4 relative overflow-hidden border border-[#A7E6C8]">
+          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full mb-3 flex items-center justify-center shadow-md">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-[#047857] text-xl font-semibold mb-2">Clients</h3>
+          <p className="text-[#047857] text-2xl font-bold mb-1">{contactStats.clients}</p>
+          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#10B981]/10 rounded-full -mr-8 -mb-8"></div>
+        </div>
+        <div className="bg-gradient-to-br from-[#F0F4FF] to-[#E5EDFF] rounded-xl p-4 relative overflow-hidden border border-[#C7D7FE]">
+          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-full mb-3 flex items-center justify-center shadow-md">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-[#4338CA] text-xl font-semibold mb-2">Witnesses</h3>
+          <p className="text-[#4338CA] text-2xl font-bold mb-1">{contactStats.witnesses}</p>
+          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#6366F1]/10 rounded-full -mr-8 -mb-8"></div>
+        </div>
+        <div className="bg-gradient-to-br from-[#FFF7ED] to-[#FFEDD5] rounded-xl p-4 relative overflow-hidden border border-[#FED7AA]">
+          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full mb-3 flex items-center justify-center shadow-md">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-[#C2410C] text-xl font-semibold mb-2">Others</h3>
+          <p className="text-[#C2410C] text-2xl font-bold mb-1">{contactStats.others}</p>
+          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#F97316]/10 rounded-full -mr-8 -mb-8"></div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6">

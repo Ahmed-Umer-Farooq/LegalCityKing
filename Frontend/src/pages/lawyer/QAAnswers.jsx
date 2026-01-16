@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { showToast } from '../../utils/toastUtils';
 
 const QAAnswers = () => {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ const QAAnswers = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please login first');
+        showToast.warning('Please login first');
         return;
       }
       
@@ -40,7 +41,7 @@ const QAAnswers = () => {
       setQuestions(data.questions || []);
     } catch (error) {
       console.error('Error:', error);
-      alert(error.message);
+      showToast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ const QAAnswers = () => {
 
   const handleAnswerSubmit = async () => {
     if (!answer.trim() || answer.length < 10) {
-      alert('Answer must be at least 10 characters long');
+      showToast.warning('Answer must be at least 10 characters long');
       return;
     }
 
@@ -65,18 +66,18 @@ const QAAnswers = () => {
       });
 
       if (response.ok) {
-        alert('Answer submitted successfully!');
+        showToast.success('Answer submitted successfully!');
         setAnswer('');
         setShowAnswerModal(false);
         setSelectedQuestion(null);
         fetchQuestions();
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to submit answer');
+        showToast.error(data.error || 'Failed to submit answer');
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
-      alert('Error submitting answer');
+      showToast.error('Error submitting answer');
     } finally {
       setSubmitting(false);
     }

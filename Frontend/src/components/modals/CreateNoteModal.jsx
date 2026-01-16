@@ -14,7 +14,7 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.content) {
-      alert('Title and content are required');
+      showToast.warning('Title and content are required');
       return;
     }
 
@@ -23,13 +23,13 @@ export default function CreateNoteModal({ isOpen, onClose, onSuccess }) {
       const submitData = { ...formData };
       const response = await api.post('/notes', submitData);
       if (response.data?.success) {
-        alert('Note created successfully!');
+        showToast.success('Note created successfully!');
         onSuccess();
         onClose();
         setFormData({ title: '', content: '', note_type: '' });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create note');
+      showToast.error(error.response?.data?.error || 'Failed to create note');
     } finally {
       setLoading(false);
     }

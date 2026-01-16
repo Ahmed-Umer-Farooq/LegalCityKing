@@ -47,7 +47,6 @@ const createContact = async (req, res) => {
       const [userId] = await db('users').insert({
         name,
         email,
-        phone,
         role: 'client',
         created_by_lawyer: lawyerId,
         created_at: new Date(),
