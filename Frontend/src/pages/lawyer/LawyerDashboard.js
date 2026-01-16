@@ -596,17 +596,17 @@ export default function LawyerDashboard() {
                   // Reorder to start with January
                   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                   const reorderedData = months.map(month => 
-                    stats.monthlyRevenueData.find(d => d.month === month) || { month, revenue: 0 }
+                    stats.monthlyRevenueData.find(d => d.month === month) || { month, amount: 0 }
                   );
-                  const maxRevenue = Math.max(...reorderedData.map(d => d.revenue));
+                  const maxRevenue = Math.max(...reorderedData.map(d => d.amount || 0));
                   return reorderedData.map((data, index) => {
-                    const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 0;
+                    const height = maxRevenue > 0 ? ((data.amount || 0) / maxRevenue) * 100 : 0;
                     return (
                       <div 
                         key={index} 
                         className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" 
                         style={{height: `${Math.max(height, 5)}%`}}
-                        title={`${data.month}: $${data.revenue.toLocaleString()}`}
+                        title={`${data.month}: $${(data.amount || 0).toLocaleString()}`}
                       ></div>
                     );
                   });

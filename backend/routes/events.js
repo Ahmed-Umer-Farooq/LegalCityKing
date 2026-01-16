@@ -5,11 +5,12 @@ const { getAllEvents, createEvent, updateEvent, deleteEvent, getUpcomingEvents, 
 
 router.use(authenticate);
 
-router.get('/', authorize('read', 'events'), getAllEvents);
-router.get('/upcoming', authorize('read', 'events'), getUpcomingEvents);
-router.get('/calendar', authorize('read', 'events'), getCalendarEvents);
-router.post('/', authorize('write', 'events'), createEvent);
-router.put('/:id', authorize('write', 'events'), updateEvent);
-router.delete('/:id', authorize('write', 'events'), deleteEvent);
+// Routes already protected by authenticate
+router.get('/', getAllEvents);
+router.get('/upcoming', getUpcomingEvents);
+router.get('/calendar', getCalendarEvents);
+router.post('/', createEvent);
+router.put('/:id', updateEvent);
+router.delete('/:id', deleteEvent);
 
 module.exports = router;

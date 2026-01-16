@@ -3,6 +3,7 @@ const passport = require('../config/passport');
 const db = require('../db');
 const { authenticate } = require('../middleware/modernAuth');
 const rbacService = require('../services/rbacService');
+const lawyerRoleService = require('../services/lawyerRoleService');
 const { authLimiter } = require('../utils/limiter');
 const {
   login,
@@ -32,8 +33,7 @@ router.post('/register-user', authLimiter, async (req, res) => {
 router.post('/register-lawyer', authLimiter, async (req, res) => {
   const result = await registerLawyer(req, res);
   if (result && result.user) {
-    const roleName = result.user.is_verified ? 'verified_lawyer' : 'lawyer';
-    await rbacService.assignRole(result.user.id, 'lawyer', roleName);
+    await lawyerRoleService.assignRoleBasedOnStatus(result.user.id);
   }
 });
 

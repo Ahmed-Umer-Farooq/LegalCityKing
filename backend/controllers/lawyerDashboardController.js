@@ -8,7 +8,7 @@ const getDashboardStats = async (req, res) => {
     const thisMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     
     // Get current month stats
-    const [activeCases, totalClients, upcomingHearings] = await Promise.all([
+    const [activeCases, totalClients, upcomingHearings, monthlyRevenue, totalRevenue] = await Promise.all([
       db('cases').where({ lawyer_id: lawyerId, status: 'active' }).count('id as count').first(),
       db('users')
         .leftJoin('cases', 'users.id', 'cases.client_id')
@@ -20,22 +20,32 @@ const getDashboardStats = async (req, res) => {
         .countDistinct('users.id as count').first(),
       db('events').where('lawyer_id', lawyerId)
         .where('start_date_time', '>=', currentDate.toISOString())
-        .count('id as count').first()
+        .count('id as count').first(),
+      db('transactions')
+        .where('lawyer_id', lawyerId)
+        .where('status', 'completed')
+        .whereBetween('created_at', [thisMonth, currentDate])
+        .sum('lawyer_earnings as total').first(),
+      db('transactions')
+        .where('lawyer_id', lawyerId)
+        .where('status', 'completed')
+        .sum('lawyer_earnings as total').first()
     ]);
 
-    const monthlyRevenue = { total: 0 };
-
     // Get last month stats for comparison
-    const [lastMonthCases, lastMonthClients] = await Promise.all([
+    const [lastMonthCases, lastMonthClients, lastMonthRevenue] = await Promise.all([
       db('cases').where({ lawyer_id: lawyerId, status: 'active' })
         .whereBetween('created_at', [lastMonth, thisMonth])
         .count('id as count').first(),
       db('cases').where('lawyer_id', lawyerId)
         .whereBetween('created_at', [lastMonth, thisMonth])
-        .countDistinct('client_id as count').first()
+        .countDistinct('client_id as count').first(),
+      db('transactions')
+        .where('lawyer_id', lawyerId)
+        .where('status', 'completed')
+        .whereBetween('created_at', [lastMonth, thisMonth])
+        .sum('lawyer_earnings as total').first()
     ]);
-
-    const lastMonthRevenue = { total: 0 };
 
     // Calculate percentage changes
     const calculatePercentage = (current, previous) => {
@@ -52,6 +62,24 @@ const getDashboardStats = async (req, res) => {
     const lastTotalClients = parseInt(lastMonthClients.count) || 0;
     const lastMonthlyRevenue = parseFloat(lastMonthRevenue.total) || 0;
 
+    // Get monthly revenue data for chart (last 12 months)
+    const monthlyRevenueData = [];
+    for (let i = 11; i >= 0; i--) {
+      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+      
+      const monthRevenue = await db('transactions')
+        .where('lawyer_id', lawyerId)
+        .where('status', 'completed')
+        .whereBetween('created_at', [monthStart, monthEnd])
+        .sum('lawyer_earnings as total').first();
+      
+      monthlyRevenueData.push({
+        month: monthStart.toLocaleString('default', { month: 'short' }),
+        amount: parseFloat(monthRevenue.total) || 0
+      });
+    }
+
     // Get case distribution by type
     const caseDistribution = await db('cases')
       .select('type')
@@ -59,13 +87,11 @@ const getDashboardStats = async (req, res) => {
       .where('lawyer_id', lawyerId)
       .groupBy('type');
 
-    // Monthly revenue data - empty since invoices deleted
-    const monthlyRevenueData = [];
-
     res.json({
       activeCases: currentActiveCases,
       totalClients: currentTotalClients,
       monthlyRevenue: currentMonthlyRevenue,
+      totalRevenue: parseFloat(totalRevenue.total) || 0,
       upcomingHearings: currentUpcomingHearings,
       percentageChanges: {
         activeCases: calculatePercentage(currentActiveCases, lastActiveCases),
