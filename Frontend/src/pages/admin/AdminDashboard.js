@@ -18,6 +18,9 @@ const FormsManagement = React.lazy(() => import('./FormsManagement'));
 const ContactSubmissions = React.lazy(() => import('./ContactSubmissions'));
 const VerificationManagement = React.lazy(() => import('./VerificationManagement'));
 const PaymentManagement = React.lazy(() => import('./PaymentManagement'));
+const ConnectedAccounts = React.lazy(() => import('./ConnectedAccounts'));
+const PayoutRequests = React.lazy(() => import('./PayoutRequests'));
+const PlatformEarnings = React.lazy(() => import('./PlatformEarnings'));
 const SubscriptionManagement = React.lazy(() => import('./SubscriptionManagement'));
 const FinancialAnalytics = React.lazy(() => import('./FinancialAnalytics'));
 const BusinessIntelligence = React.lazy(() => import('./BusinessIntelligence'));
@@ -2595,6 +2598,21 @@ const AdminDashboard = ({ activeTabProp }) => {
         {activeTab === 'payments' && (
           <Suspense fallback={<LoadingSpinner />}>
             <PaymentManagement />
+          </Suspense>
+        )}
+        {activeTab === 'connected-accounts' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <ConnectedAccounts />
+          </Suspense>
+        )}
+        {activeTab === 'payout-requests' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PayoutRequests />
+          </Suspense>
+        )}
+        {activeTab === 'platform-earnings' && (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PlatformEarnings />
           </Suspense>
         )}
         {activeTab === 'subscriptions' && (

@@ -62,9 +62,8 @@ const createPaymentLinkCheckout = async (req, res) => {
   try {
     const { linkId, userId } = req.body;
     
-    // Get payment link details
     const paymentLink = await db('payment_links')
-      .select('payment_links.*', 'lawyers.name as lawyer_name')
+      .select('payment_links.*', 'lawyers.name as lawyer_name', 'lawyers.stripe_connect_account_id')
       .leftJoin('lawyers', 'payment_links.lawyer_id', 'lawyers.id')
       .where('payment_links.link_id', linkId)
       .first();
@@ -73,12 +72,10 @@ const createPaymentLinkCheckout = async (req, res) => {
       return res.status(404).json({ error: 'Payment link not found' });
     }
 
-    // Check if link is expired
     if (new Date() > new Date(paymentLink.expires_at)) {
       return res.status(400).json({ error: 'Payment link has expired' });
     }
 
-    // Check if already paid
     const existingTransaction = await db('transactions')
       .where('payment_link_id', linkId)
       .where('status', 'completed')
@@ -103,10 +100,10 @@ const createPaymentLinkCheckout = async (req, res) => {
       }
     }
 
-    const platformFee = Math.round(paymentLink.amount * 0.05 * 100); // 5% platform fee
+    const platformFee = Math.round(paymentLink.amount * 0.05 * 100);
     const lawyerEarnings = paymentLink.amount * 100 - platformFee;
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{
@@ -131,7 +128,19 @@ const createPaymentLinkCheckout = async (req, res) => {
         platformFee: platformFee.toString(),
         lawyerEarnings: lawyerEarnings.toString()
       }
-    });
+    };
+
+    // Add destination charge if lawyer has Connect account
+    if (paymentLink.stripe_connect_account_id) {
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: paymentLink.stripe_connect_account_id
+        }
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     res.json({ sessionId: session.id, url: session.url });
   } catch (error) {
@@ -165,10 +174,10 @@ const createConsultationCheckout = async (req, res) => {
       }
     }
 
-    const platformFee = Math.round(amount * 0.05 * 100); // 5% platform fee
+    const platformFee = Math.round(amount * 0.05 * 100);
     const lawyerEarnings = amount * 100 - platformFee;
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{
@@ -192,7 +201,19 @@ const createConsultationCheckout = async (req, res) => {
         platformFee: platformFee.toString(),
         lawyerEarnings: lawyerEarnings.toString()
       }
-    });
+    };
+
+    // Add destination charge if lawyer has Connect account
+    if (lawyer.stripe_connect_account_id) {
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: lawyer.stripe_connect_account_id
+        }
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     res.json({ sessionId: session.id, url: session.url });
   } catch (error) {

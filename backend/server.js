@@ -451,6 +451,14 @@ app.use('/api/admin/security', securityRoutes);
 const paymentLinksRoutes = require('./routes/paymentLinks');
 app.use('/api/payment-links', paymentLinksRoutes);
 
+// Stripe Connect routes
+const stripeConnectRoutes = require('./routes/stripeConnect');
+app.use('/api/stripe-connect', stripeConnectRoutes);
+
+// Admin Payout routes
+const adminPayoutsRoutes = require('./routes/adminPayouts');
+app.use('/api/admin/payouts', adminPayoutsRoutes);
+
 // Make io available to routes
 app.set('io', io);
 
