@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, CreditCard, TrendingUp, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const PayoutsTab = () => {
   const [balance, setBalance] = useState({ available: 0, pending: 0, total_earned: 0 });
@@ -141,7 +141,7 @@ const PayoutsTab = () => {
               <p className="text-sm text-gray-600">Available Balance</p>
               <p className="text-3xl font-bold text-green-600">${balance.available.toFixed(2)}</p>
             </div>
-            <DollarSign className="w-12 h-12 text-green-600 opacity-20" />
+            <Wallet className="w-12 h-12 text-green-600 opacity-20" />
           </div>
         </div>
 

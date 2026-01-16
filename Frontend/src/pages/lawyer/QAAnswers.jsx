@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toastUtils';
+import { MapPin, User, Calendar, Eye } from 'lucide-react';
 
 const QAAnswers = () => {
   const { user } = useAuth();
@@ -120,10 +121,10 @@ const QAAnswers = () => {
                   {question.question}
                 </h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                  <span>📍 {question.city_state}</span>
-                  <span>👤 {question.user_display_name || 'Anonymous'}</span>
-                  <span>📅 {formatDate(question.created_at)}</span>
-                  <span>👁️ {question.views} views</span>
+                  <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {question.city_state}</span>
+                  <span className="flex items-center gap-1"><User className="w-4 h-4" /> {question.user_display_name || 'Anonymous'}</span>
+                  <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(question.created_at)}</span>
+                  <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {question.views} views</span>
                 </div>
               </div>
 

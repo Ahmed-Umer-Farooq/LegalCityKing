@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Crown } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
@@ -294,7 +294,7 @@ export default function LawyerDashboard() {
                 { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, subscriptionRequired: !isPremium },
                 { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
                 { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, verificationRequired: !isVerified },
-                { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
+                { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;

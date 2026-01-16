@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { MapPin, User, Calendar, Eye } from 'lucide-react';
 
 const QA = () => {
   const { user } = useAuth();
@@ -309,10 +310,10 @@ const QA = () => {
                           {question.situation.substring(0, 200)}...
                         </p>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span>📍 {question.city_state}</span>
-                          <span>👤 {question.user_display_name || 'Anonymous'}</span>
-                          <span>📅 {formatDate(question.created_at)}</span>
-                          <span>👁️ {question.views} views</span>
+                          <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {question.city_state}</span>
+                          <span className="flex items-center gap-1"><User className="w-4 h-4" /> {question.user_display_name || 'Anonymous'}</span>
+                          <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(question.created_at)}</span>
+                          <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {question.views} views</span>
                         </div>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
@@ -502,10 +503,10 @@ const QA = () => {
                   </div>
                   <p className="text-blue-800 mb-4 whitespace-pre-wrap">{selectedQuestion.situation}</p>
                   <div className="flex items-center space-x-4 text-sm text-blue-700">
-                    <span>📍 {selectedQuestion.city_state}</span>
-                    <span>👤 {selectedQuestion.user_display_name || 'Anonymous'}</span>
-                    <span>📅 {formatDate(selectedQuestion.created_at)}</span>
-                    <span>👁️ {selectedQuestion.views} views</span>
+                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedQuestion.city_state}</span>
+                    <span className="flex items-center gap-1"><User className="w-4 h-4" /> {selectedQuestion.user_display_name || 'Anonymous'}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(selectedQuestion.created_at)}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {selectedQuestion.views} views</span>
                   </div>
                 </div>
 

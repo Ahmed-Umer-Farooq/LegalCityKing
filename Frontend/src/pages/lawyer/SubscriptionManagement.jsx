@@ -295,7 +295,7 @@ const SubscriptionManagement = () => {
           <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800">Payment Method</h3>
-              <CreditCard className="w-6 h-6 text-slate-600" />
+              <Crown className="w-6 h-6 text-amber-500" />
             </div>
             <div className="text-sm text-slate-600 mb-4">
               {lawyer?.stripe_customer_id ? 'Card on file' : 'No payment method'}
