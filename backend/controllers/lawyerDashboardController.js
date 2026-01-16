@@ -59,8 +59,26 @@ const getDashboardStats = async (req, res) => {
       .where('lawyer_id', lawyerId)
       .groupBy('type');
 
-    // Monthly revenue data - empty since invoices deleted
+    // Monthly revenue data from transactions
+    const currentYear = new Date().getFullYear();
     const monthlyRevenueData = [];
+    
+    for (let month = 0; month < 12; month++) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const startDate = new Date(currentYear, month, 1);
+      const endDate = new Date(currentYear, month + 1, 0, 23, 59, 59);
+      
+      const result = await db('transactions')
+        .where('lawyer_id', lawyerId)
+        .whereBetween('created_at', [startDate, endDate])
+        .sum('lawyer_earnings as total')
+        .first();
+      
+      monthlyRevenueData.push({
+        month: monthNames[month],
+        revenue: parseFloat(result.total) || 0
+      });
+    }
 
     res.json({
       activeCases: currentActiveCases,

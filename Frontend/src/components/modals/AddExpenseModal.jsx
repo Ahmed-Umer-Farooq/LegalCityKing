@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import api from '../../utils/api';
+import { showToast } from '../../utils/toastUtils';
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.amount || !formData.description || !formData.date) {
-      alert('Amount, description, and date are required');
+      showToast.warning('Amount, description, and date are required');
       return;
     }
 
@@ -24,13 +25,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
     try {
       const response = await api.post('/expenses', formData);
       if (response.data?.success) {
-        alert('Expense added successfully!');
+        showToast.success('Expense added successfully!');
         onSuccess();
         onClose();
         setFormData({ amount: '', description: '', date: new Date().toISOString().slice(0, 16), category: '', receipt_url: '', billable: false });
       }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to add expense');
+      showToast.error(error.response?.data?.error || 'Failed to add expense');
     } finally {
       setLoading(false);
     }

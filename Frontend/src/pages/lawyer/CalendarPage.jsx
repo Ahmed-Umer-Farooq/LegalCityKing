@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../../utils/api';
+import { showToast } from '../../utils/toastUtils';
 
 const CalendarPage = () => {
   const [events, setEvents] = useState([]);
@@ -10,6 +11,8 @@ const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -277,10 +280,19 @@ const CalendarPage = () => {
                     </div>
                     
                     <div className="flex items-center gap-2 ml-4">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      <button 
+                        onClick={() => {
+                          setEditingEvent(event);
+                          setShowEventModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
                         Edit
                       </button>
-                      <button className="text-red-600 hover:text-red-800 text-sm font-medium">
+                      <button 
+                        onClick={() => setDeleteConfirm(event.id)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
                         Delete
                       </button>
                     </div>
@@ -334,40 +346,86 @@ const CalendarPage = () => {
         </div>
       )}
 
-      {/* Create Event Modal */}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4">Delete Event</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this event? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await api.delete(`/events/${deleteConfirm}`);
+                    showToast.success('Event deleted successfully');
+                    setDeleteConfirm(null);
+                    fetchEvents();
+                  } catch (error) {
+                    showToast.error('Failed to delete event');
+                    console.error('Error deleting event:', error);
+                  }
+                }}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Event Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Create Event</h3>
-              <button onClick={() => setShowEventModal(false)} className="text-gray-500 hover:text-gray-700">
+              <h3 className="text-lg font-semibold">{editingEvent ? 'Edit Event' : 'Create Event'}</h3>
+              <button onClick={() => { setShowEventModal(false); setEditingEvent(null); }} className="text-gray-500 hover:text-gray-700">
                 ×
               </button>
             </div>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.target);
               const eventData = {
                 title: formData.get('title'),
                 event_type: formData.get('event_type'),
-                start_date_time: selectedDate?.toISOString().slice(0, 16),
+                start_date_time: formData.get('start_date_time'),
+                end_date_time: formData.get('end_date_time') || null,
                 description: formData.get('description'),
                 location: formData.get('location')
               };
               
-              api.post('/events', eventData).then(() => {
+              try {
+                if (editingEvent) {
+                  await api.put(`/events/${editingEvent.id}`, eventData);
+                  showToast.success('Event updated successfully');
+                } else {
+                  await api.post('/events', eventData);
+                  showToast.success('Event created successfully');
+                }
                 setShowEventModal(false);
+                setEditingEvent(null);
                 fetchEvents();
-              }).catch(err => console.error(err));
+              } catch (err) {
+                showToast.error('Failed to save event');
+                console.error(err);
+              }
             }}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Title</label>
-                  <input name="title" type="text" required className="w-full px-3 py-2 border rounded-lg" />
+                  <input name="title" type="text" defaultValue={editingEvent?.title} required className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Type</label>
-                  <select name="event_type" className="w-full px-3 py-2 border rounded-lg">
+                  <select name="event_type" defaultValue={editingEvent?.event_type} className="w-full px-3 py-2 border rounded-lg">
                     <option value="meeting">Meeting</option>
                     <option value="hearing">Hearing</option>
                     <option value="deadline">Deadline</option>
@@ -377,18 +435,26 @@ const CalendarPage = () => {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium mb-1">Start Date & Time</label>
+                  <input name="start_date_time" type="datetime-local" defaultValue={editingEvent?.start_date_time?.slice(0, 16)} required className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">End Date & Time</label>
+                  <input name="end_date_time" type="datetime-local" defaultValue={editingEvent?.end_date_time?.slice(0, 16)} className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div>
                   <label className="block text-sm font-medium mb-1">Location</label>
-                  <input name="location" type="text" className="w-full px-3 py-2 border rounded-lg" />
+                  <input name="location" type="text" defaultValue={editingEvent?.location} className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea name="description" className="w-full px-3 py-2 border rounded-lg" rows="3"></textarea>
+                  <textarea name="description" defaultValue={editingEvent?.description} className="w-full px-3 py-2 border rounded-lg" rows="3"></textarea>
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-                    Create
+                    {editingEvent ? 'Update' : 'Create'}
                   </button>
-                  <button type="button" onClick={() => setShowEventModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">
+                  <button type="button" onClick={() => { setShowEventModal(false); setEditingEvent(null); }} className="flex-1 bg-gray-200 py-2 rounded-lg">
                     Cancel
                   </button>
                 </div>
