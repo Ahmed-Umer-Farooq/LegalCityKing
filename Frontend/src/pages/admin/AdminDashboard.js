@@ -699,9 +699,9 @@ const AdminDashboard = ({ activeTabProp }) => {
 
   // Dashboard Stats View
   const renderDashboard = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div onClick={() => setActiveTab('users')} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -1000,53 +1000,53 @@ const AdminDashboard = ({ activeTabProp }) => {
   // Users Management View
   const renderUsers = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-      <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-              <Users className="w-5 h-5 text-white" />
+      <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-md">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             User Management
           </h3>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full lg:w-auto">
             <select
               value={usersFilter}
               onChange={(e) => {
                 setUsersFilter(e.target.value);
                 setUsersPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="all">All Users</option>
               <option value="admin">Admin Users</option>
               <option value="user">Regular Users</option>
             </select>
-            <div className="relative flex-1">
+            <div className="relative flex-1 sm:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by name, email, or phone..."
+                placeholder="Search users..."
                 value={usersSearch}
                 onChange={(e) => {
                   setUsersSearch(e.target.value);
                   setUsersPagination(prev => ({ ...prev, page: 1 }));
                 }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
             <button
               onClick={fetchUsers}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm font-medium flex items-center gap-2"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm font-medium flex items-center justify-center gap-2 text-sm"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
@@ -1171,53 +1171,53 @@ const AdminDashboard = ({ activeTabProp }) => {
   // Lawyers Management View
   const renderLawyers = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-      <div className="px-6 py-5 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-              <Briefcase className="w-5 h-5 text-white" />
+      <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-md">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             Lawyer Management
           </h3>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full lg:w-auto">
             <select
               value={lawyersFilter}
               onChange={(e) => {
                 setLawyersFilter(e.target.value);
                 setLawyersPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="all">All Lawyers</option>
               <option value="verified">Verified Only</option>
               <option value="unverified">Pending Only</option>
             </select>
-            <div className="relative flex-1">
+            <div className="relative flex-1 sm:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by name, email, registration ID, or specialty..."
+                placeholder="Search lawyers..."
                 value={lawyersSearch}
                 onChange={(e) => {
                   setLawyersSearch(e.target.value);
                   setLawyersPagination(prev => ({ ...prev, page: 1 }));
                 }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
             <button
               onClick={fetchLawyers}
-              className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm font-medium flex items-center gap-2"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-sm font-medium flex items-center justify-center gap-2 text-sm"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[800px]">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
@@ -1328,53 +1328,53 @@ const AdminDashboard = ({ activeTabProp }) => {
   // Blog Management View
   const renderBlogs = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-      <div className="px-6 py-5 bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-              <FileText className="w-5 h-5 text-white" />
+      <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-4">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-md">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             Blog Management
           </h3>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full lg:w-auto">
             <select
               value={blogsFilter}
               onChange={(e) => {
                 setBlogsFilter(e.target.value);
                 setBlogsPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="all">All Blogs</option>
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
-            <div className="relative flex-1">
+            <div className="relative flex-1 sm:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by title, author, or content..."
+                placeholder="Search blogs..."
                 value={blogsSearch}
                 onChange={(e) => {
                   setBlogsSearch(e.target.value);
                   setBlogsPagination(prev => ({ ...prev, page: 1 }));
                 }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
             <button
               onClick={fetchBlogs}
-              className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-sm font-medium flex items-center gap-2"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-sm font-medium flex items-center justify-center gap-2 text-sm"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
@@ -1733,35 +1733,35 @@ const AdminDashboard = ({ activeTabProp }) => {
     const totalPages = Math.ceil(filteredMessages.length / messagePagination.limit);
     
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header with Search and Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-                <MessageCircle className="w-5 h-5 text-white" />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3 shadow-md">
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               Platform Messages ({filteredMessages.length})
             </h3>
-            <button onClick={fetchAllMessages} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-sm font-medium flex items-center gap-2">
+            <button onClick={fetchAllMessages} className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-sm font-medium flex items-center justify-center gap-2 text-sm">
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
           
           {/* Search and Filter Controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by name or message content..."
+                placeholder="Search messages..."
                 value={messageSearch}
                 onChange={(e) => {
                   setMessageSearch(e.target.value);
                   setMessagePagination(prev => ({ ...prev, page: 1 }));
                 }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
             <select
@@ -1770,7 +1770,7 @@ const AdminDashboard = ({ activeTabProp }) => {
                 setMessageFilter(e.target.value);
                 setMessagePagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="all">All Messages</option>
               <option value="lawyers">Lawyer Messages</option>
@@ -1782,27 +1782,27 @@ const AdminDashboard = ({ activeTabProp }) => {
         {/* Messages List */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           {loadingMessages ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-6 sm:p-8 text-center text-gray-500">
               Loading messages...
             </div>
           ) : paginatedMessages.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-6 sm:p-8 text-center text-gray-500 text-sm">
               {messageSearch || messageFilter !== 'all' ? 'No messages match your search' : 'No messages found'}
             </div>
           ) : (
             <>
               <div className="divide-y divide-gray-100">
                 {paginatedMessages.map((msg, index) => (
-                  <div key={index} className="p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
+                  <div key={index} className="p-3 sm:p-4 hover:bg-gray-50">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                      <div className="flex-1 w-full">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <div className={`w-3 h-3 rounded-full ${
                             msg.sender_type === 'lawyer' ? 'bg-blue-500' : 'bg-green-500'
                           }`}></div>
-                          <span className="font-medium text-gray-900">{msg.sender_name}</span>
+                          <span className="font-medium text-sm sm:text-base text-gray-900">{msg.sender_name}</span>
                           <span className="text-gray-400">→</span>
-                          <span className="text-gray-600">{msg.receiver_name}</span>
+                          <span className="text-sm sm:text-base text-gray-600">{msg.receiver_name}</span>
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             msg.sender_type === 'lawyer' 
                               ? 'bg-blue-100 text-blue-800' 
@@ -1811,9 +1811,9 @@ const AdminDashboard = ({ activeTabProp }) => {
                             {msg.sender_type === 'lawyer' ? 'Lawyer' : 'User'}
                           </span>
                         </div>
-                        <p className="text-gray-800 ml-5">{msg.message || msg.content}</p>
+                        <p className="text-sm sm:text-base text-gray-800 ml-0 sm:ml-5">{msg.message || msg.content}</p>
                       </div>
-                      <div className="text-xs text-gray-400 ml-4">
+                      <div className="text-xs text-gray-400 whitespace-nowrap">
                         {new Date(msg.created_at || msg.timestamp).toLocaleString()}
                       </div>
                     </div>
@@ -1823,27 +1823,27 @@ const AdminDashboard = ({ activeTabProp }) => {
               
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                  <p className="text-sm text-gray-500">
+                <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
                     Showing {startIndex + 1} to {Math.min(startIndex + messagePagination.limit, filteredMessages.length)} of {filteredMessages.length} messages
                   </p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setMessagePagination(prev => ({ ...prev, page: prev.page - 1 }))}
                       disabled={messagePagination.page === 1}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-1.5 sm:p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
-                    <span className="text-sm text-gray-700">
+                    <span className="text-xs sm:text-sm text-gray-700">
                       Page {messagePagination.page} of {totalPages}
                     </span>
                     <button
                       onClick={() => setMessagePagination(prev => ({ ...prev, page: prev.page + 1 }))}
                       disabled={messagePagination.page >= totalPages}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-1.5 sm:p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>

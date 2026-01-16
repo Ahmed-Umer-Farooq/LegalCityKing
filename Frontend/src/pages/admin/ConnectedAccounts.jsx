@@ -53,59 +53,59 @@ const ConnectedAccounts = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Connected Accounts</h1>
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Connected Accounts</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Lawyers</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Lawyers</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <Users className="w-12 h-12 text-gray-400 opacity-20" />
+            <Users className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 opacity-20" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Connected</p>
-              <p className="text-3xl font-bold text-green-600">{stats.connected}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Connected</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats.connected}</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-green-600 opacity-20" />
+            <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-600 opacity-20" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Not Connected</p>
-              <p className="text-3xl font-bold text-red-600">{stats.not_connected}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Not Connected</p>
+              <p className="text-2xl sm:text-3xl font-bold text-red-600">{stats.not_connected}</p>
             </div>
-            <XCircle className="w-12 h-12 text-red-600 opacity-20" />
+            <XCircle className="w-8 h-8 sm:w-12 sm:h-12 text-red-600 opacity-20" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-3xl font-bold text-yellow-600">{stats.pending_verification}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Pending</p>
+              <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{stats.pending_verification}</p>
             </div>
-            <Clock className="w-12 h-12 text-yellow-600 opacity-20" />
+            <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-600 opacity-20" />
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200">
           <input
             type="text"
             placeholder="Search lawyers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           />
         </div>
 

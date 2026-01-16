@@ -9,7 +9,7 @@ import {
   FileText, Eye, Edit, MessageCircle, Flag, AlertTriangle, Phone,
   DollarSign, CreditCard, BarChart3, Settings, Database, 
   Calendar, FolderOpen, Mail, Star, HelpCircle, Building,
-  Zap, Globe, Lock, Layers, PieChart, Target, Gauge
+  Zap, Globe, Lock, Layers, PieChart, Target, Gauge, Menu, X
 } from 'lucide-react';
 
 // Import the original dashboard component
@@ -22,6 +22,7 @@ const AdminDashboardSidebar = () => {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Helper function for navigation button classes
   const getNavButtonClasses = (tabName) => {
@@ -48,6 +49,7 @@ const AdminDashboardSidebar = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setSearchParams({ tab });
+    setIsSidebarOpen(false);
   };
 
   const fetchPendingReportsCount = async () => {
@@ -80,8 +82,18 @@ const AdminDashboardSidebar = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg border-r border-gray-200 fixed h-full flex flex-col">
+      <aside className={`w-64 bg-white shadow-lg border-r border-gray-200 fixed h-full flex flex-col z-50 transform transition-transform duration-300 lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -235,7 +247,25 @@ const AdminDashboardSidebar = () => {
       </aside>
 
       {/* Main Content - Render original dashboard with activeTab prop */}
-      <div className="flex-1 ml-64">
+      <div className="flex-1 lg:ml-64">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-6 h-6 text-gray-600" />
+            </button>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">Admin Panel</span>
+            </div>
+            <div className="w-10"></div>
+          </div>
+        </div>
         <AdminDashboard activeTabProp={activeTab} />
       </div>
     </div>

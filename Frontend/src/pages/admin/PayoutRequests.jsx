@@ -88,51 +88,51 @@ const PayoutRequests = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Payout Requests</h1>
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Payout Requests</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pending Requests</p>
-              <p className="text-3xl font-bold text-yellow-600">{summary.pending.count || 0}</p>
-              <p className="text-sm text-gray-500 mt-1">${(summary.pending.amount || 0).toFixed(2)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Pending Requests</p>
+              <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{summary.pending.count || 0}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">${(summary.pending.amount || 0).toFixed(2)}</p>
             </div>
-            <Clock className="w-12 h-12 text-yellow-600 opacity-20" />
+            <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-600 opacity-20" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Approved Today</p>
-              <p className="text-3xl font-bold text-green-600">{summary.approved_today.count || 0}</p>
-              <p className="text-sm text-gray-500 mt-1">${(summary.approved_today.amount || 0).toFixed(2)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Approved Today</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-600">{summary.approved_today.count || 0}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">${(summary.approved_today.amount || 0).toFixed(2)}</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-green-600 opacity-20" />
+            <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-600 opacity-20" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Failed</p>
-              <p className="text-3xl font-bold text-red-600">{summary.failed.count || 0}</p>
-              <p className="text-sm text-gray-500 mt-1">${(summary.failed.amount || 0).toFixed(2)}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Failed</p>
+              <p className="text-2xl sm:text-3xl font-bold text-red-600">{summary.failed.count || 0}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">${(summary.failed.amount || 0).toFixed(2)}</p>
             </div>
-            <XCircle className="w-12 h-12 text-red-600 opacity-20" />
+            <XCircle className="w-8 h-8 sm:w-12 sm:h-12 text-red-600 opacity-20" />
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 flex gap-2">
+        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 flex gap-2 overflow-x-auto">
           {['all', 'pending', 'paid', 'failed', 'rejected'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                 filter === status
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -209,24 +209,24 @@ const PayoutRequests = () => {
       </div>
 
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Payout Request</h3>
-            <p className="text-sm text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Reject Payout Request</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
               Rejecting payout of ${parseFloat(selectedPayout?.amount || 0).toFixed(2)} for {selectedPayout?.lawyer_name}
             </p>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Reason for rejection..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               rows="4"
               required
             />
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-3 sm:mt-4">
               <button
                 onClick={handleReject}
-                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition text-sm"
               >
                 Reject Payout
               </button>
@@ -236,7 +236,7 @@ const PayoutRequests = () => {
                   setRejectReason('');
                   setSelectedPayout(null);
                 }}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition text-sm"
               >
                 Cancel
               </button>

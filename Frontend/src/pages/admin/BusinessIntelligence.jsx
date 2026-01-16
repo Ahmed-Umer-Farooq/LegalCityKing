@@ -90,18 +90,18 @@ const BusinessIntelligence = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Business Intelligence</h2>
-          <p className="text-gray-600">Advanced analytics and business insights</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Business Intelligence</h2>
+          <p className="text-sm sm:text-base text-gray-600">Advanced analytics and business insights</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -110,33 +110,33 @@ const BusinessIntelligence = () => {
           </select>
           <button
             onClick={exportData}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 text-sm"
           >
             <Download className="w-4 h-4" />
-            Export
+            <span className="hidden sm:inline">Export</span>
           </button>
           <button
             onClick={fetchBusinessIntelligence}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-sm"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Growth Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                  <Users className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <span className="text-sm font-semibold text-gray-600">User Growth</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-600">User Growth</span>
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{formatPercentage(intelligence.growth.userGrowth)}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{formatPercentage(intelligence.growth.userGrowth)}</div>
               <div className={`text-xs font-medium ${intelligence.growth.userGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {intelligence.growth.userGrowth >= 0 ? '↗' : '↘'} vs last period
               </div>
@@ -378,18 +378,18 @@ const BusinessIntelligence = () => {
       </div>
 
       {/* Predictions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Business Predictions</h3>
-            <p className="text-sm text-gray-600">AI-powered forecasts and insights</p>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Business Predictions</h3>
+            <p className="text-xs sm:text-sm text-gray-600">AI-powered forecasts and insights</p>
           </div>
-          <Calendar className="w-6 h-6 text-blue-500" />
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          <div className="text-center p-4 sm:p-6 bg-blue-50 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600 mb-2">
               {formatCurrency(intelligence.predictions.nextMonthRevenue)}
             </div>
             <div className="text-sm text-gray-600">Predicted Next Month Revenue</div>

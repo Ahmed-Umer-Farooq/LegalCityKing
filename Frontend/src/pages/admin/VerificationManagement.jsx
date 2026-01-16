@@ -178,33 +178,33 @@ export default function VerificationManagement() {
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Verification & Restrictions Management</h2>
+    <div className="p-3 sm:p-4 md:p-6">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Verification & Restrictions Management</h2>
       
-      <div className="mb-6 flex gap-2">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
             activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Pending Verifications ({pendingVerifications.length})
+          Pending ({pendingVerifications.length})
         </button>
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
             activeTab === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Lawyers Restrictions
+          Lawyers
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
             activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Users Restrictions
+          Users
         </button>
       </div>
       
@@ -246,28 +246,28 @@ export default function VerificationManagement() {
           </div>
         )
       ) : activeTab === 'all' ? (
-        <div className="bg-white border rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white border rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lawyer</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Restrictions</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lawyer</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Restrictions</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {allLawyers.map((lawyer) => (
                 <tr key={lawyer.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-3">
                     <div>
-                      <div className="font-medium">{lawyer.name}</div>
-                      <div className="text-sm text-gray-500">{lawyer.email}</div>
+                      <div className="font-medium text-sm sm:text-base">{lawyer.name}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 truncate">{lawyer.email}</div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
+                  <td className="px-3 sm:px-4 py-3">
+                    <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
                       lawyer.verification_status === 'approved' ? 'bg-green-100 text-green-800' :
                       lawyer.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
                       lawyer.verification_status === 'submitted' ? 'bg-yellow-100 text-yellow-800' :
@@ -276,24 +276,24 @@ export default function VerificationManagement() {
                       {lawyer.verification_status || 'pending'}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-3">
                     {lawyer.is_verified ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-gray-400" />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-3">
                     {lawyer.feature_restrictions ? (
-                      <Lock className="w-5 h-5 text-red-600" />
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                     ) : (
-                      <Unlock className="w-5 h-5 text-green-600" />
+                      <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-3">
                     <button
                       onClick={() => openLawyerModal(lawyer)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
+                      className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs sm:text-sm hover:bg-blue-200"
                     >
                       Manage
                     </button>
@@ -304,41 +304,41 @@ export default function VerificationManagement() {
           </table>
         </div>
       ) : (
-        <div className="bg-white border rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white border rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Restrictions</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Restrictions</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {allUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-4 py-8 text-center text-gray-500">No users found</td>
+                  <td colSpan="4" className="px-3 sm:px-4 py-8 text-center text-gray-500 text-sm">No users found</td>
                 </tr>
               ) : (
                 allUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A'}</div>
+                    <td className="px-3 sm:px-4 py-3">
+                      <div className="font-medium text-sm sm:text-base">{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A'}</div>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                    <td className="px-3 sm:px-4 py-3">
+                      <div className="text-xs sm:text-sm text-gray-500 truncate">{user.email}</div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3">
                       {user.feature_restrictions ? (
-                        <Lock className="w-5 h-5 text-red-600" />
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                       ) : (
-                        <Unlock className="w-5 h-5 text-green-600" />
+                        <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3">
                       <button
                         onClick={() => openUserModal(user)}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
+                        className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs sm:text-sm hover:bg-blue-200"
                       >
                         Manage
                       </button>
