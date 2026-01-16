@@ -15,7 +15,7 @@ export default function VerificationManagement() {
   const [restrictions, setRestrictions] = useState({
     cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
     payment_links: false, quick_actions: false, payment_records: false,
-    calendar: false, contacts: false, messages: false
+    calendar: false, contacts: false, messages: false, payouts: false, tasks: false
   });
   const [userRestrictions, setUserRestrictions] = useState({
     dashboard: false, calendar: false, cases: false, tasks: false, forms: false,
@@ -79,7 +79,7 @@ export default function VerificationManagement() {
       setRestrictions({
         cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
         payment_links: false, quick_actions: false, payment_records: false,
-        calendar: false, contacts: false, messages: false
+        calendar: false, contacts: false, messages: false, payouts: false, tasks: false
       });
     } catch (error) {
       console.error('Error approving verification:', error);
@@ -138,14 +138,14 @@ export default function VerificationManagement() {
         setRestrictions({
           cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
           payment_links: false, quick_actions: false, payment_records: false,
-          calendar: false, contacts: false, messages: false
+          calendar: false, contacts: false, messages: false, payouts: false, tasks: false
         });
       }
     } else {
       setRestrictions({
         cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
         payment_links: false, quick_actions: false, payment_records: false,
-        calendar: false, contacts: false, messages: false
+        calendar: false, contacts: false, messages: false, payouts: false, tasks: false
       });
     }
   };
@@ -284,11 +284,16 @@ export default function VerificationManagement() {
                     )}
                   </td>
                   <td className="px-3 sm:px-4 py-3">
-                    {lawyer.feature_restrictions ? (
-                      <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                    ) : (
-                      <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                    )}
+                    {(() => {
+                      if (!lawyer.feature_restrictions) return <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                      try {
+                        const parsed = typeof lawyer.feature_restrictions === 'string' ? JSON.parse(lawyer.feature_restrictions) : lawyer.feature_restrictions;
+                        const hasRestrictions = Object.values(parsed).some(val => val === true);
+                        return hasRestrictions ? <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" /> : <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                      } catch {
+                        return <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                      }
+                    })()}
                   </td>
                   <td className="px-3 sm:px-4 py-3">
                     <button
@@ -329,11 +334,16 @@ export default function VerificationManagement() {
                       <div className="text-xs sm:text-sm text-gray-500 truncate">{user.email}</div>
                     </td>
                     <td className="px-3 sm:px-4 py-3">
-                      {user.feature_restrictions ? (
-                        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                      ) : (
-                        <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                      )}
+                      {(() => {
+                        if (!user.feature_restrictions) return <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                        try {
+                          const parsed = typeof user.feature_restrictions === 'string' ? JSON.parse(user.feature_restrictions) : user.feature_restrictions;
+                          const hasRestrictions = Object.values(parsed).some(val => val === true);
+                          return hasRestrictions ? <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" /> : <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                        } catch {
+                          return <Unlock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />;
+                        }
+                      })()}
                     </td>
                     <td className="px-3 sm:px-4 py-3">
                       <button

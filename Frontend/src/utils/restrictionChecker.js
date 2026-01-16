@@ -16,38 +16,52 @@ export const checkFeatureAccess = (featureName, lawyer) => {
                    lawyer.subscription_tier === 'Premium';
   const hasAdvancedFeatures = isProfessional || isPremium;
 
-  // Check admin restrictions
+  // Check admin restrictions - normalize feature names (both dash and underscore)
   const restrictions = lawyer.feature_restrictions ? 
     (typeof lawyer.feature_restrictions === 'string' ? 
       JSON.parse(lawyer.feature_restrictions) : 
       lawyer.feature_restrictions) : 
     {};
 
-  // If admin locked this feature
-  if (restrictions[featureName] === true) {
+  // Normalize feature name to check both formats (dash and underscore)
+  const normalizedFeatureName = featureName.replace(/-/g, '_');
+  const dashFeatureName = featureName.replace(/_/g, '-');
+  
+  // If admin locked this feature (check both formats)
+  if (restrictions[featureName] === true || 
+      restrictions[normalizedFeatureName] === true || 
+      restrictions[dashFeatureName] === true) {
     return { allowed: false, reason: 'admin_locked' };
   }
 
-  // Feature-specific checks
+  // Feature-specific checks (support both dash and underscore formats)
   const featureRequirements = {
     // Verification required features
     'messages': { verification: true },
     'contacts': { verification: true },
     'calendar': { verification: true },
     'payment-records': { verification: true },
+    'payment_records': { verification: true },
     'tasks': { verification: true },
     'documents': { verification: true },
     'clients': { verification: true },
     'cases': { verification: true },
     'qa': { verification: true },
+    'qa_answers': { verification: true },
+    'payouts': { verification: true },
     
     // Professional/Premium features
     'payment-links': { verification: true, subscription: 'professional' },
+    'payment_links': { verification: true, subscription: 'professional' },
     'reports': { verification: true, subscription: 'professional' },
     'blogs': { verification: false, subscription: 'professional' },
     
     // Premium only features
-    'forms': { verification: false, subscription: 'premium' }
+    'forms': { verification: false, subscription: 'premium' },
+    
+    // Quick actions
+    'quick_actions': { verification: true },
+    'quick-actions': { verification: true }
   };
 
   const requirements = featureRequirements[featureName];

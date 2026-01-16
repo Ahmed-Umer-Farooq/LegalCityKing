@@ -5,6 +5,7 @@ import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
 import RestrictedFeature from '../../components/RestrictedFeature';
+import { checkFeatureAccess } from '../../utils/restrictionChecker';
 
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
@@ -283,41 +284,51 @@ export default function LawyerDashboard() {
             <nav className="hidden lg:flex items-center gap-4">
               {[
                 { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); } },
-                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, verificationRequired: !isVerified },
-                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, verificationRequired: !isVerified },
-                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, verificationRequired: !isVerified },
-                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, verificationRequired: !isVerified },
-                { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); }, verificationRequired: !isVerified },
-                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
-                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, verificationRequired: !isVerified },
-                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, verificationRequired: !isVerified },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, subscriptionRequired: !isPremium },
-                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, verificationRequired: !isVerified },
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, featureName: 'messages' },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, featureName: 'contacts' },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, featureName: 'calendar' },
+                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, featureName: 'payment_records' },
+                { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); }, featureName: 'payouts' },
+                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, featureName: 'payment_links' },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, featureName: 'reports' },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, featureName: 'tasks' },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, featureName: 'documents' },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, featureName: 'forms' },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, featureName: 'blogs' },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, featureName: 'qa_answers' },
                 { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
-                const needsVerification = item.verificationRequired;
-                const needsSubscription = item.subscriptionRequired;
-                const isRestricted = needsVerification || needsSubscription;
+                
+                // Check feature access if featureName is provided
+                const accessCheck = item.featureName ? checkFeatureAccess(item.featureName, currentUser) : { allowed: true };
+                const isRestricted = !accessCheck.allowed;
+                const isAdminLocked = accessCheck.reason === 'admin_locked';
+                const needsVerification = accessCheck.reason === 'verification_required';
+                const needsSubscription = accessCheck.reason === 'subscription_required';
+                
                 return (
                   <button
                     key={item.id}
-                    onClick={isRestricted ? (needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
+                    onClick={isRestricted ? (isAdminLocked ? () => showToast.error('This feature has been restricted by the administrator.') : needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
                     className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                    } ${
+                      isRestricted ? 'opacity-60' : ''
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span className="hidden xl:block">{item.label}</span>
-                    {needsVerification && (
+                    {isAdminLocked && (
+                      <Lock className="w-3 h-3 text-red-500" />
+                    )}
+                    {needsVerification && !isAdminLocked && (
                       <Lock className="w-3 h-3 text-orange-500" />
                     )}
-                    {needsSubscription && !needsVerification && (
+                    {needsSubscription && !needsVerification && !isAdminLocked && (
                       <span className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1 rounded font-bold leading-none">PRO</span>
                     )}
                     {item.showNotification && (
@@ -464,41 +475,51 @@ export default function LawyerDashboard() {
           <div className="space-y-2">
             {[
               { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); setIsMobileMenuOpen(false); } },
-              { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); setIsMobileMenuOpen(false); }, showNotification: true, verificationRequired: !isVerified },
-              { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
-              { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
-              { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
-              { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !isPremium },
-              { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); setIsMobileMenuOpen(false); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
-              { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); setIsMobileMenuOpen(false); }, showNotification: true, featureName: 'messages' },
+              { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); setIsMobileMenuOpen(false); }, featureName: 'contacts' },
+              { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); setIsMobileMenuOpen(false); }, featureName: 'calendar' },
+              { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); setIsMobileMenuOpen(false); }, featureName: 'payment_records' },
+              { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); setIsMobileMenuOpen(false); }, featureName: 'payouts' },
+              { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); setIsMobileMenuOpen(false); }, featureName: 'payment_links' },
+              { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); setIsMobileMenuOpen(false); }, featureName: 'reports' },
+              { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); setIsMobileMenuOpen(false); }, featureName: 'tasks' },
+              { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); setIsMobileMenuOpen(false); }, featureName: 'documents' },
+              { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); setIsMobileMenuOpen(false); }, featureName: 'forms' },
+              { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); setIsMobileMenuOpen(false); }, showNotification: true, notificationCount: blogEngagementCount, featureName: 'blogs' },
+              { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); setIsMobileMenuOpen(false); }, featureName: 'qa_answers' },
               { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); } }
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeNavItem === item.id;
-              const needsVerification = item.verificationRequired;
-              const needsSubscription = item.subscriptionRequired;
-              const isRestricted = needsVerification || needsSubscription;
+              
+              // Check feature access if featureName is provided
+              const accessCheck = item.featureName ? checkFeatureAccess(item.featureName, currentUser) : { allowed: true };
+              const isRestricted = !accessCheck.allowed;
+              const isAdminLocked = accessCheck.reason === 'admin_locked';
+              const needsVerification = accessCheck.reason === 'verification_required';
+              const needsSubscription = accessCheck.reason === 'subscription_required';
+              
               return (
                 <button
                   key={item.id}
-                  onClick={isRestricted ? (needsVerification ? () => { setShowVerificationModal(true); setIsMobileMenuOpen(false); } : () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); }) : item.action}
+                  onClick={isRestricted ? (isAdminLocked ? () => { showToast.error('This feature has been restricted by the administrator.'); setIsMobileMenuOpen(false); } : needsVerification ? () => { setShowVerificationModal(true); setIsMobileMenuOpen(false); } : () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); }) : item.action}
                   className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive 
                       ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
                       : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                  } ${
+                    isRestricted ? 'opacity-60' : ''
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="flex-1 text-left">{item.label}</span>
-                  {needsVerification && (
+                  {isAdminLocked && (
+                    <Lock className="w-4 h-4 text-red-500" />
+                  )}
+                  {needsVerification && !isAdminLocked && (
                     <Lock className="w-4 h-4 text-orange-500" />
                   )}
-                  {needsSubscription && !needsVerification && (
+                  {needsSubscription && !needsVerification && !isAdminLocked && (
                     <span className="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">PRO</span>
                   )}
                   {item.showNotification && (
@@ -773,7 +794,7 @@ export default function LawyerDashboard() {
             {/* Quick Actions */}
             <div className="h-full">
               <React.Suspense fallback={<div className="animate-pulse h-32 bg-gray-200 rounded"></div>}>
-                <QuickActions onSuccess={fetchDashboardData} />
+                <QuickActions onSuccess={fetchDashboardData} lawyer={currentUser} />
               </React.Suspense>
             </div>
 
