@@ -170,6 +170,18 @@ const AdminDashboardSidebar = () => {
           {/* Financial Management */}
           <div className="mb-4">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Financial</p>
+            <button onClick={() => handleTabChange('connected-accounts')} className={getNavButtonClasses('connected-accounts')}>
+              <Users className="w-4 h-4" />
+              <span>Connected Accounts</span>
+            </button>
+            <button onClick={() => handleTabChange('payout-requests')} className={getNavButtonClasses('payout-requests')}>
+              <CreditCard className="w-4 h-4" />
+              <span>Payout Requests</span>
+            </button>
+            <button onClick={() => handleTabChange('platform-earnings')} className={getNavButtonClasses('platform-earnings')}>
+              <DollarSign className="w-4 h-4" />
+              <span>Platform Earnings</span>
+            </button>
             <button onClick={() => handleTabChange('payments')} className={getNavButtonClasses('payments')}>
               <DollarSign className="w-4 h-4" />
               <span>Payments</span>
