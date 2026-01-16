@@ -212,7 +212,7 @@ const Header = ({ onMenuClick, sidebarWidth, currentUser, onChatClick }) => {
     navigate(path);
   };
   return (
-    <header className={`fixed top-0 left-0 right-0 h-24 bg-white z-10 flex items-center justify-between px-4 md:px-8 transition-all duration-300`} style={{ left: `${sidebarWidth}px` }}>
+    <header className={`fixed top-0 left-0 right-0 h-16 lg:h-24 bg-white z-10 flex items-center justify-between px-4 md:px-8 transition-all duration-300 shadow-sm`} style={{ left: `${sidebarWidth}px` }}>
       <button
         onClick={onMenuClick}
         className="lg:hidden p-2 bg-white rounded-lg shadow-md"
@@ -220,14 +220,14 @@ const Header = ({ onMenuClick, sidebarWidth, currentUser, onChatClick }) => {
         <Menu className="w-6 h-6" />
       </button>
       
-      <h1 className="text-blue-900 font-semibold text-xl md:text-3xl leading-none tracking-tight">
+      <h1 className="text-blue-900 font-semibold text-base md:text-xl lg:text-3xl leading-none tracking-tight">
         Welcome Back, {userName}
       </h1>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         <div className="hidden md:flex relative">
-          <div className="flex items-center gap-2 px-5 h-10 rounded-full border border-gray-300 w-full max-w-sm">
-            <Search className="w-5 h-5 text-gray-500" />
+          <div className="flex items-center gap-2 px-3 lg:px-5 h-8 lg:h-10 rounded-full border border-gray-300 w-full max-w-sm">
+            <Search className="w-4 lg:w-5 h-4 lg:h-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search pages, actions..."
@@ -235,7 +235,7 @@ const Header = ({ onMenuClick, sidebarWidth, currentUser, onChatClick }) => {
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => searchQuery && setShowResults(true)}
               onBlur={() => setTimeout(() => setShowResults(false), 200)}
-              className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder:text-gray-500"
+              className="flex-1 bg-transparent border-none outline-none text-xs lg:text-sm text-gray-700 placeholder:text-gray-500"
             />
           </div>
           {showResults && searchResults.length > 0 && (
@@ -270,13 +270,13 @@ const Header = ({ onMenuClick, sidebarWidth, currentUser, onChatClick }) => {
               e.stopPropagation();
               setShowProfileMenu(!showProfileMenu);
             }}
-            className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold hover:bg-blue-700 transition-colors"
+            className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold hover:bg-blue-700 transition-colors text-sm lg:text-base"
           >
             {userName.charAt(0).toUpperCase()}
           </button>
           {showProfileMenu && (
             <div 
-              className="absolute top-12 right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+              className="absolute top-10 lg:top-12 right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -382,7 +382,7 @@ const DashboardStats = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
       {stats.map((stat, index) => (
         <Link key={index} to={getPath(stat.label)} className={`${stat.bgColor} rounded-xl p-6 relative overflow-hidden hover:shadow-lg transition-all cursor-pointer`}>
           <div className="flex items-center justify-between">
@@ -424,7 +424,7 @@ const QuickActions = () => {
         <h2 className="text-[#181A2A] text-lg font-semibold mb-1">Quick Actions</h2>
         <p className="text-[#737791] text-sm">Frequently used actions</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 lg:gap-3">
         {actions.map((action, index) => (
           <Link
             key={index}
@@ -835,8 +835,8 @@ const Layout = ({ children, showFooter = false }) => {
         onChatClick={handleChatClick}
       />
 
-      <main className="pt-24 min-h-screen transition-all duration-300" style={{ marginLeft: window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}>
-        <div className="px-4 md:px-8 py-10 max-w-7xl mx-auto">
+      <main className="pt-16 lg:pt-24 min-h-screen transition-all duration-300" style={{ marginLeft: window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}>
+        <div className="px-4 md:px-8 py-6 lg:py-10 max-w-7xl mx-auto">
           {children}
         </div>
       </main>

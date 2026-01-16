@@ -142,33 +142,34 @@ const Cases = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Cases</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 lg:gap-4">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Cases</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm lg:text-base"
         >
           <Plus className="w-4 h-4" />
-          New Case
+          <span className="hidden sm:inline">New Case</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[
           { label: 'Total Cases', value: stats.total, color: 'bg-blue-500' },
           { label: 'Active Cases', value: stats.active, color: 'bg-green-500' },
           { label: 'Pending Cases', value: stats.pending, color: 'bg-yellow-500' },
           { label: 'Closed Cases', value: stats.closed, color: 'bg-gray-500' }
         ].map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg border border-gray-100 p-4">
+          <div key={index} className="bg-white rounded-lg border border-gray-100 p-3 lg:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs lg:text-sm text-gray-600">{stat.label}</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-900">{stat.value}</p>
               </div>
-              <div className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <FileText className="w-5 h-5 text-white" />
+              <div className={`w-8 h-8 lg:w-10 lg:h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
+                <FileText className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
               </div>
             </div>
           </div>
@@ -176,24 +177,24 @@ const Cases = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-100 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className="bg-white rounded-lg border border-gray-100 p-3 lg:p-4">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 lg:w-4 lg:h-4" />
             <input
               type="text"
               placeholder="Search cases..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 lg:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm lg:text-base"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+            <Filter className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm lg:text-base"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -206,8 +207,8 @@ const Cases = () => {
 
       {/* Cases List */}
       <div className="bg-white rounded-lg border border-gray-100">
-        <div className="p-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Your Cases ({filteredCases.length})</h2>
+        <div className="p-3 lg:p-4 border-b border-gray-100">
+          <h2 className="text-base lg:text-lg font-semibold text-gray-900">Your Cases ({filteredCases.length})</h2>
         </div>
         <div className="divide-y divide-gray-100">
           {loading ? (
@@ -222,39 +223,41 @@ const Cases = () => {
             </div>
           ) : (
             cases.map(caseItem => (
-              <div key={caseItem.secure_id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div key={caseItem.secure_id} className="p-3 lg:p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col gap-3 lg:gap-4">
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{caseItem.title}</h3>
-                      <p className="text-sm text-gray-500">Case #{caseItem.case_number}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 text-sm lg:text-base">{caseItem.title}</h3>
+                      <p className="text-xs lg:text-sm text-gray-500">Case #{caseItem.case_number}</p>
                     </div>
-                    <div className="flex gap-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(caseItem.status)}`}>
+                    <div className="flex gap-2 flex-wrap">
+                      <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getStatusColor(caseItem.status)}`}>
                         {caseItem.status}
                       </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(caseItem.priority)}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getPriorityColor(caseItem.priority)}`}>
                         {caseItem.priority} priority
                       </span>
                     </div>
                   </div>
                   
-                  <p className="text-sm text-gray-600 mb-3">{caseItem.description}</p>
+                  <p className="text-xs lg:text-sm text-gray-600 mb-3 line-clamp-2">{caseItem.description}</p>
                   
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                  <div className="flex flex-wrap gap-2 lg:gap-4 text-xs lg:text-sm text-gray-500">
                     <div className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      <span>{caseItem.lawyer_name}</span>
+                      <User className="w-3 h-3 lg:w-4 lg:h-4" />
+                      <span className="truncate">{caseItem.lawyer_name}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>Created: {new Date(caseItem.created_at).toLocaleDateString()}</span>
+                      <Calendar className="w-3 h-3 lg:w-4 lg:h-4" />
+                      <span className="hidden sm:inline">Created: {new Date(caseItem.created_at).toLocaleDateString()}</span>
+                      <span className="sm:hidden">{new Date(caseItem.created_at).toLocaleDateString()}</span>
                     </div>
                     {caseItem.next_hearing && (
                       <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>Next: {new Date(caseItem.next_hearing).toLocaleDateString()}</span>
+                        <Clock className="w-3 h-3 lg:w-4 lg:h-4" />
+                        <span className="hidden sm:inline">Next: {new Date(caseItem.next_hearing).toLocaleDateString()}</span>
+                        <span className="sm:hidden">{new Date(caseItem.next_hearing).toLocaleDateString()}</span>
                       </div>
                     )}
                   </div>
@@ -266,10 +269,11 @@ const Cases = () => {
                       setSelectedCase(caseItem);
                       setShowDetailModal(true);
                     }}
-                    className="flex items-center gap-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 text-xs lg:text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   >
-                    <Eye className="w-4 h-4" />
-                    View Details
+                    <Eye className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span className="hidden sm:inline">View Details</span>
+                    <span className="sm:hidden">View</span>
                   </button>
                 </div>
               </div>
@@ -281,12 +285,12 @@ const Cases = () => {
 
       {/* Case Detail Modal */}
       {showDetailModal && selectedCase && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-4xl mx-auto max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{selectedCase.title}</h3>
-                <p className="text-sm text-gray-500">Case #{selectedCase.case_number}</p>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{selectedCase.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Case #{selectedCase.case_number}</p>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -296,12 +300,12 @@ const Cases = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Case Info */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">Case Information</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Case Information</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                     <div>
                       <span className="text-gray-500">Status:</span>
                       <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(selectedCase.status)}`}>
@@ -361,7 +365,7 @@ const Cases = () => {
               </div>
 
               {/* Sidebar */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Documents</h4>
                   <div className="space-y-2">
@@ -401,13 +405,13 @@ const Cases = () => {
                 <div className="space-y-2">
                   <button 
                     onClick={() => setShowScheduleModal(true)}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
                   >
                     Schedule Meeting
                   </button>
                   <button 
                     onClick={() => setShowDocumentModal(true)}
-                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
                   >
                     Add Document
                   </button>
@@ -416,7 +420,7 @@ const Cases = () => {
                       setNewStatus(selectedCase.status);
                       setShowStatusModal(true);
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
                   >
                     Update Status
                   </button>

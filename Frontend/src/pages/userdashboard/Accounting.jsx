@@ -150,15 +150,15 @@ const Accounting = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Lawyer Payments</h1>
-        <p className="text-gray-600">Manage payments to your lawyers and track legal expenses</p>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Lawyer Payments</h1>
+        <p className="text-sm lg:text-base text-gray-600">Manage payments to your lawyers and track legal expenses</p>
       </div>
 
       {/* Lawyer Payment Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
         {[
           { label: 'Total Paid to Lawyers', value: `$${totalPaidToLawyers.toLocaleString()}`, icon: DollarSign, color: 'bg-blue-500', change: 'This month' },
           { label: 'Active Lawyers', value: activeLawyers.toString(), icon: TrendingUp, color: 'bg-green-500', change: 'Working with' }
@@ -183,27 +183,25 @@ const Accounting = () => {
 
       {/* Recent Transactions */}
       <div className="bg-white rounded-lg border border-gray-100">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-          <div className="flex gap-2">
+        <div className="p-3 lg:p-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h3 className="text-base lg:text-lg font-semibold text-gray-900">Recent Transactions</h3>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <button 
               onClick={fetchTransactions}
-              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="px-3 py-1 text-xs lg:text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
             >
               Refresh
             </button>
             <button 
               onClick={capturePayments}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-3 py-1 text-xs lg:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Capture Payments
+              Capture
             </button>
-          </div>
-          <div className="flex gap-2">
             <select 
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 py-1 text-xs lg:text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <option value="All">All</option>
               <option value="Lawyer Fees">Lawyer Fees</option>
@@ -215,9 +213,9 @@ const Accounting = () => {
             </select>
             <button 
               onClick={exportToPDF}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-3 py-1 text-xs lg:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Export PDF
+              Export
             </button>
           </div>
         </div>
@@ -244,28 +242,28 @@ const Accounting = () => {
             </div>
           ) : (
             filteredTransactions.map(transaction => (
-            <div key={transaction.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            <div key={transaction.id} className="p-3 lg:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-gray-50">
+              <div className="flex items-start gap-3 lg:gap-4 w-full sm:w-auto">
+                <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                   transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                 }`}>
                   {transaction.type === 'income' ? (
-                    <TrendingUp className="w-5 h-5 text-green-600" />
+                    <TrendingUp className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
                   ) : (
-                    <TrendingDown className="w-5 h-5 text-red-600" />
+                    <TrendingDown className="w-4 h-4 lg:w-5 lg:h-5 text-red-600" />
                   )}
                 </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{transaction.description}</h4>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-gray-900 text-sm lg:text-base truncate">{transaction.description}</h4>
+                  <div className="flex flex-wrap items-center gap-1 lg:gap-2 text-xs lg:text-sm text-gray-500">
                     <Calendar className="w-3 h-3" />
                     <span>{new Date(transaction.date).toLocaleDateString()}</span>
                     <span>•</span>
-                    <span>{transaction.category}</span>
+                    <span className="truncate">{transaction.category}</span>
                     {transaction.status && (
                       <>
                         <span>•</span>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium whitespace-nowrap">
                           {transaction.status}
                         </span>
                       </>
@@ -273,13 +271,13 @@ const Accounting = () => {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <p className={`font-semibold ${
+              <div className="text-right w-full sm:w-auto">
+                <p className={`font-semibold text-sm lg:text-base ${
                   transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
                 </p>
-                <p className="text-sm text-gray-500 capitalize">{transaction.type}</p>
+                <p className="text-xs lg:text-sm text-gray-500 capitalize">{transaction.type}</p>
               </div>
             </div>
           ))

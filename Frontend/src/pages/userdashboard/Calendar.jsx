@@ -159,12 +159,12 @@ const Calendar = () => {
   };
 
   return (
-    <div className="flex gap-6 h-full">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-full">
       {/* Main Content - Meetings */}
       <div className="flex-1 min-w-0">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Appointments</h1>
-          <p className="text-gray-600">Manage your upcoming meetings and consultations</p>
+        <div className="mb-4 lg:mb-6">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Appointments</h1>
+          <p className="text-sm lg:text-base text-gray-600">Manage your upcoming meetings and consultations</p>
         </div>
 
         {loading ? (
@@ -172,40 +172,40 @@ const Calendar = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 lg:space-y-4">
             {appointments
               .filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0))
               .sort((a, b) => new Date(a.date) - new Date(b.date))
               .map(apt => (
-                <div key={apt.secure_id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <h3 className="font-semibold text-gray-900">{apt.title}</h3>
-                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                <div key={apt.secure_id} className="bg-white rounded-lg border border-gray-200 p-3 lg:p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 lg:gap-3 mb-2">
+                        <div className="w-2 h-2 lg:w-3 lg:h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <h3 className="font-semibold text-gray-900 text-sm lg:text-base truncate">{apt.title}</h3>
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
                           {apt.type}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs lg:text-sm text-gray-600 mb-2">
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {new Date(apt.date).toLocaleDateString()} at {apt.time}
+                          <Clock className="w-3 h-3 lg:w-4 lg:h-4 flex-shrink-0" />
+                          <span className="truncate">{new Date(apt.date).toLocaleDateString()} at {apt.time}</span>
                         </div>
                         {apt.lawyer && (
                           <div className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {apt.lawyer}
+                            <User className="w-3 h-3 lg:w-4 lg:h-4 flex-shrink-0" />
+                            <span className="truncate">{apt.lawyer}</span>
                           </div>
                         )}
                       </div>
                       {apt.description && (
-                        <p className="text-sm text-gray-600">{apt.description}</p>
+                        <p className="text-xs lg:text-sm text-gray-600 line-clamp-2">{apt.description}</p>
                       )}
                     </div>
                     <button
                       onClick={() => handleDeleteAppointment(apt.secure_id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 lg:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -225,7 +225,7 @@ const Calendar = () => {
       </div>
 
       {/* Smart Calendar Card - Sidebar */}
-      <div className="w-80 flex-shrink-0">
+      <div className="w-full lg:w-80 flex-shrink-0">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Calendar Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">

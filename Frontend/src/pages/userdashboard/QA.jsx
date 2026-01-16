@@ -237,18 +237,18 @@ const QA = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Legal Q&A</h1>
-        <p className="text-gray-600">Ask questions and get expert legal advice from qualified attorneys</p>
+    <div className="p-4 lg:p-6">
+      <div className="mb-4 lg:mb-6">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Legal Q&A</h1>
+        <p className="text-sm lg:text-base text-gray-600">Ask questions and get expert legal advice from qualified attorneys</p>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 mb-4 lg:mb-6">
+        <nav className="flex space-x-4 lg:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveView('browse')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs lg:text-sm whitespace-nowrap ${
               activeView === 'browse'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -258,7 +258,7 @@ const QA = () => {
           </button>
           <button
             onClick={() => setActiveView('ask')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs lg:text-sm whitespace-nowrap ${
               activeView === 'ask'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -272,11 +272,11 @@ const QA = () => {
       {/* Content */}
       {activeView === 'browse' ? (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Community Questions</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 lg:mb-6">
+            <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Community Questions</h2>
             <button
               onClick={() => setActiveView('ask')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
             >
               Ask a Question
             </button>
@@ -300,38 +300,38 @@ const QA = () => {
                 </div>
               ) : (
                 questions.map((question) => (
-                  <div key={question.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <div key={question.id} className="bg-white rounded-lg shadow-md p-4 lg:p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex flex-col lg:flex-row justify-between items-start gap-3 lg:gap-0 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">
                           {question.question}
                         </h3>
-                        <p className="text-gray-600 mb-3 line-clamp-2">
+                        <p className="text-sm lg:text-base text-gray-600 mb-3 line-clamp-2">
                           {question.situation.substring(0, 200)}...
                         </p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {question.city_state}</span>
-                          <span className="flex items-center gap-1"><User className="w-4 h-4" /> {question.user_display_name || 'Anonymous'}</span>
-                          <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(question.created_at)}</span>
-                          <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {question.views} views</span>
+                        <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-xs lg:text-sm text-gray-500">
+                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3 lg:w-4 lg:h-4" /> {question.city_state}</span>
+                          <span className="flex items-center gap-1"><User className="w-3 h-3 lg:w-4 lg:h-4" /> {question.user_display_name || 'Anonymous'}</span>
+                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3 lg:w-4 lg:h-4" /> {formatDate(question.created_at)}</span>
+                          <span className="flex items-center gap-1"><Eye className="w-3 h-3 lg:w-4 lg:h-4" /> {question.views} views</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end space-y-2">
+                      <div className="flex flex-row lg:flex-col items-center lg:items-end gap-2">
                         {getStatusBadge(question.status)}
                         {question.answer_count > 0 && (
-                          <span className="text-sm text-gray-500">
+                          <span className="text-xs lg:text-sm text-gray-500">
                             {question.answer_count} {question.answer_count === 1 ? 'answer' : 'answers'}
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="text-xs lg:text-sm text-gray-500">
                         Plans to hire attorney: <span className="capitalize">{question.plan_hire_attorney.replace('_', ' ')}</span>
                       </div>
                       <button
                         onClick={() => fetchQuestionDetails(question.secure_id || question.id)}
-                        className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 bg-blue-100 text-blue-700 text-sm rounded-lg hover:bg-blue-200 transition-colors"
                       >
                         View Details
                       </button>
@@ -481,60 +481,60 @@ const QA = () => {
 
       {/* Question Detail Modal */}
       {showQuestionModal && selectedQuestion && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 sm:p-4">
+          <div className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full sm:w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
             <div className="mt-3">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Question Details</h3>
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-2xl font-bold text-gray-900">Question Details</h3>
                 <button
                   onClick={() => setShowQuestionModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl"
                 >
                   ✕
                 </button>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Question */}
-                <div className="bg-blue-50 p-6 rounded-xl">
-                  <div className="flex justify-between items-start mb-4">
-                    <h4 className="text-xl font-semibold text-blue-900">{selectedQuestion.question}</h4>
+                <div className="bg-blue-50 p-4 sm:p-6 rounded-xl">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-4">
+                    <h4 className="text-base sm:text-xl font-semibold text-blue-900">{selectedQuestion.question}</h4>
                     {getStatusBadge(selectedQuestion.status)}
                   </div>
-                  <p className="text-blue-800 mb-4 whitespace-pre-wrap">{selectedQuestion.situation}</p>
-                  <div className="flex items-center space-x-4 text-sm text-blue-700">
-                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedQuestion.city_state}</span>
-                    <span className="flex items-center gap-1"><User className="w-4 h-4" /> {selectedQuestion.user_display_name || 'Anonymous'}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(selectedQuestion.created_at)}</span>
-                    <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {selectedQuestion.views} views</span>
+                  <p className="text-sm sm:text-base text-blue-800 mb-4 whitespace-pre-wrap">{selectedQuestion.situation}</p>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-blue-700">
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3 sm:w-4 sm:h-4" /> {selectedQuestion.city_state}</span>
+                    <span className="flex items-center gap-1"><User className="w-3 h-3 sm:w-4 sm:h-4" /> {selectedQuestion.user_display_name || 'Anonymous'}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3 sm:w-4 sm:h-4" /> {formatDate(selectedQuestion.created_at)}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 sm:w-4 sm:h-4" /> {selectedQuestion.views} views</span>
                   </div>
                 </div>
 
                 {/* Answers */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                     Answers ({questionAnswers.length})
                   </h4>
                   {questionAnswers.length === 0 ? (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <p className="text-gray-500">No answers yet. Be the first lawyer to answer!</p>
+                    <div className="text-center py-6 sm:py-8 bg-gray-50 rounded-lg">
+                      <p className="text-sm sm:text-base text-gray-500">No answers yet. Be the first lawyer to answer!</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {questionAnswers.map((answer) => (
-                        <div key={answer.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                          <div className="flex items-start justify-between mb-4">
+                        <div key={answer.id} className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-0 mb-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 font-semibold">⚖️</span>
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 font-semibold text-sm sm:text-base">⚖️</span>
                               </div>
                               <div>
-                                <h5 className="font-semibold text-gray-900">{answer.lawyer_name}</h5>
-                                <p className="text-sm text-gray-500">{answer.speciality}</p>
+                                <h5 className="font-semibold text-gray-900 text-sm sm:text-base">{answer.lawyer_name}</h5>
+                                <p className="text-xs sm:text-sm text-gray-500">{answer.speciality}</p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-sm text-gray-500">{formatDate(answer.created_at)}</div>
+                            <div className="text-left sm:text-right w-full sm:w-auto">
+                              <div className="text-xs sm:text-sm text-gray-500">{formatDate(answer.created_at)}</div>
                               {answer.is_best_answer && (
                                 <span className="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                                   ✓ Best Answer
@@ -542,7 +542,7 @@ const QA = () => {
                               )}
                             </div>
                           </div>
-                          <p className="text-gray-800 whitespace-pre-wrap">{answer.answer}</p>
+                          <p className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap">{answer.answer}</p>
 
                         </div>
                       ))}
