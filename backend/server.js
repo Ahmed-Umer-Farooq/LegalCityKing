@@ -351,26 +351,20 @@ const tasksRoutes = require('./routes/tasks');
 app.use('/api/tasks', tasksRoutes);
 const documentsRoutes = require('./routes/documents');
 app.use('/api/documents', documentsRoutes);
-const invoicesRoutes = require('./routes/invoices');
-app.use('/api/invoices', invoicesRoutes);
-const timeEntriesRoutes = require('./routes/timeEntries');
-app.use('/api/time-entries', timeEntriesRoutes);
-const expensesRoutes = require('./routes/expenses');
-app.use('/api/expenses', expensesRoutes);
+
+
 const notesRoutes = require('./routes/notes');
 app.use('/api/notes', notesRoutes);
 const contactsRoutes = require('./routes/contacts');
 app.use('/api/contacts', contactsRoutes);
 const callsRoutes = require('./routes/calls');
 app.use('/api/calls', callsRoutes);
-const messagesRoutes = require('./routes/messages');
-app.use('/api/messages', messagesRoutes);
+
 const paymentsRoutes = require('./routes/payments');
 app.use('/api/payments', paymentsRoutes);
 const stripeRoutes = require('./routes/stripe');
 app.use('/api/stripe', stripeRoutes);
-const intakesRoutes = require('./routes/intakes');
-app.use('/api/intakes', intakesRoutes);
+
 const userAppointmentsRoutes = require('./routes/userAppointments');
 app.use('/api/user/appointments', userAppointmentsRoutes);
 const userCasesRoutes = require('./routes/userCases');

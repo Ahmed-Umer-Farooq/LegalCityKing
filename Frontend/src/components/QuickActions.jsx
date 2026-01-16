@@ -9,9 +9,7 @@ import CreateEventModal from './modals/CreateEventModal.jsx';
 import CreateTaskModal from './modals/CreateTaskModal.jsx';
 import CreateNoteModal from './modals/CreateNoteModal.jsx';
 import CreateCallModal from './modals/CreateCallModal.jsx';
-import SendMessageModal from './modals/SendMessageModal.jsx';
-import TrackTimeModal from './modals/TrackTimeModal.jsx';
-import AddExpenseModal from './modals/AddExpenseModal.jsx';
+
 
 
 
@@ -28,8 +26,7 @@ export default function QuickActions({ onSuccess }) {
     { id: 'task', label: 'New Task', icon: CheckSquare, color: 'bg-red-500' },
     { id: 'note', label: 'New Note', icon: StickyNote, color: 'bg-yellow-500' },
     { id: 'call', label: 'Log Call', icon: Phone, color: 'bg-indigo-500' },
-    { id: 'message', label: 'Send Message', icon: MessageSquare, color: 'bg-pink-500' },
-    { id: 'expense', label: 'Add Expense', icon: DollarSign, color: 'bg-emerald-500' },
+
 
     { id: 'payment-records', label: 'Payment Records', icon: CreditCard, color: 'bg-violet-500' },
     { id: 'reports', label: 'View Reports', icon: BarChart3, color: 'bg-indigo-600' },
@@ -113,16 +110,7 @@ export default function QuickActions({ onSuccess }) {
         onClose={handleModalClose} 
         onSuccess={handleModalSuccess}
       />
-      <SendMessageModal 
-        isOpen={activeModal === 'message'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
-      <AddExpenseModal 
-        isOpen={activeModal === 'expense'} 
-        onClose={handleModalClose} 
-        onSuccess={handleModalSuccess}
-      />
+
 
 
 

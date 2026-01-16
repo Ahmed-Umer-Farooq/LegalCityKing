@@ -6,10 +6,9 @@ const getStats = async (req, res) => {
     const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     const thisMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     
-    // Enhanced stats with financial and operational metrics
+    // Enhanced stats with operational metrics
     const [totalUsers, totalLawyers, verifiedLawyers, unverifiedLawyers, 
-           totalCases, activeCases, totalRevenue, monthlyRevenue,
-           totalInvoices, paidInvoices, pendingInvoices, overdueInvoices,
+           totalCases, activeCases,
            totalDocuments, totalAppointments, totalChatMessages] = await Promise.all([
       db('users').count('id as count').first(),
       db('lawyers').count('id as count').first(),
@@ -17,27 +16,25 @@ const getStats = async (req, res) => {
       db('lawyers').where('is_verified', 0).count('id as count').first(),
       db('cases').count('id as count').first(),
       db('cases').where('status', 'active').count('id as count').first(),
-      db('invoices').where('status', 'paid').sum('amount as total').first(),
-      db('invoices').where('status', 'paid')
-        .whereBetween('created_at', [thisMonth, currentDate])
-        .sum('amount as total').first(),
-      db('invoices').count('id as count').first(),
-      db('invoices').where('status', 'paid').count('id as count').first(),
-      db('invoices').where('status', 'pending').count('id as count').first(),
-      db('invoices').where('status', 'overdue').count('id as count').first(),
       db('documents').count('id as count').first(),
       db('appointments').count('id as count').first(),
       db('chat_messages').count('id as count').first()
     ]);
 
+    const totalRevenue = { total: 0 };
+    const monthlyRevenue = { total: 0 };
+    const totalInvoices = { count: 0 };
+    const paidInvoices = { count: 0 };
+    const pendingInvoices = { count: 0 };
+    const overdueInvoices = { count: 0 };
+
     // Platform growth metrics
-    const [lastMonthUsers, lastMonthLawyers, lastMonthRevenue] = await Promise.all([
+    const [lastMonthUsers, lastMonthLawyers] = await Promise.all([
       db('users').whereBetween('created_at', [lastMonth, thisMonth]).count('id as count').first(),
-      db('lawyers').whereBetween('created_at', [lastMonth, thisMonth]).count('id as count').first(),
-      db('invoices').where('status', 'paid')
-        .whereBetween('created_at', [lastMonth, thisMonth])
-        .sum('amount as total').first()
+      db('lawyers').whereBetween('created_at', [lastMonth, thisMonth]).count('id as count').first()
     ]);
+
+    const lastMonthRevenue = { total: 0 };
 
     // Calculate growth percentages
     const calculateGrowth = (current, previous) => {
@@ -51,41 +48,11 @@ const getStats = async (req, res) => {
       db('cases').select('status').count('id as count').groupBy('status')
     ]);
 
-    // Revenue trends (last 12 months) - optimized single query
-    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1);
-    const revenueByMonth = await db('invoices')
-      .select(
-        db.raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
-        db.raw('SUM(amount) as total')
-      )
-      .where('status', 'paid')
-      .where('created_at', '>=', startDate)
-      .groupBy('month')
-      .orderBy('month');
-
-    // Fill in missing months with zero revenue
+    // Revenue trends - empty since invoices deleted
     const revenueData = [];
-    for (let i = 11; i >= 0; i--) {
-      const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const monthKey = monthDate.toISOString().slice(0, 7);
-      const monthData = revenueByMonth.find(r => r.month === monthKey);
-      
-      revenueData.push({
-        month: monthDate.toLocaleString('default', { month: 'short', year: 'numeric' }),
-        revenue: parseFloat(monthData?.total) || 0
-      });
-    }
 
-    // Top performing lawyers by revenue
-    const topLawyers = await db('invoices')
-      .join('lawyers', 'invoices.lawyer_id', 'lawyers.id')
-      .select('lawyers.name', 'lawyers.email')
-      .sum('invoices.amount as total_revenue')
-      .count('invoices.id as total_invoices')
-      .where('invoices.status', 'paid')
-      .groupBy('lawyers.id', 'lawyers.name', 'lawyers.email')
-      .orderBy('total_revenue', 'desc')
-      .limit(5);
+    // Top performing lawyers - empty since invoices deleted
+    const topLawyers = [];
 
     const stats = {
       // Core metrics
@@ -337,15 +304,10 @@ const deleteLawyer = async (req, res) => {
     await db('events').where('lawyer_id', id).del();
     await db('tasks').where('created_by', id).del();
     await db('documents').where('uploaded_by', id).del();
-    await db('invoices').where('lawyer_id', id).del();
-    await db('time_entries').where('lawyer_id', id).del();
-    await db('expenses').where('created_by', id).del();
     await db('notes').where('created_by', id).del();
     await db('contacts').where('created_by', id).del();
     await db('calls').where('lawyer_id', id).del();
-    await db('messages').where('lawyer_id', id).del();
     await db('payments').where('recorded_by', id).del();
-    await db('intakes').where('assigned_to', id).del();
     await db('chat_messages').where('sender_id', id).where('sender_type', 'lawyer').del();
     await db('chat_messages').where('receiver_id', id).where('receiver_type', 'lawyer').del();
     await db('blogs').where('author_id', id).del();

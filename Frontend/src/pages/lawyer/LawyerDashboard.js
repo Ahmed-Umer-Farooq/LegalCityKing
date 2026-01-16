@@ -14,10 +14,6 @@ const CreateContactModal = React.lazy(() => import('../../components/modals/Crea
 const CreateCaseModal = React.lazy(() => import('../../components/modals/CreateCaseModal').catch(() => ({ default: () => null })));
 const CreateNoteModal = React.lazy(() => import('../../components/modals/CreateNoteModal').catch(() => ({ default: () => null })));
 const LogCallModal = React.lazy(() => import('../../components/modals/LogCallModal').catch(() => ({ default: () => null })));
-const SendMessageModal = React.lazy(() => import('../../components/modals/SendMessageModal').catch(() => ({ default: () => null })));
-const TrackTimeModal = React.lazy(() => import('../../components/modals/TrackTimeModal').catch(() => ({ default: () => null })));
-const AddExpenseModal = React.lazy(() => import('../../components/modals/AddExpenseModal').catch(() => ({ default: () => null })));
-const CreateInvoiceModal = React.lazy(() => import('../../components/modals/CreateInvoiceModal').catch(() => ({ default: () => null })));
 const RecordPaymentModal = React.lazy(() => import('../../components/modals/RecordPaymentModal').catch(() => ({ default: () => null })));
 const VerificationModal = React.lazy(() => import('../../components/modals/VerificationModal').catch(() => ({ default: () => null })));
 const ContactsPage = React.lazy(() => import('./ContactsPage.jsx').catch(() => ({ default: () => <div>Contacts coming soon...</div> })));
@@ -51,7 +47,6 @@ export default function LawyerDashboard() {
   });
   const [notes, setNotes] = useState([]);
   const [calls, setCalls] = useState([]);
-  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -59,10 +54,6 @@ export default function LawyerDashboard() {
   const [showCaseModal, setShowCaseModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [showTimeModal, setShowTimeModal] = useState(false);
-  const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeNavItem, setActiveNavItem] = useState(searchParams.get('tab') || 'home');
@@ -161,15 +152,14 @@ export default function LawyerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, casesRes, notesRes, eventsRes, earningsRes, calendarRes, callsRes, expensesRes] = await Promise.all([
+      const [statsRes, casesRes, notesRes, eventsRes, earningsRes, calendarRes, callsRes] = await Promise.all([
         api.get('/lawyer/dashboard/stats'),
         api.get('/lawyer/cases?page=1&limit=10'),
         api.get('/notes?page=1&limit=3'),
         api.get('/events/upcoming'),
         api.get('/stripe/lawyer-earnings'),
         api.get('/events/calendar'),
-        api.get('/calls?page=1&limit=3').catch(() => ({ data: [] })),
-        api.get('/expenses?page=1&limit=3').catch(() => ({ data: [] }))
+        api.get('/calls?page=1&limit=3').catch(() => ({ data: [] }))
       ]);
       
       setStats(statsRes.data || { 
@@ -184,7 +174,6 @@ export default function LawyerDashboard() {
       setCases(Array.isArray(casesRes.data) ? casesRes.data : []);
       setNotes(Array.isArray(notesRes.data?.data) ? notesRes.data.data : []);
       setCalls(Array.isArray(callsRes.data) ? callsRes.data : (callsRes.data?.calls || callsRes.data?.data || []));
-      setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : (expensesRes.data?.expenses || expensesRes.data?.data || []));
       setUpcomingEvents(Array.isArray(eventsRes.data?.data) ? eventsRes.data.data : []);
       setCalendarEvents(Array.isArray(calendarRes.data?.data) ? calendarRes.data.data : []);
       
@@ -939,8 +928,8 @@ export default function LawyerDashboard() {
           </div>
         </div>
 
-        {/* Recent Notes, Calls & Expenses */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Recent Notes, Calls */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
             <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Notes</h2>
             <div className="space-y-3">
@@ -1011,37 +1000,6 @@ export default function LawyerDashboard() {
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {call.outcome ? call.outcome.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Pending'}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-8">
-            <h2 className="text-[#181A2A] text-lg font-semibold mb-4">Recent Expenses</h2>
-            <div className="space-y-3">
-              {loading ? (
-                <p className="text-center text-[#737791]">Loading...</p>
-              ) : expenses.length === 0 ? (
-                <p className="text-center text-[#737791]">No expenses found</p>
-              ) : (
-                expenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between p-3 border border-[#F8F9FA] rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#FEF3C7] rounded-full flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-[#D97706]" />
-                      </div>
-                      <div>
-                        <p className="text-[#181A2A] font-medium">{expense.category?.charAt(0).toUpperCase() + expense.category?.slice(1) || 'Expense'}</p>
-                        <p className="text-[#737791] text-sm">${Number(expense.amount || 0).toFixed(2)} • {new Date(expense.date || expense.created_at).toLocaleDateString()}</p>
-                        {expense.description && <p className="text-[#9CA3AF] text-xs mt-1">{expense.description.substring(0, 40)}{expense.description.length > 40 ? '...' : ''}</p>}
-                      </div>
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      expense.billable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {expense.billable ? 'Billable' : 'Non-billable'}
                     </span>
                   </div>
                 ))
@@ -1156,26 +1114,6 @@ export default function LawyerDashboard() {
       <LogCallModal 
         isOpen={showCallModal} 
         onClose={() => setShowCallModal(false)} 
-        onSuccess={fetchDashboardData}
-      />
-      <SendMessageModal 
-        isOpen={showMessageModal} 
-        onClose={() => setShowMessageModal(false)} 
-        onSuccess={fetchDashboardData}
-      />
-      <TrackTimeModal 
-        isOpen={showTimeModal} 
-        onClose={() => setShowTimeModal(false)} 
-        onSuccess={fetchDashboardData}
-      />
-      <AddExpenseModal 
-        isOpen={showExpenseModal} 
-        onClose={() => setShowExpenseModal(false)} 
-        onSuccess={fetchDashboardData}
-      />
-      <CreateInvoiceModal 
-        isOpen={showInvoiceModal} 
-        onClose={() => setShowInvoiceModal(false)} 
         onSuccess={fetchDashboardData}
       />
       <RecordPaymentModal 

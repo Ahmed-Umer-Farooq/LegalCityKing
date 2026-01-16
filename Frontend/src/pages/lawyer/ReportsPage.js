@@ -12,9 +12,6 @@ export default function ReportsPage() {
     notes: [],
     calls: [],
     messages: [],
-    timeEntries: [],
-    expenses: [],
-    invoices: [],
     payments: []
   });
   const [loading, setLoading] = useState(true);
@@ -28,7 +25,7 @@ export default function ReportsPage() {
       setLoading(true);
       const [
         casesRes, contactsRes, tasksRes, eventsRes, notesRes,
-        callsRes, messagesRes, timeRes, expensesRes, invoicesRes, paymentsRes
+        callsRes, messagesRes, paymentsRes
       ] = await Promise.all([
         api.get('/cases').catch(() => ({ data: { data: [] } })),
         api.get('/contacts').catch(() => ({ data: { data: [] } })),
@@ -37,9 +34,6 @@ export default function ReportsPage() {
         api.get('/notes').catch(() => ({ data: { data: [] } })),
         api.get('/calls').catch(() => ({ data: { data: [] } })),
         api.get('/messages').catch(() => ({ data: { data: [] } })),
-        api.get('/time-entries').catch(() => ({ data: { data: [] } })),
-        api.get('/expenses').catch(() => ({ data: { data: [] } })),
-        api.get('/invoices').catch(() => ({ data: { data: [] } })),
         api.get('/payments').catch(() => ({ data: { data: [] } }))
       ]);
 
@@ -51,9 +45,6 @@ export default function ReportsPage() {
         notes: notesRes.data?.data || [],
         calls: callsRes.data?.data || [],
         messages: messagesRes.data?.data || [],
-        timeEntries: timeRes.data?.data || [],
-        expenses: expensesRes.data?.data || [],
-        invoices: invoicesRes.data?.data || [],
         payments: paymentsRes.data?.data || []
       });
     } catch (error) {
@@ -174,7 +165,7 @@ export default function ReportsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           title="Notes"
           count={data.notes.length}
@@ -202,45 +193,10 @@ export default function ReportsPage() {
           onViewAll={() => toast.info('Click "Messages" in the navigation menu to view all messages')}
           onItemClick={(item) => toast.info(`Message: ${item.subject}\nType: ${item.message_type}\nContent: ${item.content}`)}
         />
-        <StatCard
-          title="Time Entries"
-          count={data.timeEntries.length}
-          icon={Clock}
-          color="#F97316"
-          items={data.timeEntries}
-          onViewAll={() => toast.info('Time tracking list coming soon! For now, time is tracked via Quick Actions.')}
-          onItemClick={(item) => toast.info(`Time Entry: ${item.description}\nHours: ${item.hours}\nDate: ${item.date}\nBillable: ${item.is_billable ? 'Yes' : 'No'}\nRate: $${item.billable_rate || 'N/A'}`)}
-        />
       </div>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
-              <p className="text-3xl font-bold text-red-600">{data.expenses.length}</p>
-              <p className="text-sm text-gray-500">
-                Total: ${data.expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0).toFixed(2)}
-              </p>
-            </div>
-            <DollarSign className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
-              <p className="text-3xl font-bold text-blue-600">{data.invoices.length}</p>
-              <p className="text-sm text-gray-500">
-                Total: ${data.invoices.reduce((sum, inv) => sum + (parseFloat(inv.amount) || 0), 0).toFixed(2)}
-              </p>
-            </div>
-            <FileText className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <div>

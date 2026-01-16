@@ -16,13 +16,8 @@ const getOverview = async (req, res) => {
       .countDistinct('client_id as count')
       .first();
 
-    // Monthly revenue
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const monthlyRevenue = await db('invoices')
-      .where({ lawyer_id: lawyerId, status: 'paid' })
-      .whereRaw('DATE_FORMAT(paid_date, "%Y-%m") = ?', [currentMonth])
-      .sum('total_amount as total')
-      .first();
+    // Monthly revenue - set to 0 since invoices table deleted
+    const monthlyRevenue = { total: 0 };
 
     // Upcoming hearings
     const upcomingHearings = await db('events')
@@ -63,21 +58,8 @@ const getRecentActivity = async (req, res) => {
 
 const getRevenue = async (req, res) => {
   try {
-    const lawyerId = req.user.id;
-    const { period = 'monthly' } = req.query;
-    
-    let dateFormat = '%Y-%m';
-    if (period === 'yearly') dateFormat = '%Y';
-    if (period === 'daily') dateFormat = '%Y-%m-%d';
-
-    const revenue = await db('invoices')
-      .select(db.raw(`DATE_FORMAT(paid_date, '${dateFormat}') as period`))
-      .sum('total_amount as total')
-      .where({ lawyer_id: lawyerId, status: 'paid' })
-      .groupBy('period')
-      .orderBy('period');
-
-    res.json({ success: true, data: revenue });
+    // Invoices table deleted - return empty data
+    res.json({ success: true, data: [] });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

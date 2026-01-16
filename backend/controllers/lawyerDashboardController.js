@@ -8,7 +8,7 @@ const getDashboardStats = async (req, res) => {
     const thisMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     
     // Get current month stats
-    const [activeCases, totalClients, monthlyRevenue, upcomingHearings] = await Promise.all([
+    const [activeCases, totalClients, upcomingHearings] = await Promise.all([
       db('cases').where({ lawyer_id: lawyerId, status: 'active' }).count('id as count').first(),
       db('users')
         .leftJoin('cases', 'users.id', 'cases.client_id')
@@ -18,26 +18,24 @@ const getDashboardStats = async (req, res) => {
         })
         .where('users.role', 'client')
         .countDistinct('users.id as count').first(),
-      db('invoices').where({ lawyer_id: lawyerId, status: 'paid' })
-        .whereBetween('created_at', [thisMonth, currentDate])
-        .sum('amount as total').first(),
       db('events').where('lawyer_id', lawyerId)
         .where('start_date_time', '>=', currentDate.toISOString())
         .count('id as count').first()
     ]);
 
+    const monthlyRevenue = { total: 0 };
+
     // Get last month stats for comparison
-    const [lastMonthCases, lastMonthClients, lastMonthRevenue] = await Promise.all([
+    const [lastMonthCases, lastMonthClients] = await Promise.all([
       db('cases').where({ lawyer_id: lawyerId, status: 'active' })
         .whereBetween('created_at', [lastMonth, thisMonth])
         .count('id as count').first(),
       db('cases').where('lawyer_id', lawyerId)
         .whereBetween('created_at', [lastMonth, thisMonth])
-        .countDistinct('client_id as count').first(),
-      db('invoices').where({ lawyer_id: lawyerId, status: 'paid' })
-        .whereBetween('created_at', [lastMonth, thisMonth])
-        .sum('amount as total').first()
+        .countDistinct('client_id as count').first()
     ]);
+
+    const lastMonthRevenue = { total: 0 };
 
     // Calculate percentage changes
     const calculatePercentage = (current, previous) => {
@@ -61,27 +59,8 @@ const getDashboardStats = async (req, res) => {
       .where('lawyer_id', lawyerId)
       .groupBy('type');
 
-    // Get monthly revenue data for chart (last 12 months)
-    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1);
-    const monthlyRevenueQuery = await db('invoices')
-      .select(db.raw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(amount) as total'))
-      .where({ lawyer_id: lawyerId, status: 'paid' })
-      .whereBetween('created_at', [startDate, currentDate])
-      .groupBy(db.raw('YEAR(created_at), MONTH(created_at)'))
-      .orderBy(db.raw('YEAR(created_at), MONTH(created_at)'));
-
+    // Monthly revenue data - empty since invoices deleted
     const monthlyRevenueData = [];
-    for (let i = 11; i >= 0; i--) {
-      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const monthData = monthlyRevenueQuery.find(item => 
-        item.year === monthStart.getFullYear() && item.month === monthStart.getMonth() + 1
-      );
-      
-      monthlyRevenueData.push({
-        month: monthStart.toLocaleString('default', { month: 'short' }),
-        revenue: parseFloat(monthData?.total) || 0
-      });
-    }
 
     res.json({
       activeCases: currentActiveCases,
@@ -249,23 +228,8 @@ const getDocuments = async (req, res) => {
 
 const getInvoices = async (req, res) => {
   try {
-    const lawyerId = req.user.id;
-    const invoices = await db('invoices')
-      .select('id', 'invoice_number', 'client_id', 'amount', 'status', 'created_at', 'due_date')
-      .where('lawyer_id', lawyerId)
-      .orderBy('created_at', 'desc');
-
-    const processedInvoices = invoices.map(inv => ({
-      id: inv.id,
-      invoice_number: inv.invoice_number,
-      client_name: `Client ${inv.client_id || 'Unknown'}`,
-      amount: inv.amount.toString(),
-      status: inv.status,
-      due_date: inv.due_date,
-      created_at: inv.created_at
-    }));
-
-    res.json(processedInvoices);
+    // Invoices table deleted - return empty array
+    res.json([]);
   } catch (error) {
     console.error('Get invoices error:', error);
     res.status(500).json({ message: 'Server error' });
