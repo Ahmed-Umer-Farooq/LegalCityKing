@@ -1195,18 +1195,18 @@ export default function ProfileManagement() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-3 sm:p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Profile Management</h1>
-              <p className="text-gray-600">Manage all aspects of your professional lawyer profile</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Complete Profile Management</h1>
+              <p className="text-sm sm:text-base text-gray-600">Manage all aspects of your professional lawyer profile</p>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{calculateProfileCompletion()}%</div>
-              <div className="text-sm text-gray-500">Profile Complete</div>
+            <div className="text-left sm:text-right">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{calculateProfileCompletion()}%</div>
+              <div className="text-xs sm:text-sm text-gray-500">Profile Complete</div>
             </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1217,19 +1217,19 @@ export default function ProfileManagement() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border overflow-hidden">
               {/* Profile Header */}
-              <div className="p-6 bg-gradient-to-br from-blue-600 to-indigo-800 text-white">
+              <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-600 to-indigo-800 text-white">
                 <div className="text-center">
-                  <div className="relative inline-block mb-4">
-                    <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <div className="relative inline-block mb-3 sm:mb-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
                       {imagePreview ? (
                         <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-10 h-10 text-white" />
+                        <User className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                       )}
                     </div>
                     {isEditing && (
@@ -1269,25 +1269,25 @@ export default function ProfileManagement() {
                       </label>
                     )}
                   </div>
-                  <h3 className="font-semibold">{profileData.name || 'Your Name'}</h3>
-                  <p className="text-blue-100 text-sm">{profileData.speciality || 'Legal Professional'}</p>
+                  <h3 className="font-semibold text-sm sm:text-base">{profileData.name || 'Your Name'}</h3>
+                  <p className="text-blue-100 text-xs sm:text-sm">{profileData.speciality || 'Legal Professional'}</p>
                 </div>
               </div>
 
               {/* Navigation */}
-              <nav className="p-3 space-y-1">
+              <nav className="p-2 sm:p-3 space-y-1">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl text-left transition-all ${
                       activeTab === tab.id
                         ? 'bg-blue-50 text-blue-700 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    <tab.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{tab.label}</span>
+                    <tab.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium truncate">{tab.label}</span>
                   </button>
                 ))}
               </nav>
@@ -1298,45 +1298,45 @@ export default function ProfileManagement() {
           <div className="lg:col-span-4">
             <div className="bg-white rounded-2xl shadow-lg border">
               {/* Header */}
-              <div className="px-6 py-5 border-b flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     {tabs.find(t => t.id === activeTab)?.icon && 
                       React.createElement(tabs.find(t => t.id === activeTab).icon, { className: "w-4 h-4 text-blue-600" })
                     }
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                     {tabs.find(t => t.id === activeTab)?.label}
                   </h2>
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+                      className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm flex-1 sm:flex-initial"
                     >
                       <Edit3 className="w-4 h-4" />
-                      Edit
+                      <span>Edit</span>
                     </button>
                   ) : (
                     <>
                       <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+                        className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm flex-1 sm:flex-initial"
                       >
                         <Save className="w-4 h-4" />
-                        Save
+                        <span>Save</span>
                       </button>
                       <button
                         onClick={() => {
                           setIsEditing(false);
                           fetchProfile();
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600"
+                        className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 text-sm flex-1 sm:flex-initial"
                       >
                         <X className="w-4 h-4" />
-                        Cancel
+                        <span>Cancel</span>
                       </button>
                     </>
                   )}
@@ -1344,7 +1344,7 @@ export default function ProfileManagement() {
               </div>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {activeTab === 'personal' && renderPersonalInfo()}
                 {activeTab === 'contact' && renderContactInfo()}
                 {activeTab === 'professional' && renderProfessionalInfo()}

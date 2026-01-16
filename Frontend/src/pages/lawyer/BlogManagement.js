@@ -220,28 +220,28 @@ const BlogManagement = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-8 border border-slate-200 shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-4 sm:p-6 lg:p-8 border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">My Blogs</h2>
-            <p className="text-slate-600 text-lg">Share your legal expertise and build your professional presence</p>
-            <div className="flex items-center gap-6 mt-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">My Blogs</h2>
+            <p className="text-slate-600 text-sm sm:text-base lg:text-lg">Share your legal expertise and build your professional presence</p>
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-4">
               <div className="flex items-center gap-2 text-slate-500">
-                <span className="text-sm font-medium">{blogs.length} Published</span>
+                <span className="text-xs sm:text-sm font-medium">{blogs.length} Published</span>
               </div>
               <div className="flex items-center gap-2 text-slate-500">
-                <Eye className="w-4 h-4" />
-                <span className="text-sm font-medium">{blogs.reduce((sum, blog) => sum + (blog.views_count || 0), 0)} Total Views</span>
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium">{blogs.reduce((sum, blog) => sum + (blog.views_count || 0), 0)} Total Views</span>
               </div>
             </div>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-semibold text-lg"
+            className="flex items-center justify-center gap-2 sm:gap-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-semibold text-sm sm:text-base lg:text-lg w-full sm:w-auto"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Create New Blog
           </button>
         </div>
@@ -551,7 +551,7 @@ const BlogManagement = () => {
           </div>
 
           {/* Blogs Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-pulse">
@@ -585,7 +585,7 @@ const BlogManagement = () => {
               </div>
             ) : (
               filteredBlogs.map((blog) => (
-                <div key={blog.secure_id} className="bg-white rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
+                <div key={blog.secure_id} className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
                   <div className="aspect-video bg-gradient-to-br from-slate-100 to-blue-50 relative overflow-hidden">
                     <img 
                       src={getImageUrl(blog.featured_image) || getPlaceholderImage(blog.category, blog.secure_id)} 
@@ -603,35 +603,35 @@ const BlogManagement = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
+                  <div className="p-4 sm:p-6">
+                    <h3 className="font-bold text-base sm:text-lg text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
                       {blog.title}
                     </h3>
-                    <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+                    <p className="text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
                       {blog.excerpt ? blog.excerpt.substring(0, 120) + '...' : blog.content ? blog.content.substring(0, 120) + '...' : ''}
                     </p>
-                    <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">
                       {blog.author_name && <span className="font-medium">{blog.author_name}</span>}
                       {blog.published_at && <span>{formatTimeAgo(blog.published_at)}</span>}
                     </div>
                     
                     {/* Metrics */}
-                    <div className="grid grid-cols-4 gap-3 mb-4">
-                      <div className="text-center p-2 bg-slate-50 rounded-lg">
-                        <Eye className="w-4 h-4 text-blue-500 mx-auto mb-1" />
-                        <div className="text-xs font-semibold text-slate-700">{blog.views_count || 0}</div>
+                    <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                      <div className="text-center p-1.5 sm:p-2 bg-slate-50 rounded-lg">
+                        <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 mx-auto mb-1" />
+                        <div className="text-[10px] sm:text-xs font-semibold text-slate-700">{blog.views_count || 0}</div>
                       </div>
-                      <div className="text-center p-2 bg-slate-50 rounded-lg">
-                        <Heart className="w-4 h-4 text-red-500 mx-auto mb-1" />
-                        <div className="text-xs font-semibold text-slate-700">{blog.like_count || 0}</div>
+                      <div className="text-center p-1.5 sm:p-2 bg-slate-50 rounded-lg">
+                        <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mx-auto mb-1" />
+                        <div className="text-[10px] sm:text-xs font-semibold text-slate-700">{blog.like_count || 0}</div>
                       </div>
-                      <div className="text-center p-2 bg-slate-50 rounded-lg">
-                        <MessageCircle className="w-4 h-4 text-green-500 mx-auto mb-1" />
-                        <div className="text-xs font-semibold text-slate-700">{blog.comment_count || 0}</div>
+                      <div className="text-center p-1.5 sm:p-2 bg-slate-50 rounded-lg">
+                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mx-auto mb-1" />
+                        <div className="text-[10px] sm:text-xs font-semibold text-slate-700">{blog.comment_count || 0}</div>
                       </div>
-                      <div className="text-center p-2 bg-slate-50 rounded-lg">
-                        <Bookmark className="w-4 h-4 text-purple-500 mx-auto mb-1" />
-                        <div className="text-xs font-semibold text-slate-700">0</div>
+                      <div className="text-center p-1.5 sm:p-2 bg-slate-50 rounded-lg">
+                        <Bookmark className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500 mx-auto mb-1" />
+                        <div className="text-[10px] sm:text-xs font-semibold text-slate-700">0</div>
                       </div>
                     </div>
 
@@ -643,10 +643,10 @@ const BlogManagement = () => {
                           setActiveView('analytics');
                           fetchBlogAnalytics(blog.secure_id);
                         }}
-                        className="flex-1 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-3 sm:px-4 py-2 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all duration-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1 sm:gap-2"
                       >
-                        <BarChart3 className="w-4 h-4" />
-                        Analytics
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Analytics</span>
                       </button>
                       <button
                         onClick={() => handleDelete(blog.secure_id)}

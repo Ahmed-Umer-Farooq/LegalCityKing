@@ -207,24 +207,25 @@ const SubscriptionManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex items-center gap-2 lg:gap-4 mb-3 lg:mb-4">
             <button 
               onClick={() => navigate('/lawyer-dashboard')}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-colors backdrop-blur-sm"
+              className="flex items-center gap-2 px-3 lg:px-4 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-colors backdrop-blur-sm text-sm lg:text-base"
             >
-              <Home className="w-4 h-4" />
-              Dashboard Home
+              <Home className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="hidden sm:inline">Dashboard Home</span>
+              <span className="sm:hidden">Back</span>
             </button>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-2">Subscription Management</h1>
-          <p className="text-slate-600 text-lg">Manage your subscription and view earnings</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-2">Subscription Management</h1>
+          <p className="text-slate-600 text-sm sm:text-base lg:text-lg">Manage your subscription and view earnings</p>
         </div>
 
         {/* Current Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800">Current Plan</h3>
@@ -320,18 +321,18 @@ const SubscriptionManagement = () => {
         </div>
 
         {/* Subscription Plans */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-3">Subscription Plans</h2>
-            <p className="text-slate-600 text-lg">Choose a plan that fits your needs</p>
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 sm:p-6 lg:p-8 mb-6 lg:mb-8">
+          <div className="text-center mb-6 lg:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-2 lg:mb-3">Subscription Plans</h2>
+            <p className="text-slate-600 text-sm sm:text-base lg:text-lg">Choose a plan that fits your needs</p>
           </div>
 
           {/* Billing Toggle */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6 lg:mb-8">
             <div className="bg-slate-100 p-1 rounded-xl">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-all text-sm lg:text-base ${
                   billingCycle === 'monthly'
                     ? 'bg-white text-slate-800 shadow-sm'
                     : 'text-slate-600 hover:text-slate-800'
@@ -341,7 +342,7 @@ const SubscriptionManagement = () => {
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all relative ${
+                className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-all relative text-sm lg:text-base ${
                   billingCycle === 'yearly'
                     ? 'bg-white text-slate-800 shadow-sm'
                     : 'text-slate-600 hover:text-slate-800'
@@ -356,7 +357,7 @@ const SubscriptionManagement = () => {
           </div>
 
           {/* Plans */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
             {subscriptionPlans
               .filter(plan => plan.billing_cycle === billingCycle && plan.name.toLowerCase() !== 'free')
               .map((plan) => {
@@ -436,17 +437,17 @@ const SubscriptionManagement = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex justify-center items-center gap-8 mt-8 pt-8 border-t border-slate-200">
-            <div className="flex items-center gap-2 text-slate-600">
-              <Shield className="w-5 h-5 text-emerald-500" />
+          <div className="flex flex-wrap justify-center items-center gap-4 lg:gap-8 mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-slate-200">
+            <div className="flex items-center gap-2 text-slate-600 text-sm lg:text-base">
+              <Shield className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-500" />
               <span className="font-medium">Secure Payment</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-600">
-              <Zap className="w-5 h-5 text-blue-500" />
+            <div className="flex items-center gap-2 text-slate-600 text-sm lg:text-base">
+              <Zap className="w-4 h-4 lg:w-5 lg:h-5 text-blue-500" />
               <span className="font-medium">Cancel Anytime</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-600">
-              <Award className="w-5 h-5 text-purple-500" />
+            <div className="flex items-center gap-2 text-slate-600 text-sm lg:text-base">
+              <Award className="w-4 h-4 lg:w-5 lg:h-5 text-purple-500" />
               <span className="font-medium">Instant Activation</span>
             </div>
           </div>

@@ -41,58 +41,58 @@ export default function ContactsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#181A2A]">Contacts</h1>
-          <p className="text-[#737791] mt-1">Manage your client and professional contacts</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#181A2A]">Contacts</h1>
+          <p className="text-[#737791] mt-1 text-sm sm:text-base">Manage your client and professional contacts</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966]"
+          className="flex items-center gap-2 bg-[#28B779] text-white px-4 py-2 rounded-lg hover:bg-[#229966] text-sm w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
           Add Contact
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-4 relative overflow-hidden border border-[#B8DAFF]">
-          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-3 flex items-center justify-center shadow-md">
-            <User className="w-4 h-4 text-white" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-3 sm:p-4 relative overflow-hidden border border-[#B8DAFF]">
+          <div className="w-8 h-8 sm:w-[34px] sm:h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-2 sm:mb-3 flex items-center justify-center shadow-md">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </div>
-          <h3 className="text-[#0052A3] text-xl font-semibold mb-2">Total Contacts</h3>
-          <p className="text-[#0052A3] text-2xl font-bold mb-1">{contactStats.total}</p>
-          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#0066CC]/10 rounded-full -mr-8 -mb-8"></div>
+          <h3 className="text-[#0052A3] text-base sm:text-xl font-semibold mb-1 sm:mb-2">Total Contacts</h3>
+          <p className="text-[#0052A3] text-xl sm:text-2xl font-bold mb-1">{contactStats.total}</p>
+          <div className="absolute bottom-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-[#0066CC]/10 rounded-full -mr-6 sm:-mr-8 -mb-6 sm:-mb-8"></div>
         </div>
-        <div className="bg-gradient-to-br from-[#E8F8F0] to-[#D9F3E8] rounded-xl p-4 relative overflow-hidden border border-[#A7E6C8]">
-          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full mb-3 flex items-center justify-center shadow-md">
-            <User className="w-4 h-4 text-white" />
+        <div className="bg-gradient-to-br from-[#E8F8F0] to-[#D9F3E8] rounded-xl p-3 sm:p-4 relative overflow-hidden border border-[#A7E6C8]">
+          <div className="w-8 h-8 sm:w-[34px] sm:h-[34px] bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full mb-2 sm:mb-3 flex items-center justify-center shadow-md">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </div>
-          <h3 className="text-[#047857] text-xl font-semibold mb-2">Clients</h3>
-          <p className="text-[#047857] text-2xl font-bold mb-1">{contactStats.clients}</p>
-          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#10B981]/10 rounded-full -mr-8 -mb-8"></div>
+          <h3 className="text-[#047857] text-base sm:text-xl font-semibold mb-1 sm:mb-2">Clients</h3>
+          <p className="text-[#047857] text-xl sm:text-2xl font-bold mb-1">{contactStats.clients}</p>
+          <div className="absolute bottom-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-[#10B981]/10 rounded-full -mr-6 sm:-mr-8 -mb-6 sm:-mb-8"></div>
         </div>
-        <div className="bg-gradient-to-br from-[#F0F4FF] to-[#E5EDFF] rounded-xl p-4 relative overflow-hidden border border-[#C7D7FE]">
-          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-full mb-3 flex items-center justify-center shadow-md">
-            <User className="w-4 h-4 text-white" />
+        <div className="bg-gradient-to-br from-[#F0F4FF] to-[#E5EDFF] rounded-xl p-3 sm:p-4 relative overflow-hidden border border-[#C7D7FE]">
+          <div className="w-8 h-8 sm:w-[34px] sm:h-[34px] bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-full mb-2 sm:mb-3 flex items-center justify-center shadow-md">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </div>
-          <h3 className="text-[#4338CA] text-xl font-semibold mb-2">Witnesses</h3>
-          <p className="text-[#4338CA] text-2xl font-bold mb-1">{contactStats.witnesses}</p>
-          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#6366F1]/10 rounded-full -mr-8 -mb-8"></div>
+          <h3 className="text-[#4338CA] text-base sm:text-xl font-semibold mb-1 sm:mb-2">Witnesses</h3>
+          <p className="text-[#4338CA] text-xl sm:text-2xl font-bold mb-1">{contactStats.witnesses}</p>
+          <div className="absolute bottom-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-[#6366F1]/10 rounded-full -mr-6 sm:-mr-8 -mb-6 sm:-mb-8"></div>
         </div>
-        <div className="bg-gradient-to-br from-[#FFF7ED] to-[#FFEDD5] rounded-xl p-4 relative overflow-hidden border border-[#FED7AA]">
-          <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full mb-3 flex items-center justify-center shadow-md">
-            <User className="w-4 h-4 text-white" />
+        <div className="bg-gradient-to-br from-[#FFF7ED] to-[#FFEDD5] rounded-xl p-3 sm:p-4 relative overflow-hidden border border-[#FED7AA]">
+          <div className="w-8 h-8 sm:w-[34px] sm:h-[34px] bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full mb-2 sm:mb-3 flex items-center justify-center shadow-md">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </div>
-          <h3 className="text-[#C2410C] text-xl font-semibold mb-2">Others</h3>
-          <p className="text-[#C2410C] text-2xl font-bold mb-1">{contactStats.others}</p>
-          <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#F97316]/10 rounded-full -mr-8 -mb-8"></div>
+          <h3 className="text-[#C2410C] text-base sm:text-xl font-semibold mb-1 sm:mb-2">Others</h3>
+          <p className="text-[#C2410C] text-xl sm:text-2xl font-bold mb-1">{contactStats.others}</p>
+          <div className="absolute bottom-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-[#F97316]/10 rounded-full -mr-6 sm:-mr-8 -mb-6 sm:-mb-8"></div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-4 sm:p-6">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#737791] w-5 h-5" />
             <input
@@ -138,7 +138,7 @@ export default function ContactsPage() {
               <p className="text-[#737791]">No contacts found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredContacts.map((contact) => (
                 <div key={contact.id} className="border border-[#F8F9FA] rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-3">

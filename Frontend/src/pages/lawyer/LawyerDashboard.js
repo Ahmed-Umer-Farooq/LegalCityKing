@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Crown } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Crown, Menu } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
@@ -67,6 +67,7 @@ export default function LawyerDashboard() {
   const [blogEngagementCount, setBlogEngagementCount] = useState(0);
   const [earnings, setEarnings] = useState({ total_earned: 0, available_balance: 0 });
   const [recentPayments, setRecentPayments] = useState([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Subscription feature checks
   const isProfessional = currentUser?.subscription_tier === 'professional' || currentUser?.subscription_tier === 'Professional';
@@ -267,14 +268,14 @@ export default function LawyerDashboard() {
     <div className="min-h-screen bg-[#EDF4FF] w-full overflow-x-hidden">
       {/* HEADER */}
       <header className="w-full bg-white border-b border-[#E5E7EB] shadow-sm sticky top-0 z-50">
-        <div className="max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4 w-full">
+        <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-2 lg:gap-4 w-full">
             {/* Professional Logo/Brand */}
-            <div className="flex items-center gap-2">
-              <div className="bg-[#0284C7] rounded-full px-4 py-2 shadow-lg">
-                <span className="text-white font-bold text-xl tracking-tight">Legal</span>
+            <div className="flex items-center gap-1.5 lg:gap-2">
+              <div className="bg-[#0284C7] rounded-full px-2 sm:px-3 lg:px-4 py-1.5 lg:py-2 shadow-lg">
+                <span className="text-white font-bold text-sm sm:text-base lg:text-xl tracking-tight">Legal</span>
               </div>
-              <span className="text-[#0284C7] font-bold text-xl tracking-tight">City</span>
+              <span className="text-[#0284C7] font-bold text-sm sm:text-base lg:text-xl tracking-tight">City</span>
             </div>
             
             {/* Navigation Sections */}
@@ -340,12 +341,18 @@ export default function LawyerDashboard() {
             </nav>
             )}
             
-
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors order-first"
+            >
+              <Menu className="w-5 h-5 text-[#374151]" />
+            </button>
             
             {/* Professional User Profile */}
             <div className="relative group">
-              <div className="flex items-center gap-2 cursor-pointer bg-[#F9FAFB] hover:bg-[#F3F4F6] rounded-lg px-2 py-1.5 border border-[#E5E7EB] transition-all">
-                <div className="w-6 h-6 bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] rounded-full flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+              <div className="flex items-center gap-1 lg:gap-2 cursor-pointer bg-[#F9FAFB] hover:bg-[#F3F4F6] rounded-lg px-1.5 lg:px-2 py-1 lg:py-1.5 border border-[#E5E7EB] transition-all">
+                <div className="w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] rounded-full flex items-center justify-center text-white font-semibold text-xs shadow-sm">
                   {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="hidden md:block text-left">
@@ -432,6 +439,90 @@ export default function LawyerDashboard() {
         </div>
       </header>
 
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
+
+      {/* Mobile Menu Drawer */}
+      <div className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 lg:hidden ${
+        isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+          <h2 className="text-lg font-semibold text-[#181A2A]">Menu</h2>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-[#374151]" />
+          </button>
+        </div>
+        <nav className="overflow-y-auto h-[calc(100%-73px)] p-4">
+          <div className="space-y-2">
+            {[
+              { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); setIsMobileMenuOpen(false); } },
+              { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); setIsMobileMenuOpen(false); }, showNotification: true, verificationRequired: !isVerified },
+              { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+              { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+              { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); setIsMobileMenuOpen(false); }, subscriptionRequired: !isPremium },
+              { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); setIsMobileMenuOpen(false); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
+              { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); setIsMobileMenuOpen(false); }, verificationRequired: !isVerified },
+              { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); } }
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNavItem === item.id;
+              const needsVerification = item.verificationRequired;
+              const needsSubscription = item.subscriptionRequired;
+              const isRestricted = needsVerification || needsSubscription;
+              return (
+                <button
+                  key={item.id}
+                  onClick={isRestricted ? (needsVerification ? () => { setShowVerificationModal(true); setIsMobileMenuOpen(false); } : () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); }) : item.action}
+                  className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive 
+                      ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                      : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {needsVerification && (
+                    <Lock className="w-4 h-4 text-orange-500" />
+                  )}
+                  {needsSubscription && !needsVerification && (
+                    <span className="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">PRO</span>
+                  )}
+                  {item.showNotification && (
+                    item.id === 'messages' ? (
+                      unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )
+                    ) : item.id === 'blogs' ? (
+                      blogEngagementCount > 0 && (
+                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
+                        </span>
+                      )
+                    ) : null
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
       {/* MAIN CONTENT */}
       <main className="w-full px-4 md:px-6 lg:px-8 pb-16 pt-6 max-w-screen-2xl mx-auto">
         {activeNavItem === 'contacts' && (
@@ -513,27 +604,27 @@ export default function LawyerDashboard() {
         <>
 
         {/* Overview Stats */}
-        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-7 mb-6">
-          <div className="mb-9">
-            <h2 className="text-[#181A2A] text-[17px] font-semibold mb-1">Overview</h2>
-            <p className="text-[#737791] text-sm">Current Period Statistics</p>
+        <div className="bg-white rounded-2xl border border-[#F8F9FA] shadow-md p-4 sm:p-5 lg:p-7 mb-4 lg:mb-6">
+          <div className="mb-4 lg:mb-9">
+            <h2 className="text-[#181A2A] text-base lg:text-[17px] font-semibold mb-1">Overview</h2>
+            <p className="text-[#737791] text-xs lg:text-sm">Current Period Statistics</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-4 relative overflow-hidden border border-[#B8DAFF]">
-              <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-3 flex items-center justify-center shadow-md">
-                <FileText className="w-4 h-4 text-white" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div className="bg-gradient-to-br from-[#EBF5FF] to-[#E0EFFF] rounded-xl p-3 lg:p-4 relative overflow-hidden border border-[#B8DAFF]">
+              <div className="w-7 h-7 lg:w-[34px] lg:h-[34px] bg-gradient-to-br from-[#0066CC] to-[#0052A3] rounded-full mb-2 lg:mb-3 flex items-center justify-center shadow-md">
+                <FileText className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
               </div>
-              <h3 className="text-[#0052A3] text-xl font-semibold mb-2">Active Cases</h3>
-              <p className="text-[#0052A3] text-2xl font-bold mb-1">{stats.activeCases}</p>
+              <h3 className="text-[#0052A3] text-sm lg:text-xl font-semibold mb-1 lg:mb-2">Active Cases</h3>
+              <p className="text-[#0052A3] text-lg lg:text-2xl font-bold mb-1">{stats.activeCases}</p>
               <div className="flex items-center text-xs">
                 <span className={`font-medium ${
                   stats.percentageChanges?.activeCases >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {stats.percentageChanges?.activeCases >= 0 ? '+' : ''}{stats.percentageChanges?.activeCases || 0}%
                 </span>
-                <span className="text-[#737791] ml-1">from last month</span>
+                <span className="text-[#737791] ml-1 hidden sm:inline">from last month</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 bg-[#0066CC]/10 rounded-full -mr-8 -mb-8"></div>
+              <div className="absolute bottom-0 right-0 w-12 h-12 lg:w-16 lg:h-16 bg-[#0066CC]/10 rounded-full -mr-6 lg:-mr-8 -mb-6 lg:-mb-8"></div>
             </div>
             <div className="bg-gradient-to-br from-[#E8F8F0] to-[#D9F3E8] rounded-xl p-4 relative overflow-hidden border border-[#A7E6C8]">
               <div className="w-[34px] h-[34px] bg-gradient-to-br from-[#10B981] to-[#059669] rounded-full mb-3 flex items-center justify-center shadow-md">

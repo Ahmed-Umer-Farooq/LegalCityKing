@@ -89,8 +89,9 @@ const CalendarPage = () => {
         {/* Calendar Header */}
         <div className="grid grid-cols-7 border-b">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-600 border-r last:border-r-0">
-              {day}
+            <div key={day} className="p-2 sm:p-4 text-center font-semibold text-gray-600 border-r last:border-r-0 text-xs sm:text-sm">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.slice(0, 1)}</span>
             </div>
           ))}
         </div>
@@ -105,7 +106,7 @@ const CalendarPage = () => {
               });
               
               return (
-                <div key={dayIndex} className={`min-h-[120px] p-2 border-r last:border-r-0 cursor-pointer hover:bg-blue-50 transition-colors ${
+                <div key={dayIndex} className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r last:border-r-0 cursor-pointer hover:bg-blue-50 transition-colors ${
                   !dayObj.isCurrentMonth ? 'bg-gray-50' : ''
                 } ${dayObj.isToday ? 'bg-blue-50' : ''}`}
                 onClick={() => {
@@ -117,19 +118,19 @@ const CalendarPage = () => {
                     setShowEventModal(true);
                   }
                 }}>
-                  <div className={`text-sm font-medium mb-2 ${
+                  <div className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
                     dayObj.isToday ? 'text-blue-600' : 
                     !dayObj.isCurrentMonth ? 'text-gray-400' : 'text-gray-900'
                   }`}>
                     {dayObj.date}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 sm:space-y-1">
                     {dayEvents.slice(0, 3).map((event) => {
                       const eventTime = new Date(event.start_date_time);
                       return (
                         <div 
                           key={event.id} 
-                          className={`text-xs p-1 rounded border ${getEventTypeColor(event.event_type)} cursor-pointer hover:shadow-sm`}
+                          className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded border ${getEventTypeColor(event.event_type)} cursor-pointer hover:shadow-sm`}
                           title={`${event.title} - ${eventTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -138,14 +139,14 @@ const CalendarPage = () => {
                           }}
                         >
                           <div className="font-medium truncate">{event.title}</div>
-                          <div className="text-xs opacity-75">
+                          <div className="text-[9px] sm:text-xs opacity-75 hidden sm:block">
                             {eventTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                           </div>
                         </div>
                       );
                     })}
                     {dayEvents.length > 3 && (
-                      <div className="text-xs text-gray-500 font-medium">
+                      <div className="text-[10px] sm:text-xs text-gray-500 font-medium">
                         +{dayEvents.length - 3} more
                       </div>
                     )}
@@ -160,18 +161,18 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendar & Events</h1>
-          <p className="text-gray-600">Manage your appointments and deadlines</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Calendar & Events</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your appointments and deadlines</p>
         </div>
         <button 
           onClick={() => {
             // Trigger event creation modal
             window.dispatchEvent(new CustomEvent('openEventModal'));
           }}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
           Add Event
@@ -179,8 +180,8 @@ const CalendarPage = () => {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <button 
             onClick={() => navigateMonth(-1)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -189,10 +190,10 @@ const CalendarPage = () => {
           </button>
           
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-900">
               {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Today: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
@@ -216,15 +217,15 @@ const CalendarPage = () => {
 
       {/* All Events List */}
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">All Events</h3>
+        <div className="p-4 sm:p-6 border-b">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">All Events</h3>
         </div>
         
         {events.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>No events found.</p>
-            <p className="text-sm mt-1">Create your first event using the Add Event button!</p>
+          <div className="p-6 sm:p-8 text-center text-gray-500">
+            <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-sm sm:text-base">No events found.</p>
+            <p className="text-xs sm:text-sm mt-1">Create your first event using the Add Event button!</p>
           </div>
         ) : (
           <div className="divide-y">
@@ -233,23 +234,23 @@ const CalendarPage = () => {
               const endDate = event.end_date_time ? new Date(event.end_date_time) : null;
               
               return (
-                <div key={event.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-gray-900">{event.title}</h4>
+                <div key={event.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{event.title}</h4>
                         <span className={`px-2 py-1 text-xs rounded-full ${getEventTypeColor(event.event_type)}`}>
                           {event.event_type.replace('_', ' ')}
                         </span>
                       </div>
                       
                       {event.description && (
-                        <p className="text-gray-600 mb-3">{event.description}</p>
+                        <p className="text-gray-600 mb-3 text-sm">{event.description}</p>
                       )}
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>
                             {eventDate.toLocaleDateString('en-US', { 
                               month: 'short', 
@@ -266,32 +267,32 @@ const CalendarPage = () => {
                         
                         {event.location && (
                           <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{event.location}</span>
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="truncate">{event.location}</span>
                           </div>
                         )}
                         
                         {event.case_title && (
-                          <div className="text-blue-600">
+                          <div className="text-blue-600 truncate">
                             Case: {event.case_title}
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-4">
                       <button 
                         onClick={() => {
                           setEditingEvent(event);
                           setShowEventModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium flex-1 sm:flex-initial"
                       >
                         Edit
                       </button>
                       <button 
                         onClick={() => setDeleteConfirm(event.id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium flex-1 sm:flex-initial"
                       >
                         Delete
                       </button>
