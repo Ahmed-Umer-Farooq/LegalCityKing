@@ -1111,15 +1111,176 @@ router.delete('/subscription-plans/:id', async (req, res) => {
 });
 
 // Subscription Restrictions
+router.get('/subscription-restrictions', async (req, res) => {
+  try {
+    const restrictions = await db('feature_restrictions').select('*');
+    const formattedRestrictions = {};
+    
+    restrictions.forEach(row => {
+      formattedRestrictions[row.plan_tier] = JSON.parse(row.restrictions);
+    });
+    
+    res.json({ restrictions: formattedRestrictions });
+  } catch (error) {
+    console.error('Error fetching restrictions:', error);
+    res.status(500).json({ error: 'Failed to fetch restrictions' });
+  }
+});
+
 router.post('/subscription-restrictions', async (req, res) => {
   try {
     const { restrictions } = req.body;
-    // Store in a settings table or config file
-    // For now, just return success
-    res.json({ message: 'Restrictions saved successfully', restrictions });
+    const adminId = req.user.id;
+    
+    for (const [planTier, planRestrictions] of Object.entries(restrictions)) {
+      const existing = await db('feature_restrictions').where('plan_tier', planTier).first();
+      
+      await db('feature_restrictions')
+        .where('plan_tier', planTier)
+        .update({
+          restrictions: JSON.stringify(planRestrictions),
+          updated_at: new Date()
+        });
+      
+      // Log audit
+      await db('restriction_audit').insert({
+        type: 'plan_restriction',
+        target_id: planTier,
+        old_restrictions: existing ? existing.restrictions : null,
+        new_restrictions: JSON.stringify(planRestrictions),
+        reason: 'Plan restrictions updated',
+        changed_by: adminId
+      });
+    }
+    
+    res.json({ message: 'Restrictions updated successfully' });
   } catch (error) {
     console.error('Error saving restrictions:', error);
     res.status(500).json({ error: 'Failed to save restrictions' });
+  }
+});
+
+// Individual Lawyer Restrictions
+router.get('/lawyer-restrictions/:lawyerId', async (req, res) => {
+  try {
+    const { lawyerId } = req.params;
+    const restrictions = await db('lawyer_restrictions')
+      .where('lawyer_id', lawyerId)
+      .first();
+    
+    res.json({ restrictions: restrictions ? JSON.parse(restrictions.restrictions) : null });
+  } catch (error) {
+    console.error('Error fetching lawyer restrictions:', error);
+    res.status(500).json({ error: 'Failed to fetch lawyer restrictions' });
+  }
+});
+
+router.post('/lawyer-restrictions/:lawyerId', async (req, res) => {
+  try {
+    const { lawyerId } = req.params;
+    const { restrictions, reason } = req.body;
+    const adminId = req.user.id;
+    
+    const existing = await db('lawyer_restrictions').where('lawyer_id', lawyerId).first();
+    
+    if (existing) {
+      await db('lawyer_restrictions')
+        .where('lawyer_id', lawyerId)
+        .update({
+          restrictions: JSON.stringify(restrictions),
+          reason,
+          updated_at: new Date()
+        });
+    } else {
+      await db('lawyer_restrictions').insert({
+        lawyer_id: lawyerId,
+        restrictions: JSON.stringify(restrictions),
+        reason,
+        created_by: adminId
+      });
+    }
+    
+    // Log audit
+    await db('restriction_audit').insert({
+      type: 'lawyer_restriction',
+      target_id: lawyerId.toString(),
+      old_restrictions: existing ? existing.restrictions : null,
+      new_restrictions: JSON.stringify(restrictions),
+      reason,
+      changed_by: adminId
+    });
+    
+    res.json({ message: 'Lawyer restrictions updated successfully' });
+  } catch (error) {
+    console.error('Error updating lawyer restrictions:', error);
+    res.status(500).json({ error: 'Failed to update lawyer restrictions' });
+  }
+});
+
+// Bulk Restriction Updates
+router.post('/bulk-restrictions', async (req, res) => {
+  try {
+    const { planTier, restrictions, reason } = req.body;
+    const adminId = req.user.id;
+    
+    const lawyers = await db('lawyers').where('subscription_tier', planTier).select('id');
+    
+    for (const lawyer of lawyers) {
+      const existing = await db('lawyer_restrictions').where('lawyer_id', lawyer.id).first();
+      
+      if (existing) {
+        await db('lawyer_restrictions')
+          .where('lawyer_id', lawyer.id)
+          .update({
+            restrictions: JSON.stringify(restrictions),
+            reason,
+            updated_at: new Date()
+          });
+      } else {
+        await db('lawyer_restrictions').insert({
+          lawyer_id: lawyer.id,
+          restrictions: JSON.stringify(restrictions),
+          reason,
+          created_by: adminId
+        });
+      }
+    }
+    
+    res.json({ message: `Bulk restrictions applied to ${lawyers.length} lawyers` });
+  } catch (error) {
+    console.error('Error applying bulk restrictions:', error);
+    res.status(500).json({ error: 'Failed to apply bulk restrictions' });
+  }
+});
+
+// Restriction Audit History
+router.get('/restriction-audit', async (req, res) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const [audit, total] = await Promise.all([
+      db('restriction_audit')
+        .leftJoin('users', 'restriction_audit.changed_by', 'users.id')
+        .select('restriction_audit.*', 'users.name as admin_name')
+        .orderBy('restriction_audit.created_at', 'desc')
+        .limit(limit)
+        .offset(offset),
+      db('restriction_audit').count('id as count').first()
+    ]);
+    
+    res.json({
+      audit,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total.count,
+        totalPages: Math.ceil(total.count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching restriction audit:', error);
+    res.status(500).json({ error: 'Failed to fetch restriction audit' });
   }
 });
 

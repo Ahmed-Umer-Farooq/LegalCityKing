@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Users, TrendingUp, Calendar, RefreshCw, Search, ChevronLeft, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
+import LawyerRestrictionManager from '../../components/LawyerRestrictionManager';
 
 const SubscriptionManagement = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -19,6 +20,8 @@ const SubscriptionManagement = () => {
   const [activeTab, setActiveTab] = useState('subscriptions');
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
+  const [showLawyerManager, setShowLawyerManager] = useState(false);
+  const [newFeature, setNewFeature] = useState('');
   const [planForm, setPlanForm] = useState({
     name: '',
     price: '',
@@ -27,16 +30,30 @@ const SubscriptionManagement = () => {
     stripe_price_id: '',
     is_free: false
   });
-  const [newFeature, setNewFeature] = useState('');
   const [restrictions, setRestrictions] = useState({
-    free: { cases: 5, clients: 10, documents: 20, blogs: 3, qa_answers: 5, payment_links: 2, quick_actions: false, payment_records: false, calendar: false, contacts: false, messages: false },
-    professional: { cases: 50, clients: 100, documents: 500, blogs: 20, qa_answers: 50, payment_links: 20, quick_actions: true, payment_records: true, calendar: true, contacts: true, messages: true },
-    premium: { cases: -1, clients: -1, documents: -1, blogs: -1, qa_answers: -1, payment_links: -1, quick_actions: true, payment_records: true, calendar: true, contacts: true, messages: true }
+    free: { 
+      cases: 5, clients: 10, documents: 20, blogs: 3, qa_answers: 5, payment_links: 2,
+      messages: false, contacts: false, calendar: false, payment_records: false, 
+      tasks: false, payouts: false, reports: false, forms: false, quick_actions: false
+    },
+    professional: { 
+      cases: 50, clients: 100, documents: 500, blogs: 20, qa_answers: 50, payment_links: 20,
+      messages: true, contacts: true, calendar: true, payment_records: true, 
+      tasks: true, payouts: true, reports: true, forms: false, quick_actions: true
+    },
+    premium: { 
+      cases: -1, clients: -1, documents: -1, blogs: -1, qa_answers: -1, payment_links: -1,
+      messages: true, contacts: true, calendar: true, payment_records: true, 
+      tasks: true, payouts: true, reports: true, forms: true, quick_actions: true
+    }
   });
+
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
       fetchSubscriptions();
+    } else if (activeTab === 'restrictions') {
+      fetchRestrictions();
     } else {
       fetchPlans();
     }
@@ -184,6 +201,17 @@ const SubscriptionManagement = () => {
 
   const removeFeature = (index) => {
     setPlanForm({...planForm, features: planForm.features.filter((_, i) => i !== index)});
+  };
+
+  const fetchRestrictions = async () => {
+    try {
+      const response = await api.get('/admin/subscription-restrictions');
+      if (response.data?.restrictions) {
+        setRestrictions(response.data.restrictions);
+      }
+    } catch (error) {
+      console.error('Error fetching restrictions:', error);
+    }
   };
 
   const saveRestrictions = async () => {
@@ -597,12 +625,20 @@ const SubscriptionManagement = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Feature Restrictions by Plan</h3>
-                <button
-                  onClick={saveRestrictions}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
-                >
-                  Save Changes
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowLawyerManager(!showLawyerManager)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    {showLawyerManager ? 'Hide' : 'Show'} Individual Management
+                  </button>
+                  <button
+                    onClick={saveRestrictions}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -720,6 +756,39 @@ const SubscriptionManagement = () => {
                         <label className="flex items-center space-x-2 cursor-pointer">
                           <input
                             type="checkbox"
+                            checked={restrictions[tier].tasks}
+                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], tasks: e.target.checked}})}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Tasks</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={restrictions[tier].payouts}
+                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], payouts: e.target.checked}})}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Payouts</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={restrictions[tier].reports}
+                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], reports: e.target.checked}})}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Reports</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
                             checked={restrictions[tier].messages}
                             onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], messages: e.target.checked}})}
                             className="w-4 h-4 text-blue-600 rounded"
@@ -732,6 +801,12 @@ const SubscriptionManagement = () => {
                   </div>
                 ))}
               </div>
+              
+              {showLawyerManager && (
+                <div className="border-t pt-6 mt-6">
+                  <LawyerRestrictionManager />
+                </div>
+              )}
             </div>
           </div>
         )}

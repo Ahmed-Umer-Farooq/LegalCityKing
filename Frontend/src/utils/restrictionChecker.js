@@ -1,5 +1,48 @@
+// Cache for dynamic restrictions
+let restrictionsCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Fetch restrictions from API
+const fetchRestrictions = async () => {
+  try {
+    const response = await fetch('/api/admin/subscription-restrictions');
+    if (response.ok) {
+      const data = await response.json();
+      restrictionsCache = data.restrictions || {};
+      cacheTimestamp = Date.now();
+      return restrictionsCache;
+    }
+  } catch (error) {
+    console.error('Failed to fetch restrictions:', error);
+  }
+  return {};
+};
+
+// Get cached or fresh restrictions
+const getRestrictions = async () => {
+  if (!restrictionsCache || !cacheTimestamp || (Date.now() - cacheTimestamp > CACHE_DURATION)) {
+    return await fetchRestrictions();
+  }
+  return restrictionsCache;
+};
+
+// Get individual lawyer restrictions
+const getLawyerRestrictions = async (lawyerId) => {
+  try {
+    const response = await fetch(`/api/admin/lawyer-restrictions/${lawyerId}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.restrictions || {};
+    }
+  } catch (error) {
+    console.error('Failed to fetch lawyer restrictions:', error);
+  }
+  return {};
+};
+
 // Centralized restriction checker for lawyer dashboard
-export const checkFeatureAccess = (featureName, lawyer) => {
+export const checkFeatureAccess = async (featureName, lawyer) => {
   if (!lawyer) {
     return { allowed: false, reason: 'profile_loading' };
   }
@@ -16,18 +59,21 @@ export const checkFeatureAccess = (featureName, lawyer) => {
                    lawyer.subscription_tier === 'Premium';
   const hasAdvancedFeatures = isProfessional || isPremium;
 
-  // Check admin restrictions - normalize feature names (both dash and underscore)
-  const restrictions = lawyer.feature_restrictions ? 
-    (typeof lawyer.feature_restrictions === 'string' ? 
-      JSON.parse(lawyer.feature_restrictions) : 
-      lawyer.feature_restrictions) : 
-    {};
+  // Get tier-based restrictions from API
+  const tierRestrictions = await getRestrictions();
+  const currentTier = lawyer.subscription_tier?.toLowerCase() || 'free';
+  const planRestrictions = tierRestrictions[currentTier] || {};
+  
+  // Get individual lawyer restrictions (overrides plan restrictions)
+  const lawyerRestrictions = await getLawyerRestrictions(lawyer.id);
+  
+  // Merge restrictions (lawyer-specific overrides plan-level)
+  const restrictions = { ...planRestrictions, ...lawyerRestrictions };
 
-  // Normalize feature name to check both formats (dash and underscore)
+  // Check admin restrictions
   const normalizedFeatureName = featureName.replace(/-/g, '_');
   const dashFeatureName = featureName.replace(/_/g, '-');
   
-  // If admin locked this feature (check both formats)
   if (restrictions[featureName] === true || 
       restrictions[normalizedFeatureName] === true || 
       restrictions[dashFeatureName] === true) {
@@ -36,7 +82,6 @@ export const checkFeatureAccess = (featureName, lawyer) => {
 
   // Feature-specific checks (support both dash and underscore formats)
   const featureRequirements = {
-    // Verification required features
     'messages': { verification: true },
     'contacts': { verification: true },
     'calendar': { verification: true },
@@ -49,17 +94,11 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     'qa': { verification: true },
     'qa_answers': { verification: true },
     'payouts': { verification: true },
-    
-    // Professional/Premium features
     'payment-links': { verification: true, subscription: 'professional' },
     'payment_links': { verification: true, subscription: 'professional' },
     'reports': { verification: true, subscription: 'professional' },
     'blogs': { verification: false, subscription: 'professional' },
-    
-    // Premium only features
     'forms': { verification: false, subscription: 'premium' },
-    
-    // Quick actions
     'quick_actions': { verification: true },
     'quick-actions': { verification: true }
   };
@@ -67,15 +106,13 @@ export const checkFeatureAccess = (featureName, lawyer) => {
   const requirements = featureRequirements[featureName];
   
   if (!requirements) {
-    return { allowed: true }; // No restrictions for this feature
+    return { allowed: true };
   }
 
-  // Check verification requirement
   if (requirements.verification && !isVerified) {
     return { allowed: false, reason: 'verification_required' };
   }
 
-  // Check subscription requirement
   if (requirements.subscription === 'professional' && !hasAdvancedFeatures) {
     return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
   }

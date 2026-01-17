@@ -1,0 +1,49 @@
+              {[
+                { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); } },
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, featureName: 'messages' },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, featureName: 'contacts' },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, featureName: 'calendar' },
+                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, featureName: 'payment_records' },
+                { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); }, featureName: 'payouts' },
+                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, featureName: 'payment_links' },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, featureName: 'reports' },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, featureName: 'tasks' },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, featureName: 'documents' },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, featureName: 'forms' },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, featureName: 'blogs' },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, featureName: 'qa_answers' },
+                { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = activeNavItem === item.id;
+                
+                return (
+                  <button
+                    key={item.id}
+                    onClick={item.action}
+                    className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                        : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden xl:block">{item.label}</span>
+                    {item.showNotification && (
+                      item.id === 'messages' ? (
+                        unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )
+                      ) : item.id === 'blogs' ? (
+                        blogEngagementCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                            {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
+                          </span>
+                        )
+                      ) : null
+                    )}
+                  </button>
+                );
+              })}

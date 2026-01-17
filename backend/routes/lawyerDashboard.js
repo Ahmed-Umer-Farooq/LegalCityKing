@@ -1,6 +1,7 @@
 const express = require('express');
 const { authenticate, authorize } = require('../middleware/modernAuth');
 const { enforceUserType } = require('../middleware/userTypeEnforcement');
+const { enforceUsageLimit, incrementUsage, decrementUsage } = require('../middleware/usageTracker');
 const {
   getDashboardStats,
   getCases,
@@ -22,7 +23,15 @@ router.use(enforceUserType('lawyer'));
 // Dashboard routes with proper authorization
 router.get('/dashboard/stats', authorize('read', 'dashboard'), getDashboardStats);
 router.get('/cases', authorize('read', 'cases'), getCases);
-router.post('/cases', authorize('write', 'cases'), createCase);
+router.post('/cases', authorize('write', 'cases'), enforceUsageLimit('cases'), async (req, res, next) => {
+  try {
+    await createCase(req, res);
+    // Increment usage counter after successful creation
+    await incrementUsage(req.user.id, 'cases');
+  } catch (error) {
+    next(error);
+  }
+});
 router.get('/clients', authorize('read', 'clients'), getClients);
 router.get('/appointments', authorize('read', 'appointments'), getAppointments);
 router.get('/documents', authorize('read', 'documents'), getDocuments);

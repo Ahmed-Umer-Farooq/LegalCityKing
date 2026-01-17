@@ -4,14 +4,32 @@ import { checkFeatureAccess, getRestrictionMessage } from '../utils/restrictionC
 import VerificationModal from './modals/VerificationModal';
 
 const RestrictedFeature = ({ featureName, lawyer, children, onRestricted }) => {
-  const accessCheck = checkFeatureAccess(featureName, lawyer);
+  const [accessCheck, setAccessCheck] = useState({ allowed: true, loading: true });
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   useEffect(() => {
-    if (!accessCheck.allowed && onRestricted) {
-      onRestricted(accessCheck);
+    if (!featureName || !lawyer) {
+      setAccessCheck({ allowed: true, loading: false });
+      return;
     }
-  }, [accessCheck.allowed]);
+    
+    checkFeatureAccess(featureName, lawyer).then(result => {
+      setAccessCheck({ ...result, loading: false });
+      if (!result.allowed && onRestricted) {
+        onRestricted(result);
+      }
+    }).catch(() => {
+      setAccessCheck({ allowed: true, loading: false });
+    });
+  }, [featureName, lawyer]);
+
+  if (accessCheck.loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-8">
+        <div className="animate-pulse bg-gray-200 rounded-2xl h-32 w-full max-w-md"></div>
+      </div>
+    );
+  }
 
   if (!accessCheck.allowed) {
     return (

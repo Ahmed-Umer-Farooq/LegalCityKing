@@ -7,6 +7,26 @@ import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
 import RestrictedFeature from '../../components/RestrictedFeature';
 import { checkFeatureAccess } from '../../utils/restrictionChecker';
 
+// Async wrapper for feature access checks
+const FeatureAccessChecker = ({ featureName, lawyer, children }) => {
+  const [accessCheck, setAccessCheck] = React.useState({ allowed: true, loading: true });
+  
+  React.useEffect(() => {
+    if (!featureName || !lawyer) {
+      setAccessCheck({ allowed: true, loading: false });
+      return;
+    }
+    
+    checkFeatureAccess(featureName, lawyer).then(result => {
+      setAccessCheck({ ...result, loading: false });
+    }).catch(() => {
+      setAccessCheck({ allowed: true, loading: false });
+    });
+  }, [featureName, lawyer]);
+  
+  return children(accessCheck);
+};
+
 // Lazy load components to prevent import errors
 const QuickActions = React.lazy(() => import('../../components/QuickActions').catch(() => ({ default: () => <div>Quick Actions Loading...</div> })));
 const CreateEventModal = React.lazy(() => import('../../components/modals/CreateEventModal').catch(() => ({ default: () => null })));
@@ -301,52 +321,72 @@ export default function LawyerDashboard() {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
                 
-                // Check feature access if featureName is provided
-                const accessCheck = item.featureName ? checkFeatureAccess(item.featureName, currentUser) : { allowed: true };
-                const isRestricted = !accessCheck.allowed;
-                const isAdminLocked = accessCheck.reason === 'admin_locked';
-                const needsVerification = accessCheck.reason === 'verification_required';
-                const needsSubscription = accessCheck.reason === 'subscription_required';
+                if (!item.featureName) {
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={item.action}
+                      className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        isActive 
+                          ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                          : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="hidden xl:block">{item.label}</span>
+                    </button>
+                  );
+                }
                 
                 return (
-                  <button
-                    key={item.id}
-                    onClick={isRestricted ? (isAdminLocked ? () => showToast.error('This feature has been restricted by the administrator.') : needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
-                    className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
-                        : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
-                    } ${
-                      isRestricted ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden xl:block">{item.label}</span>
-                    {isAdminLocked && (
-                      <Lock className="w-3 h-3 text-red-500" />
-                    )}
-                    {needsVerification && !isAdminLocked && (
-                      <Lock className="w-3 h-3 text-orange-500" />
-                    )}
-                    {needsSubscription && !needsVerification && !isAdminLocked && (
-                      <span className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1 rounded font-bold leading-none">PRO</span>
-                    )}
-                    {item.showNotification && (
-                      item.id === 'messages' ? (
-                        unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
-                        )
-                      ) : item.id === 'blogs' ? (
-                        blogEngagementCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                            {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
-                          </span>
-                        )
-                      ) : null
-                    )}
-                  </button>
+                  <FeatureAccessChecker key={item.id} featureName={item.featureName} lawyer={currentUser}>
+                    {(accessCheck) => {
+                      const isRestricted = !accessCheck.allowed && !accessCheck.loading;
+                      const isAdminLocked = accessCheck.reason === 'admin_locked';
+                      const needsVerification = accessCheck.reason === 'verification_required';
+                      const needsSubscription = accessCheck.reason === 'subscription_required';
+                      
+                      return (
+                        <button
+                          onClick={isRestricted ? (isAdminLocked ? () => showToast.error('This feature has been restricted by the administrator.') : needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
+                          className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                              : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                          } ${
+                            isRestricted ? 'opacity-60' : ''
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="hidden xl:block">{item.label}</span>
+                          {isAdminLocked && (
+                            <Lock className="w-3 h-3 text-red-500" />
+                          )}
+                          {needsVerification && !isAdminLocked && (
+                            <Lock className="w-3 h-3 text-orange-500" />
+                          )}
+                          {needsSubscription && !needsVerification && !isAdminLocked && (
+                            <span className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1 rounded font-bold leading-none">PRO</span>
+                          )}
+                          {item.showNotification && (
+                            item.id === 'messages' ? (
+                              unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                  {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                              )
+                            ) : item.id === 'blogs' ? (
+                              blogEngagementCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                  {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
+                                </span>
+                              )
+                            ) : null
+                          )}
+                        </button>
+                      );
+                    }}
+                  </FeatureAccessChecker>
                 );
               })}
             </nav>
@@ -492,52 +532,72 @@ export default function LawyerDashboard() {
               const Icon = item.icon;
               const isActive = activeNavItem === item.id;
               
-              // Check feature access if featureName is provided
-              const accessCheck = item.featureName ? checkFeatureAccess(item.featureName, currentUser) : { allowed: true };
-              const isRestricted = !accessCheck.allowed;
-              const isAdminLocked = accessCheck.reason === 'admin_locked';
-              const needsVerification = accessCheck.reason === 'verification_required';
-              const needsSubscription = accessCheck.reason === 'subscription_required';
+              if (!item.featureName) {
+                return (
+                  <button
+                    key={item.id}
+                    onClick={item.action}
+                    className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                        : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                  </button>
+                );
+              }
               
               return (
-                <button
-                  key={item.id}
-                  onClick={isRestricted ? (isAdminLocked ? () => { showToast.error('This feature has been restricted by the administrator.'); setIsMobileMenuOpen(false); } : needsVerification ? () => { setShowVerificationModal(true); setIsMobileMenuOpen(false); } : () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); }) : item.action}
-                  className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
-                      : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
-                  } ${
-                    isRestricted ? 'opacity-60' : ''
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {isAdminLocked && (
-                    <Lock className="w-4 h-4 text-red-500" />
-                  )}
-                  {needsVerification && !isAdminLocked && (
-                    <Lock className="w-4 h-4 text-orange-500" />
-                  )}
-                  {needsSubscription && !needsVerification && !isAdminLocked && (
-                    <span className="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">PRO</span>
-                  )}
-                  {item.showNotification && (
-                    item.id === 'messages' ? (
-                      unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )
-                    ) : item.id === 'blogs' ? (
-                      blogEngagementCount > 0 && (
-                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
-                        </span>
-                      )
-                    ) : null
-                  )}
-                </button>
+                <FeatureAccessChecker key={item.id} featureName={item.featureName} lawyer={currentUser}>
+                  {(accessCheck) => {
+                    const isRestricted = !accessCheck.allowed && !accessCheck.loading;
+                    const isAdminLocked = accessCheck.reason === 'admin_locked';
+                    const needsVerification = accessCheck.reason === 'verification_required';
+                    const needsSubscription = accessCheck.reason === 'subscription_required';
+                    
+                    return (
+                      <button
+                        onClick={isRestricted ? (isAdminLocked ? () => { showToast.error('This feature has been restricted by the administrator.'); setIsMobileMenuOpen(false); } : needsVerification ? () => { setShowVerificationModal(true); setIsMobileMenuOpen(false); } : () => { window.location.href = '/lawyer-dashboard/subscription'; setIsMobileMenuOpen(false); }) : item.action}
+                        className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isActive 
+                            ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
+                            : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
+                        } ${
+                          isRestricted ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {isAdminLocked && (
+                          <Lock className="w-4 h-4 text-red-500" />
+                        )}
+                        {needsVerification && !isAdminLocked && (
+                          <Lock className="w-4 h-4 text-orange-500" />
+                        )}
+                        {needsSubscription && !needsVerification && !isAdminLocked && (
+                          <span className="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">PRO</span>
+                        )}
+                        {item.showNotification && (
+                          item.id === 'messages' ? (
+                            unreadCount > 0 && (
+                              <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </span>
+                            )
+                          ) : item.id === 'blogs' ? (
+                            blogEngagementCount > 0 && (
+                              <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
+                              </span>
+                            )
+                          ) : null
+                        )}
+                      </button>
+                    );
+                  }}
+                </FeatureAccessChecker>
               );
             })}
           </div>
