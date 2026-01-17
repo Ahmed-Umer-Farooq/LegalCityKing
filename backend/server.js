@@ -453,6 +453,10 @@ app.use('/api/stripe-connect', stripeConnectRoutes);
 const adminPayoutsRoutes = require('./routes/adminPayouts');
 app.use('/api/admin/payouts', adminPayoutsRoutes);
 
+// AI Integration routes
+const aiRoutes = require('./routes/ai');
+app.use('/api/ai', aiRoutes);
+
 // Make io available to routes
 app.set('io', io);
 

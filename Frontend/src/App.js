@@ -48,6 +48,8 @@ import ContactUs from './pages/ContactUs';
 import PaymentSuccess from './pages/PaymentSuccess';
 import SecurePaymentPage from './pages/PaymentLinkPage';
 import SubscriptionManagement from './pages/lawyer/SubscriptionManagement';
+import LegalChatbot from './components/LegalChatbot';
+import DocumentAnalyzer from './components/DocumentAnalyzer';
 
 import QAAnswers from './pages/lawyer/QAAnswers';
 
@@ -102,6 +104,7 @@ function App() {
         {/* Dashboard routes - No header/footer */}
         <Route path="/lawyer-dashboard" element={<ProtectedRoute><LawyerDashboard /></ProtectedRoute>} />
         <Route path="/lawyer-dashboard/chatapp" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="/lawyer-dashboard/ai-analyzer" element={<ProtectedRoute><DocumentAnalyzer /></ProtectedRoute>} />
         <Route path="/lawyer-dashboard/subscription" element={<ProtectedRoute><SubscriptionManagement /></ProtectedRoute>} />
         <Route path="/lawyer-dashboard/subscription/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/lawyer/qa-answers" element={<ProtectedRoute><QAAnswers /></ProtectedRoute>} />
@@ -164,6 +167,9 @@ function App() {
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        
+        {/* AI Chatbot - Available on all public pages */}
+        <LegalChatbot />
       </div>
     </AuthProvider>
   );
