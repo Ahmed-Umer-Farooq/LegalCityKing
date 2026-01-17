@@ -449,6 +449,10 @@ app.use('/api/payment-links', paymentLinksRoutes);
 const stripeConnectRoutes = require('./routes/stripeConnect');
 app.use('/api/stripe-connect', stripeConnectRoutes);
 
+// Stripe Webhooks (must be before body parsing middleware)
+const stripeWebhooksRoutes = require('./routes/stripeWebhooks');
+app.use('/api/webhooks', stripeWebhooksRoutes);
+
 // Admin Payout routes
 const adminPayoutsRoutes = require('./routes/adminPayouts');
 app.use('/api/admin/payouts', adminPayoutsRoutes);
