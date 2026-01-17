@@ -580,51 +580,56 @@ const SubscriptionManagement = () => {
                     })();
 
                     return (
-                      <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all">
-                        <div className="text-center mb-4">
-                          <h4 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h4>
-                          <div className="text-3xl font-bold text-blue-600 mb-1">
+                      <div key={plan.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300">
+                        <div className="text-center mb-6">
+                          <div className="inline-block bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-1 rounded-full mb-3">
+                            <span className="text-xs font-semibold text-blue-700 capitalize">{plan.name}</span>
+                          </div>
+                          <div className="text-4xl font-bold text-gray-900 mb-1">
                             {formatCurrency(plan.price)}
                           </div>
-                          <div className="text-sm text-gray-500">/{plan.billing_cycle}</div>
+                          <div className="text-sm text-gray-500 font-medium">per {plan.billing_cycle}</div>
                         </div>
                         
-                        <div className="space-y-2 mb-6 min-h-[120px]">
+                        <div className="space-y-3 mb-6 pb-6 border-b border-gray-100">
                           {featuresArray.slice(0, 5).map((feature, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-sm text-gray-600">
-                              <span className="text-green-600 mt-0.5">✓</span>
+                            <div key={idx} className="flex items-start gap-3 text-sm text-gray-700">
+                              <span className="text-green-500 font-bold mt-0.5">✓</span>
                               <span>{feature}</span>
                             </div>
                           ))}
                           {featuresArray.length > 5 && (
-                            <div className="text-xs text-gray-500 italic">+{featuresArray.length - 5} more features</div>
+                            <div className="text-xs text-gray-500 font-medium italic pt-2">+{featuresArray.length - 5} more features</div>
                           )}
                         </div>
 
-                        <div className="space-y-3 mb-6 pt-4 border-t">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Active Users:</span>
-                            <span className="font-medium">{plan.active_users || 0}</span>
+                        <div className="space-y-3 mb-6">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600 font-medium">Active Users</span>
+                            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">{plan.active_users || 0}</span>
                           </div>
                           {plan.stripe_price_id && (
-                            <div className="text-xs text-gray-500 truncate" title={plan.stripe_price_id}>
-                              Stripe: {plan.stripe_price_id}
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                              <p className="text-xs text-gray-500 truncate" title={plan.stripe_price_id}>
+                                <span className="font-semibold">Stripe ID:</span> {plan.stripe_price_id}
+                              </p>
                             </div>
                           )}
                         </div>
 
-                        <div className="flex space-x-2">
+                        <div className="flex gap-2 pt-2">
                           <button
                             onClick={() => openEditModal(plan)}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm"
+                            className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-medium shadow-sm hover:shadow-md flex items-center justify-center"
                           >
-                            Edit
+                            Edit Plan
                           </button>
                           <button
                             onClick={() => handleDeletePlan(plan.id)}
-                            className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-all text-sm"
+                            className="flex-1 px-4 py-2.5 border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-all text-sm font-medium flex items-center justify-center gap-2"
                           >
                             <Trash2 className="w-4 h-4" />
+                            Delete
                           </button>
                         </div>
                       </div>
