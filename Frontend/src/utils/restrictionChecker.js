@@ -10,10 +10,9 @@ export const checkFeatureAccess = (featureName, lawyer) => {
                     lawyer.verified === true;
 
   // Check subscription tier
-  const isProfessional = lawyer.subscription_tier === 'professional' || 
-                        lawyer.subscription_tier === 'Professional';
-  const isPremium = lawyer.subscription_tier === 'premium' || 
-                   lawyer.subscription_tier === 'Premium';
+  const currentTier = (lawyer.subscription_tier || 'free').toLowerCase();
+  const isProfessional = currentTier === 'professional';
+  const isPremium = currentTier === 'premium';
   const hasAdvancedFeatures = isProfessional || isPremium;
 
   // Check admin restrictions - normalize feature names (both dash and underscore)
@@ -27,60 +26,56 @@ export const checkFeatureAccess = (featureName, lawyer) => {
   const normalizedFeatureName = featureName.replace(/-/g, '_');
   const dashFeatureName = featureName.replace(/_/g, '-');
   
-  // If admin locked this feature (check both formats)
+  // 1. Admin restrictions (highest priority - red lock)
   if (restrictions[featureName] === true || 
       restrictions[normalizedFeatureName] === true || 
       restrictions[dashFeatureName] === true) {
     return { allowed: false, reason: 'admin_locked' };
   }
 
-  // Feature-specific checks (support both dash and underscore formats)
-  const featureRequirements = {
-    // Verification required features
-    'messages': { verification: true },
-    'contacts': { verification: true },
-    'calendar': { verification: true },
-    'payment-records': { verification: true },
-    'payment_records': { verification: true },
-    'tasks': { verification: true },
-    'documents': { verification: true },
-    'clients': { verification: true },
-    'cases': { verification: true },
-    'qa': { verification: true },
-    'qa_answers': { verification: true },
-    'payouts': { verification: true },
-    
-    // Professional/Premium features
-    'payment-links': { verification: true, subscription: 'professional' },
-    'payment_links': { verification: true, subscription: 'professional' },
-    'reports': { verification: true, subscription: 'professional' },
-    'blogs': { verification: false, subscription: 'professional' },
-    
-    // Premium only features
-    'forms': { verification: false, subscription: 'premium' },
-    
-    // Quick actions
-    'quick_actions': { verification: true },
-    'quick-actions': { verification: true }
-  };
+  // 2. Plan restrictions (PRO badge)
+  const planRestrictions = lawyer.plan_restrictions ? 
+    (typeof lawyer.plan_restrictions === 'string' ? 
+      JSON.parse(lawyer.plan_restrictions) : 
+      lawyer.plan_restrictions) : 
+    {};
 
-  const requirements = featureRequirements[featureName];
-  
-  if (!requirements) {
-    return { allowed: true }; // No restrictions for this feature
-  }
-
-  // Check verification requirement
-  if (requirements.verification && !isVerified) {
-    return { allowed: false, reason: 'verification_required' };
-  }
-
-  // Check subscription requirement
-  if (requirements.subscription === 'professional' && !hasAdvancedFeatures) {
+  // Plan restrictions are stored directly for the lawyer's current tier
+  if (planRestrictions[featureName] === false || 
+      planRestrictions[normalizedFeatureName] === false || 
+      planRestrictions[dashFeatureName] === false) {
     return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
   }
 
-  if (requirements.subscription === 'premium' && !isPremium) {
+  // 3. Verification requirements (orange lock)
+  const verificationRequiredFeatures = [
+    'messages', 'contacts', 'calendar', 'payment-records', 'payment_records',
+    'tasks', 'documents', 'clients', 'cases', 'qa', 'qa_answers', 'payouts',
+    'payment-links', 'payment_links', 'reports', 'quick_actions', 'quick-actions'
+  ];
+  
+  if (verificationRequiredFeatures.includes(featureName) || 
+      verificationRequiredFeatures.includes(normalizedFeatureName) || 
+      verificationRequiredFeatures.includes(dashFeatureName)) {
+    if (!isVerified) {
+      return { allowed: false, reason: 'verification_required' };
+    }
+  }
+
+  // 4. Hard-coded subscription requirements (existing PRO features)
+  const hardCodedRequirements = {
+    'payment-links': 'professional',
+    'payment_links': 'professional',
+    'reports': 'professional',
+    'blogs': 'professional',
+    'forms': 'premium'
+  };
+
+  const requiredTier = hardCodedRequirements[featureName] || hardCodedRequirements[normalizedFeatureName] || hardCodedRequirements[dashFeatureName];
+  if (requiredTier === 'professional' && !hasAdvancedFeatures) {
+    return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
+  }
+  if (requiredTier === 'premium' && !isPremium) {
     return { allowed: false, reason: 'subscription_required', requiredTier: 'premium' };
   }
 
@@ -100,4 +95,12 @@ export const getRestrictionMessage = (reason, requiredTier) => {
     default:
       return 'Access denied';
   }
+};
+
+// Get all available features for plan restrictions
+export const getAllFeatures = () => {
+  return [
+    'quick_actions', 'messages', 'contacts', 'calendar', 'payment_records',
+    'tasks', 'documents', 'reports', 'blogs', 'forms', 'payouts', 'payment_links'
+  ];
 };

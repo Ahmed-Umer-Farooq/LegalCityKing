@@ -1110,16 +1110,90 @@ router.delete('/subscription-plans/:id', async (req, res) => {
   }
 });
 
-// Subscription Restrictions
-router.post('/subscription-restrictions', async (req, res) => {
+// Plan Restrictions - Apply to individual lawyers
+router.post('/lawyers/:id/plan-restrictions', async (req, res) => {
   try {
+    const { id } = req.params;
     const { restrictions } = req.body;
-    // Store in a settings table or config file
-    // For now, just return success
-    res.json({ message: 'Restrictions saved successfully', restrictions });
+    
+    await db('lawyers')
+      .where('id', id)
+      .update({
+        plan_restrictions: JSON.stringify(restrictions),
+        updated_at: new Date()
+      });
+
+    res.json({ message: 'Plan restrictions updated successfully' });
   } catch (error) {
-    console.error('Error saving restrictions:', error);
-    res.status(500).json({ error: 'Failed to save restrictions' });
+    console.error('Error saving plan restrictions:', error);
+    res.status(500).json({ error: 'Failed to save plan restrictions' });
+  }
+});
+
+// Get current plan restrictions
+router.get('/plan-restrictions', async (req, res) => {
+  try {
+    // Get sample lawyers from each tier to see current restrictions
+    const [freeLawyer, professionalLawyer, premiumLawyer] = await Promise.all([
+      db('lawyers').where('subscription_tier', 'free').first(),
+      db('lawyers').where('subscription_tier', 'professional').first(),
+      db('lawyers').where('subscription_tier', 'premium').first()
+    ]);
+
+    const restrictions = {
+      free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
+      professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
+      premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+    };
+
+    // Override with actual data if exists
+    if (freeLawyer?.plan_restrictions) {
+      try {
+        restrictions.free = JSON.parse(freeLawyer.plan_restrictions);
+      } catch (e) {}
+    }
+    if (professionalLawyer?.plan_restrictions) {
+      try {
+        restrictions.professional = JSON.parse(professionalLawyer.plan_restrictions);
+      } catch (e) {}
+    }
+    if (premiumLawyer?.plan_restrictions) {
+      try {
+        restrictions.premium = JSON.parse(premiumLawyer.plan_restrictions);
+      } catch (e) {}
+    }
+
+    res.json({ restrictions });
+  } catch (error) {
+    console.error('Error fetching plan restrictions:', error);
+    res.status(500).json({ error: 'Failed to fetch plan restrictions' });
+  }
+});
+
+// Bulk update plan restrictions by subscription tier
+router.post('/plan-restrictions-bulk', async (req, res) => {
+  try {
+    const { tier, restrictions } = req.body;
+    
+    console.log(`Updating ${tier} tier with restrictions:`, restrictions);
+    
+    const result = await db('lawyers')
+      .where('subscription_tier', tier)
+      .update({
+        plan_restrictions: JSON.stringify(restrictions),
+        updated_at: new Date()
+      });
+
+    console.log(`Updated ${result} lawyers in ${tier} tier`);
+    res.json({ 
+      message: `Plan restrictions updated for ${result} ${tier} lawyers`,
+      updated_count: result,
+      tier,
+      restrictions
+    });
+  } catch (error) {
+    console.error('Error bulk updating plan restrictions:', error);
+    res.status(500).json({ error: 'Failed to bulk update plan restrictions' });
   }
 });
 

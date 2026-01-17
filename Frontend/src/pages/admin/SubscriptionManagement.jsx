@@ -29,16 +29,23 @@ const SubscriptionManagement = () => {
   });
   const [newFeature, setNewFeature] = useState('');
   const [restrictions, setRestrictions] = useState({
-    free: { cases: 5, clients: 10, documents: 20, blogs: 3, qa_answers: 5, payment_links: 2, quick_actions: false, payment_records: false, calendar: false, contacts: false, messages: false },
-    professional: { cases: 50, clients: 100, documents: 500, blogs: 20, qa_answers: 50, payment_links: 20, quick_actions: true, payment_records: true, calendar: true, contacts: true, messages: true },
-    premium: { cases: -1, clients: -1, documents: -1, blogs: -1, qa_answers: -1, payment_links: -1, quick_actions: true, payment_records: true, calendar: true, contacts: true, messages: true }
+    free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
+    professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
+    premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+  });
+  const [planRestrictions, setPlanRestrictions] = useState({
+    free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
+    professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
+    premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
   });
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
       fetchSubscriptions();
-    } else {
+    } else if (activeTab === 'plans') {
       fetchPlans();
+    } else if (activeTab === 'plan-restrictions') {
+      fetchPlanRestrictions();
     }
     fetchSubscriptionStats();
   }, [pagination.page, search, filter, activeTab]);
@@ -186,12 +193,50 @@ const SubscriptionManagement = () => {
     setPlanForm({...planForm, features: planForm.features.filter((_, i) => i !== index)});
   };
 
+  const fetchPlanRestrictions = async () => {
+    try {
+      const response = await api.get('/admin/plan-restrictions');
+      if (response.data?.restrictions) {
+        setPlanRestrictions(response.data.restrictions);
+        console.log('Fetched plan restrictions:', response.data.restrictions);
+      }
+    } catch (error) {
+      console.error('Error fetching plan restrictions:', error);
+      // Use defaults if fetch fails
+      const defaultRestrictions = {
+        free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
+        professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
+        premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+      };
+      setPlanRestrictions(defaultRestrictions);
+    }
+  };
+
+  const savePlanRestrictions = async () => {
+    try {
+      // Apply restrictions to all lawyers of each tier
+      for (const [tier, restrictions] of Object.entries(planRestrictions)) {
+        const response = await api.post('/admin/plan-restrictions-bulk', { tier, restrictions });
+        console.log(`Updated ${tier} tier:`, response.data);
+      }
+      showToast.success('Plan restrictions updated successfully');
+      // Refresh the data to confirm save
+      await fetchPlanRestrictions();
+    } catch (error) {
+      console.error('Error saving plan restrictions:', error);
+      showToast.error('Failed to update plan restrictions');
+    }
+  };
+
   const saveRestrictions = async () => {
     try {
-      await api.post('/admin/subscription-restrictions', { restrictions });
-      showToast.success('Restrictions updated successfully');
+      // Apply restrictions to all lawyers of each tier
+      for (const [tier, restrictionData] of Object.entries(restrictions)) {
+        await api.post('/admin/plan-restrictions-bulk', { tier, restrictions: restrictionData });
+      }
+      showToast.success('Plan restrictions updated successfully');
     } catch (error) {
-      showToast.error('Failed to update restrictions');
+      showToast.error('Failed to update plan restrictions');
     }
   };
 
@@ -321,14 +366,14 @@ const SubscriptionManagement = () => {
               Subscription Plans
             </button>
             <button
-              onClick={() => setActiveTab('restrictions')}
+              onClick={() => setActiveTab('plan-restrictions')}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                activeTab === 'restrictions'
+                activeTab === 'plan-restrictions'
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Feature Restrictions
+              Plan Restrictions
             </button>
           </div>
         </div>
@@ -591,14 +636,14 @@ const SubscriptionManagement = () => {
           </div>
         )}
 
-        {/* Restrictions Tab */}
-        {activeTab === 'restrictions' && (
+        {/* Plan Restrictions Tab */}
+        {activeTab === 'plan-restrictions' && (
           <div>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Feature Restrictions by Plan</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Plan Feature Access</h3>
                 <button
-                  onClick={saveRestrictions}
+                  onClick={savePlanRestrictions}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
                 >
                   Save Changes
@@ -611,124 +656,41 @@ const SubscriptionManagement = () => {
                 {['free', 'professional', 'premium'].map(tier => (
                   <div key={tier} className="bg-gray-50 rounded-lg p-6">
                     <h4 className="text-lg font-bold text-gray-900 mb-4 capitalize">{tier} Plan</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Cases</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].cases}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], cases: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Clients</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].clients}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], clients: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Documents</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].documents}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], documents: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Blogs</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].blogs}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], blogs: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Q&A Answers</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].qa_answers}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], qa_answers: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Payment Links</label>
-                        <input
-                          type="number"
-                          value={restrictions[tier].payment_links}
-                          onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], payment_links: parseInt(e.target.value)}})}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          placeholder="-1 for unlimited"
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={restrictions[tier].quick_actions}
-                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], quick_actions: e.target.checked}})}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm font-medium text-gray-700">Quick Actions</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={restrictions[tier].payment_records}
-                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], payment_records: e.target.checked}})}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm font-medium text-gray-700">Payment Records</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={restrictions[tier].calendar}
-                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], calendar: e.target.checked}})}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm font-medium text-gray-700">Calendar</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={restrictions[tier].contacts}
-                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], contacts: e.target.checked}})}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm font-medium text-gray-700">Contacts</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={restrictions[tier].messages}
-                            onChange={(e) => setRestrictions({...restrictions, [tier]: {...restrictions[tier], messages: e.target.checked}})}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm font-medium text-gray-700">Messages</span>
-                        </label>
-                      </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[
+                        { key: 'quick_actions', label: 'Quick Actions' },
+                        { key: 'messages', label: 'Messages' },
+                        { key: 'contacts', label: 'Contacts' },
+                        { key: 'calendar', label: 'Calendar' },
+                        { key: 'payment_records', label: 'Payment Records' },
+                        { key: 'tasks', label: 'Tasks' },
+                        { key: 'documents', label: 'Documents' },
+                        { key: 'reports', label: 'Reports' },
+                        { key: 'blogs', label: 'Blogs' },
+                        { key: 'forms', label: 'Forms' },
+                        { key: 'payouts', label: 'Payouts' },
+                        { key: 'payment_links', label: 'Payment Links' }
+                      ].map(feature => (
+                        <div key={feature.key} className="flex items-center">
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={planRestrictions[tier][feature.key] || false}
+                              onChange={(e) => setPlanRestrictions({
+                                ...planRestrictions,
+                                [tier]: {
+                                  ...planRestrictions[tier],
+                                  [feature.key]: e.target.checked
+                                }
+                              })}
+                              className="w-4 h-4 text-blue-600 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-700">{feature.label}</span>
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-xs text-gray-500 mt-3">Note: Use -1 for unlimited access on numeric fields</p>
+                    <p className="text-xs text-gray-500 mt-3">Unchecked features will show PRO badge and require upgrade</p>
                   </div>
                 ))}
               </div>
