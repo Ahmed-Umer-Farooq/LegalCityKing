@@ -15,12 +15,12 @@ const {
 router.use(authenticate);
 router.use(enforceUserType('user'));
 
-router.get('/', authorize('read', 'cases'), getCases);
-router.get('/stats', authorize('read', 'cases'), getCaseStats);
-router.post('/', authorize('write', 'cases'), createCase);
-router.put('/:id', authorize('write', 'cases'), updateCase);
-router.delete('/:id', authorize('delete', 'cases'), deleteCase);
-router.post('/:id/documents', authorize('write', 'documents'), addCaseDocument);
-router.post('/:id/meetings', authorize('write', 'cases'), addCaseMeeting);
+router.get('/', getCases);
+router.get('/stats', getCaseStats);
+router.post('/', createCase);
+router.put('/:id', updateCase);
+router.delete('/:id', deleteCase);
+router.post('/:id/documents', addCaseDocument);
+router.post('/:id/meetings', addCaseMeeting);
 
 module.exports = router;

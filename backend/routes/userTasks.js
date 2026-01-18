@@ -13,10 +13,10 @@ const {
 router.use(authenticate);
 router.use(enforceUserType('user'));
 
-router.get('/', authorize('read', 'tasks'), getTasks);
-router.get('/stats', authorize('read', 'tasks'), getTaskStats);
-router.post('/', authorize('write', 'tasks'), createTask);
-router.put('/:id', authorize('write', 'tasks'), updateTask);
+router.get('/', getTasks);
+router.get('/stats', getTaskStats);
+router.post('/', createTask);
+router.put('/:id', updateTask);
 router.delete('/:id', deleteTask);
 
 module.exports = router;

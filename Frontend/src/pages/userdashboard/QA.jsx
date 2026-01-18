@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { MapPin, User, Calendar, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 const QA = () => {
   const { user } = useAuth();
@@ -132,7 +133,7 @@ const QA = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Question submitted successfully! Attorneys will respond soon.');
+        toast.success('Question submitted successfully! Attorneys will respond soon.');
         setFormData({
           question: '',
           situation: '',
@@ -143,11 +144,11 @@ const QA = () => {
         setActiveView('browse');
         fetchQuestions();
       } else {
-        alert(data.error || 'Error submitting question. Please try again.');
+        toast.error(data.error || 'Error submitting question. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting question:', error);
-      alert('Error submitting question. Please try again.');
+      toast.error('Error submitting question. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
