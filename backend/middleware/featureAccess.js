@@ -88,10 +88,12 @@ const checkFeatureAccess = (featureName) => {
         return next();
       }
 
-      // 3. Verification requirements
+      // 3. Verification requirements - ALL features require verification
       const verificationRequiredFeatures = [
-        'ai_analyzer', 'ai-analyzer', 'payment_links', 'payment-links', 
-        'reports', 'blogs', 'forms'
+        'messages', 'contacts', 'calendar', 'payment_records', 'payment-records',
+        'tasks', 'documents', 'clients', 'cases', 'qa', 'qa_answers', 'payouts',
+        'payment_links', 'payment-links', 'reports', 'quick_actions', 'quick-actions',
+        'blogs', 'forms', 'ai_analyzer', 'ai-analyzer'
       ];
       
       if (verificationRequiredFeatures.includes(featureName) || 
@@ -103,37 +105,6 @@ const checkFeatureAccess = (featureName) => {
             code: 'VERIFICATION_REQUIRED'
           });
         }
-      }
-
-      // 4. Subscription requirements
-      const subscriptionRequirements = {
-        'ai_analyzer': 'professional',
-        'ai-analyzer': 'professional',
-        'payment_links': 'professional',
-        'payment-links': 'professional',
-        'reports': 'professional',
-        'blogs': 'professional',
-        'forms': 'premium'
-      };
-
-      const requiredTier = subscriptionRequirements[featureName] || 
-                          subscriptionRequirements[normalizedFeatureName] || 
-                          subscriptionRequirements[dashFeatureName];
-
-      if (requiredTier === 'professional' && !hasAdvancedFeatures) {
-        return res.status(403).json({ 
-          error: 'This feature requires a Professional subscription. Please upgrade your plan.',
-          code: 'SUBSCRIPTION_REQUIRED',
-          requiredTier: 'professional'
-        });
-      }
-
-      if (requiredTier === 'premium' && !isPremium) {
-        return res.status(403).json({ 
-          error: 'This feature requires a Premium subscription. Please upgrade your plan.',
-          code: 'SUBSCRIPTION_REQUIRED',
-          requiredTier: 'premium'
-        });
       }
 
       // All checks passed

@@ -70,11 +70,12 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     return { allowed: true };
   }
 
-  // 3. Verification requirements (orange lock)
+  // 3. Verification requirements (orange lock) - ALL features require verification
   const verificationRequiredFeatures = [
     'messages', 'contacts', 'calendar', 'payment-records', 'payment_records',
     'tasks', 'documents', 'clients', 'cases', 'qa', 'qa_answers', 'payouts',
-    'payment-links', 'payment_links', 'reports', 'quick_actions', 'quick-actions'
+    'payment-links', 'payment_links', 'reports', 'quick_actions', 'quick-actions',
+    'blogs', 'forms', 'ai_analyzer', 'ai-analyzer'
   ];
   
   if (verificationRequiredFeatures.includes(featureName) || 
@@ -83,34 +84,6 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     if (!isVerified) {
       return { allowed: false, reason: 'verification_required' };
     }
-  }
-
-  // 4. Hard-coded subscription requirements (only if no plan restrictions)
-  const hardCodedRequirements = {
-    'payment-links': 'professional',
-    'payment_links': 'professional',
-    'reports': 'professional',
-    'blogs': 'professional',
-    'forms': 'premium',
-    'ai_analyzer': 'professional',
-    'ai-analyzer': 'professional'
-  };
-
-  const requiredTier = hardCodedRequirements[featureName] || hardCodedRequirements[normalizedFeatureName] || hardCodedRequirements[dashFeatureName];
-  if (requiredTier === 'professional' && !hasAdvancedFeatures) {
-    return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
-  }
-  if (requiredTier === 'premium' && !isPremium) {
-    return { allowed: false, reason: 'subscription_required', requiredTier: 'premium' };
-  }
-
-  // 5. Default free tier restrictions (only if no plan restrictions)
-  const freeTierFeatures = ['home', 'profile', 'subscription', 'quick_actions'];
-  if (!freeTierFeatures.includes(featureName) && 
-      !freeTierFeatures.includes(normalizedFeatureName) && 
-      !freeTierFeatures.includes(dashFeatureName) && 
-      currentTier === 'free') {
-    return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
   }
 
   return { allowed: true };

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { generateToken } = require('../utils/token');
 const { sendVerificationEmail, sendResetPasswordEmail } = require('../utils/mailer');
+const { getPlanRestrictions } = require('../utils/planTemplates');
 
 // Real email sending using nodemailer
 const mockSendVerificationEmail = sendVerificationEmail;
@@ -45,6 +46,9 @@ const registerLawyer = async (req, res) => {
     const verificationCode = crypto.randomInt(100000, 999999).toString();
     const secure_id = crypto.randomBytes(16).toString('hex');
 
+    // Get default free plan restrictions from template
+    const defaultFreePlanRestrictions = getPlanRestrictions('free');
+
     await db('lawyers').insert({
       secure_id,
       name,
@@ -64,6 +68,8 @@ const registerLawyer = async (req, res) => {
       email_verification_code: verificationCode,
       is_verified: 0,
       lawyer_verified: 0,
+      subscription_tier: 'free',
+      plan_restrictions: JSON.stringify(defaultFreePlanRestrictions)
     });
 
     await mockSendVerificationEmail(email, verificationCode);

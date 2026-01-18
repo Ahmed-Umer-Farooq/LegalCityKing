@@ -1,5 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const db = require('../db');
+const { updateLawyerPlanRestrictions } = require('../utils/planTemplates');
 
 // Create Stripe customer
 const createCustomer = async (email, name, userType = 'user') => {
@@ -504,7 +505,11 @@ const handleCheckoutCompleted = async (session) => {
       auto_renew: true
     });
     
+    // Auto-update plan restrictions based on new tier
+    await updateLawyerPlanRestrictions(metadata.lawyerId, tier, db);
+    
     console.log(`✅ Saved real Stripe subscription ID: ${realStripeId}`);
+    console.log(`✅ Auto-updated plan restrictions to ${tier} tier`);
   } else if (metadata.type === 'consultation') {
     const platformFee = parseInt(metadata.platformFee) / 100;
     const lawyerEarnings = parseInt(metadata.lawyerEarnings) / 100;
@@ -674,7 +679,11 @@ const updateSubscriptionStatus = async (req, res) => {
         auto_renew: true
       });
       
+      // Auto-update plan restrictions based on new tier
+      await updateLawyerPlanRestrictions(lawyerId, tier, db);
+      
       console.log(`✅ Successfully updated lawyer ${lawyerId} to ${tier} tier`);
+      console.log(`✅ Auto-updated plan restrictions to ${tier} tier`);
       res.json({ success: true, tier });
     } else {
       res.status(400).json({ error: 'Invalid session or not a subscription' });
@@ -777,8 +786,12 @@ const getSubscriptionStatus = async (req, res) => {
         stripe_subscription_id: null
       });
       
+      // Auto-update plan restrictions to free tier
+      await updateLawyerPlanRestrictions(lawyerId, 'free', db);
+      
       lawyer.subscription_tier = 'free';
       lawyer.subscription_status = 'expired';
+      console.log(`⏰ Expired lawyer ${lawyerId} reverted to free tier with restrictions`);
     }
 
     const daysUntilExpiry = lawyer.subscription_expires_at 
@@ -854,7 +867,10 @@ const checkExpiredMemberships = async () => {
         stripe_subscription_id: null
       });
       
-      console.log(`⏰ Expired membership for lawyer ${lawyer.id}`);
+      // Auto-update plan restrictions to free tier
+      await updateLawyerPlanRestrictions(lawyer.id, 'free', db);
+      
+      console.log(`⏰ Expired membership for lawyer ${lawyer.id} - reverted to free tier`);
     }
 
     return { expired_count: expiredLawyers.length };
