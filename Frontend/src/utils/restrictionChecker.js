@@ -54,7 +54,19 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     if (!isAllowed) {
       return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
     }
-    // If plan allows it, skip all other checks and allow access
+    // If plan allows it, still check verification for certain features
+    const verificationRequiredFeatures = [
+      'messages', 'contacts', 'calendar', 'payment-records', 'payment_records',
+      'tasks', 'documents', 'clients', 'cases', 'qa', 'qa_answers', 'payouts',
+      'payment-links', 'payment_links', 'reports', 'quick_actions', 'quick-actions'
+    ];
+    
+    if ((verificationRequiredFeatures.includes(featureName) || 
+         verificationRequiredFeatures.includes(normalizedFeatureName) || 
+         verificationRequiredFeatures.includes(dashFeatureName)) && !isVerified) {
+      return { allowed: false, reason: 'verification_required' };
+    }
+    
     return { allowed: true };
   }
 

@@ -4,7 +4,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const aiController = require('../controllers/aiController');
-const { authenticate } = require('../middleware/modernAuth');
+const { authenticate, authorize } = require('../middleware/modernAuth');
+const { checkFeatureAccess } = require('../middleware/featureAccess');
 
 // Configure multer for file uploads
 const uploadDir = 'uploads/ai-documents/';
@@ -47,10 +48,10 @@ const requireLawyer = (req, res, next) => {
   }
 };
 
-// Routes for lawyers only
-router.post('/summarize-document', authenticate, requireLawyer, upload.single('document'), aiController.summarizeDocument);
-router.post('/analyze-contract', authenticate, requireLawyer, aiController.analyzeContract);
-router.post('/document-chat', authenticate, requireLawyer, aiController.documentChat);
+// Routes for lawyers only with feature access check
+router.post('/summarize-document', authenticate, requireLawyer, checkFeatureAccess('ai_analyzer'), upload.single('document'), aiController.summarizeDocument);
+router.post('/analyze-contract', authenticate, requireLawyer, checkFeatureAccess('ai_analyzer'), aiController.analyzeContract);
+router.post('/document-chat', authenticate, requireLawyer, checkFeatureAccess('ai_analyzer'), aiController.documentChat);
 
 // Routes for all users (including public)
 router.post('/chatbot', aiController.chatbot);
