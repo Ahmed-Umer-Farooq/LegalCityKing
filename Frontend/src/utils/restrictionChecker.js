@@ -68,7 +68,9 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     'payment_links': 'professional',
     'reports': 'professional',
     'blogs': 'professional',
-    'forms': 'premium'
+    'forms': 'premium',
+    'ai_analyzer': 'professional',
+    'ai-analyzer': 'professional'
   };
 
   const requiredTier = hardCodedRequirements[featureName] || hardCodedRequirements[normalizedFeatureName] || hardCodedRequirements[dashFeatureName];
@@ -100,7 +102,8 @@ export const getRestrictionMessage = (reason, requiredTier) => {
 // Get all available features for plan restrictions
 export const getAllFeatures = () => {
   return [
-    'quick_actions', 'messages', 'contacts', 'calendar', 'payment_records',
-    'tasks', 'documents', 'reports', 'blogs', 'forms', 'payouts', 'payment_links'
+    'home', 'quick_actions', 'messages', 'contacts', 'calendar', 'payment_records',
+    'tasks', 'documents', 'reports', 'blogs', 'forms', 'payouts', 'payment_links',
+    'cases', 'clients', 'qa_answers', 'ai_analyzer', 'profile', 'subscription'
   ];
 };

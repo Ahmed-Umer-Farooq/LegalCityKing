@@ -29,14 +29,14 @@ const SubscriptionManagement = () => {
   });
   const [newFeature, setNewFeature] = useState('');
   const [restrictions, setRestrictions] = useState({
-    free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
-    professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
-    premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+    free: { home: true, quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false, cases: false, clients: false, qa_answers: false, ai_analyzer: false, profile: true, subscription: true },
+    professional: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true },
+    premium: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true }
   });
   const [planRestrictions, setPlanRestrictions] = useState({
-    free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
-    professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
-    premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+    free: { home: true, quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false, cases: false, clients: false, qa_answers: false, ai_analyzer: false, profile: true, subscription: true },
+    professional: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true },
+    premium: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true }
   });
 
   useEffect(() => {
@@ -204,9 +204,9 @@ const SubscriptionManagement = () => {
       console.error('Error fetching plan restrictions:', error);
       // Use defaults if fetch fails
       const defaultRestrictions = {
-        free: { quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false },
-        professional: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true },
-        premium: { quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true }
+        free: { home: true, quick_actions: false, messages: false, contacts: false, calendar: false, payment_records: false, tasks: false, documents: false, reports: false, blogs: false, forms: false, payouts: false, payment_links: false, cases: false, clients: false, qa_answers: false, ai_analyzer: false, profile: true, subscription: true },
+        professional: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: false, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true },
+        premium: { home: true, quick_actions: true, messages: true, contacts: true, calendar: true, payment_records: true, tasks: true, documents: true, reports: true, blogs: true, forms: true, payouts: true, payment_links: true, cases: true, clients: true, qa_answers: true, ai_analyzer: true, profile: true, subscription: true }
       };
       setPlanRestrictions(defaultRestrictions);
     }
@@ -663,6 +663,7 @@ const SubscriptionManagement = () => {
                     <h4 className="text-lg font-bold text-gray-900 mb-4 capitalize">{tier} Plan</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {[
+                        { key: 'home', label: 'Home' },
                         { key: 'quick_actions', label: 'Quick Actions' },
                         { key: 'messages', label: 'Messages' },
                         { key: 'contacts', label: 'Contacts' },
@@ -674,7 +675,13 @@ const SubscriptionManagement = () => {
                         { key: 'blogs', label: 'Blogs' },
                         { key: 'forms', label: 'Forms' },
                         { key: 'payouts', label: 'Payouts' },
-                        { key: 'payment_links', label: 'Payment Links' }
+                        { key: 'payment_links', label: 'Payment Links' },
+                        { key: 'cases', label: 'Cases' },
+                        { key: 'clients', label: 'Clients' },
+                        { key: 'qa_answers', label: 'Q&A Answers' },
+                        { key: 'ai_analyzer', label: 'AI Analyzer' },
+                        { key: 'profile', label: 'Profile' },
+                        { key: 'subscription', label: 'Subscription' }
                       ].map(feature => (
                         <div key={feature.key} className="flex items-center">
                           <label className="flex items-center space-x-2 cursor-pointer">
