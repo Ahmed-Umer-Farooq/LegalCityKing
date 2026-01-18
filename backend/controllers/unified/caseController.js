@@ -55,7 +55,7 @@ class CaseController {
   async createCase(req, res) {
     try {
       const { role, id: userId } = req.user;
-      const { title, description, type, client_id } = req.body;
+      const { title, description, lawyer_name, priority } = req.body;
 
       if (!title) {
         return res.status(400).json({ success: false, error: 'Title is required' });
@@ -64,36 +64,24 @@ class CaseController {
       let caseData, tableName;
 
       if (role === 'lawyer') {
-        // Validate client_id exists if provided
-        if (client_id) {
-          const clientExists = await db('users').where({ id: client_id }).first();
-          if (!clientExists) {
-            return res.status(400).json({ success: false, error: 'Selected client not found' });
-          }
-        }
-
         const caseNumber = 'CASE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
         caseData = {
           title,
           case_number: caseNumber,
-          type: type || 'general',
           description,
-          filing_date: req.body.filing_date,
-          client_id,
           lawyer_id: userId,
-          estimated_value: req.body.estimated_value,
-          next_hearing_date: req.body.next_hearing_date,
           status: 'active'
         };
         tableName = 'cases';
       } else {
+        const caseNumber = 'UC-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        
         caseData = {
           title,
           description: description || '',
-          case_type: type || 'general',
-          user_id: userId,
-          status: 'pending',
-          start_date: new Date().toISOString().split('T')[0]
+          case_type: lawyer_name || '',
+          status: priority || 'pending',
+          user_id: userId
         };
         tableName = 'user_cases';
       }
@@ -114,21 +102,32 @@ class CaseController {
       const { role, id: userId } = req.user;
       const updateData = req.body;
 
-      const tableName = role === 'lawyer' ? 'cases' : 'user_cases';
-      const whereClause = role === 'lawyer' 
-        ? { id, lawyer_id: userId }
-        : { id, user_id: userId };
+      if (role === 'lawyer') {
+        const { secure_id } = req.params;
+        const whereClause = { secure_id, lawyer_id: userId };
+        const updated = await db('cases')
+          .where(whereClause)
+          .update({ ...updateData, updated_at: new Date() });
 
-      const updated = await db(tableName)
-        .where(whereClause)
-        .update({ ...updateData, updated_at: new Date() });
+        if (!updated) {
+          return res.status(404).json({ success: false, error: 'Case not found' });
+        }
 
-      if (!updated) {
-        return res.status(404).json({ success: false, error: 'Case not found' });
+        const updatedCase = await db('cases').where({ secure_id }).first();
+        res.json({ success: true, data: updatedCase });
+      } else {
+        const whereClause = { id, user_id: userId };
+        const updated = await db('user_cases')
+          .where(whereClause)
+          .update({ ...updateData, updated_at: new Date() });
+
+        if (!updated) {
+          return res.status(404).json({ success: false, error: 'Case not found' });
+        }
+
+        const updatedCase = await db('user_cases').where({ id }).first();
+        res.json({ success: true, data: updatedCase });
       }
-
-      const updatedCase = await db(tableName).where({ id }).first();
-      res.json({ success: true, data: updatedCase });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -140,15 +139,21 @@ class CaseController {
       const { id } = req.params;
       const { role, id: userId } = req.user;
 
-      const tableName = role === 'lawyer' ? 'cases' : 'user_cases';
-      const whereClause = role === 'lawyer' 
-        ? { id, lawyer_id: userId }
-        : { id, user_id: userId };
+      if (role === 'lawyer') {
+        const { secure_id } = req.params;
+        const whereClause = { secure_id, lawyer_id: userId };
+        const deleted = await db('cases').where(whereClause).del();
 
-      const deleted = await db(tableName).where(whereClause).del();
+        if (!deleted) {
+          return res.status(404).json({ success: false, error: 'Case not found' });
+        }
+      } else {
+        const whereClause = { id, user_id: userId };
+        const deleted = await db('user_cases').where(whereClause).del();
 
-      if (!deleted) {
-        return res.status(404).json({ success: false, error: 'Case not found' });
+        if (!deleted) {
+          return res.status(404).json({ success: false, error: 'Case not found' });
+        }
       }
 
       res.json({ success: true, data: { message: 'Case deleted successfully' } });

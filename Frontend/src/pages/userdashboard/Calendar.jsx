@@ -174,7 +174,12 @@ const Calendar = () => {
         ) : (
           <div className="space-y-3 lg:space-y-4">
             {appointments
-              .filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0))
+              .filter(apt => {
+                const appointmentDate = new Date(apt.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return appointmentDate >= today;
+              })
               .sort((a, b) => new Date(a.date) - new Date(b.date))
               .map(apt => (
                 <div key={apt.secure_id} className="bg-white rounded-lg border border-gray-200 p-3 lg:p-4 hover:shadow-md transition-shadow">
@@ -213,7 +218,12 @@ const Calendar = () => {
                 </div>
               ))
             }
-            {appointments.filter(apt => new Date(apt.date) >= new Date().setHours(0,0,0,0)).length === 0 && (
+            {appointments.filter(apt => {
+              const appointmentDate = new Date(apt.date);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return appointmentDate >= today;
+            }).length === 0 && (
               <div className="text-center py-12">
                 <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No upcoming appointments</h3>

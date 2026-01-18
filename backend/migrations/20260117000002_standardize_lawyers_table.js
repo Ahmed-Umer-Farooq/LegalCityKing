@@ -63,7 +63,8 @@ exports.up = async function(knex) {
     { name: 'updated_at', type: 'timestamp', default: knex.fn.now() },
     { name: 'email_verification_code', type: 'string' },
     { name: 'reset_token', type: 'string' },
-    { name: 'reset_token_expiry', type: 'timestamp' }
+    { name: 'reset_token_expiry', type: 'timestamp' },
+    { name: 'plan_restrictions', type: 'text' }
   ];
 
   for (const col of columnsToAdd) {

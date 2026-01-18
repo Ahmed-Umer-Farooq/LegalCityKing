@@ -262,16 +262,16 @@ const QAPage = () => {
               <p className={`text-gray-700 ${responsive.text.base} mb-6 sm:mb-8 leading-relaxed font-medium`}>
                 Submit Your Legal Question to Get Expert Attorney Insights. Free, Confidential, and Professional.
               </p>
-              <div className={`${responsive.flex.responsive} ${responsive.spacing.gap} justify-center`}>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => navigate('/lawyers')}
-                  className={`${responsive.button} bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-bold hover:shadow-2xl hover:scale-105 transition-all duration-300 ${responsive.text.sm}`}
+                  className="px-10 py-4 bg-gradient-to-r from-[#0071BC] to-[#00D2FF] text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 text-lg"
                 >
                   Find Lawyers
                 </button>
                 <button
                   onClick={() => navigate('/legal-forms')}
-                  className={`${responsive.button} bg-white/90 backdrop-blur-md text-gray-800 font-bold hover:bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 ${responsive.text.sm}`}
+                  className="px-10 py-4 bg-white/90 backdrop-blur-md text-gray-800 font-bold rounded-xl hover:bg-white hover:shadow-xl transition-all duration-300 border-2 border-gray-200 text-lg"
                 >
                   Legal Forms
                 </button>
