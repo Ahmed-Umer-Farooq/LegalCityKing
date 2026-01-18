@@ -19,15 +19,15 @@ const router = express.Router();
 router.use(authenticate);
 router.use(enforceUserType('lawyer'));
 
-// Dashboard routes with proper authorization
-router.get('/dashboard/stats', authorize('read', 'dashboard'), getDashboardStats);
-router.get('/cases', authorize('read', 'cases'), getCases);
-router.post('/cases', authorize('write', 'cases'), createCase);
-router.get('/clients', authorize('read', 'clients'), getClients);
-router.get('/appointments', authorize('read', 'appointments'), getAppointments);
-router.get('/documents', authorize('read', 'documents'), getDocuments);
-router.get('/invoices', authorize('read', 'invoices'), getInvoices);
-router.get('/profile', authorize('read', 'profile'), getProfile);
-router.get('/upcoming-events', authorize('read', 'events'), getUpcomingEvents);
+// Dashboard routes - allow basic access for all lawyers (free plan included)
+router.get('/dashboard/stats', getDashboardStats); // No authorization needed for stats
+router.get('/cases', getCases); // Allow all lawyers to view their cases
+router.post('/cases', createCase); // Allow all lawyers to create cases
+router.get('/clients', getClients); // Allow all lawyers to view their clients
+router.get('/appointments', getAppointments); // Allow all lawyers to view appointments
+router.get('/documents', getDocuments); // Allow all lawyers to view documents
+router.get('/invoices', getInvoices); // Allow all lawyers to view invoices
+router.get('/profile', getProfile); // Allow all lawyers to view profile
+router.get('/upcoming-events', getUpcomingEvents); // Allow all lawyers to view events
 
 module.exports = router;

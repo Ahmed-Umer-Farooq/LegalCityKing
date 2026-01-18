@@ -64,11 +64,13 @@ class CaseController {
       let caseData, tableName;
 
       if (role === 'lawyer') {
+        const { title, description, type } = req.body;
         const caseNumber = 'CASE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
         caseData = {
           title,
           case_number: caseNumber,
           description,
+          type: type || 'civil',
           lawyer_id: userId,
           status: 'active'
         };

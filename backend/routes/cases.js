@@ -5,6 +5,7 @@ const { getCases, getCaseById, createCase, updateCase, deleteCase, getCaseTimeli
 
 router.use(authenticate);
 
+// Use correct resource names that match RBAC permissions
 router.get('/', authorize('read', 'cases'), getCases);
 router.get('/stats', authorize('read', 'cases'), getCaseStats);
 router.get('/:id', authorize('read', 'cases'), getCaseById);

@@ -724,9 +724,9 @@ export default function LawyerDashboard() {
                   });
                 })()
               ) : (
-                [65, 45, 78, 52, 89, 67, 95, 73, 88, 92, 85, 98].map((height, index) => (
-                  <div key={index} className="flex-1 bg-gradient-to-t from-[#007EF4] to-[#00C1F4] rounded-t-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer" style={{height: `${height}%`}}></div>
-                ))
+                <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+                  No revenue data available
+                </div>
               )}
             </div>
             <div className="flex justify-between mt-4 text-xs text-[#737791]">
@@ -768,21 +768,9 @@ export default function LawyerDashboard() {
                   );
                 })
               ) : (
-                [
-                  { label: 'Civil', count: 5, color: '#007EF4' },
-                  { label: 'Criminal', count: 3, color: '#16D959' },
-                  { label: 'Family', count: 2, color: '#E6372B' },
-                  { label: 'Corporate', count: 1, color: '#F5AB23' },
-                  { label: 'Other', count: 1, color: '#737791' }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></div>
-                      <span className="text-sm text-[#181A2A]">{item.label}</span>
-                    </div>
-                    <span className="text-sm font-medium text-[#737791]">{item.count}</span>
-                  </div>
-                ))
+                <div className="text-center text-gray-500 text-sm py-4">
+                  No case data available
+                </div>
               )}
             </div>
           </div>

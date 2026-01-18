@@ -91,9 +91,9 @@ const getDashboardStats = async (req, res) => {
         monthlyRevenue: calculatePercentage(currentMonthlyRevenue, lastMonthlyRevenue)
       },
       caseDistribution: caseDistribution.map(item => ({
-        label: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+        label: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Unknown',
         count: parseInt(item.count),
-        type: item.type
+        type: item.type || 'unknown'
       })),
       monthlyRevenueData
     });

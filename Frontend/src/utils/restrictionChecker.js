@@ -33,18 +33,29 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     return { allowed: false, reason: 'admin_locked' };
   }
 
-  // 2. Plan restrictions (PRO badge)
+  // 2. Plan restrictions (PRO badge) - Check both plan_restrictions and feature_restrictions
   const planRestrictions = lawyer.plan_restrictions ? 
     (typeof lawyer.plan_restrictions === 'string' ? 
       JSON.parse(lawyer.plan_restrictions) : 
       lawyer.plan_restrictions) : 
     {};
 
-  // Plan restrictions are stored directly for the lawyer's current tier
-  if (planRestrictions[featureName] === false || 
-      planRestrictions[normalizedFeatureName] === false || 
-      planRestrictions[dashFeatureName] === false) {
-    return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
+  // Check if plan restrictions exist for this feature
+  const hasPlanRestriction = planRestrictions.hasOwnProperty(featureName) || 
+                           planRestrictions.hasOwnProperty(normalizedFeatureName) || 
+                           planRestrictions.hasOwnProperty(dashFeatureName);
+
+  // If plan restrictions exist, they override everything else (except admin restrictions)
+  if (hasPlanRestriction) {
+    const isAllowed = planRestrictions[featureName] === true || 
+                     planRestrictions[normalizedFeatureName] === true || 
+                     planRestrictions[dashFeatureName] === true;
+    
+    if (!isAllowed) {
+      return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
+    }
+    // If plan allows it, skip all other checks and allow access
+    return { allowed: true };
   }
 
   // 3. Verification requirements (orange lock)
@@ -62,7 +73,7 @@ export const checkFeatureAccess = (featureName, lawyer) => {
     }
   }
 
-  // 4. Hard-coded subscription requirements (existing PRO features)
+  // 4. Hard-coded subscription requirements (only if no plan restrictions)
   const hardCodedRequirements = {
     'payment-links': 'professional',
     'payment_links': 'professional',
@@ -79,6 +90,15 @@ export const checkFeatureAccess = (featureName, lawyer) => {
   }
   if (requiredTier === 'premium' && !isPremium) {
     return { allowed: false, reason: 'subscription_required', requiredTier: 'premium' };
+  }
+
+  // 5. Default free tier restrictions (only if no plan restrictions)
+  const freeTierFeatures = ['home', 'profile', 'subscription', 'quick_actions'];
+  if (!freeTierFeatures.includes(featureName) && 
+      !freeTierFeatures.includes(normalizedFeatureName) && 
+      !freeTierFeatures.includes(dashFeatureName) && 
+      currentTier === 'free') {
+    return { allowed: false, reason: 'subscription_required', requiredTier: 'professional' };
   }
 
   return { allowed: true };
