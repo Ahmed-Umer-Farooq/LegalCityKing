@@ -96,14 +96,14 @@ const AdminDashboardSidebar = () => {
       }`}>
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md">
-              <Shield className="w-6 h-6 text-white" />
+          <div className="flex flex-col items-center space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-[#0284C7] rounded-full px-3 py-1.5 shadow-md">
+                <span className="text-white font-bold text-sm tracking-tight">Legal</span>
+              </div>
+              <span className="text-[#0284C7] font-bold text-sm tracking-tight">City</span>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-xs text-gray-500">Legal City</p>
-            </div>
+            <p className="text-xs text-gray-500 font-medium">Admin Panel</p>
           </div>
         </div>
 
@@ -258,10 +258,12 @@ const AdminDashboardSidebar = () => {
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-1">
+                <div className="bg-[#0284C7] rounded-full px-2 py-1 shadow-md">
+                  <span className="text-white font-bold text-xs tracking-tight">Legal</span>
+                </div>
+                <span className="text-[#0284C7] font-bold text-xs tracking-tight">City</span>
               </div>
-              <span className="text-lg font-bold text-gray-900">Admin Panel</span>
             </div>
             <div className="w-10"></div>
           </div>

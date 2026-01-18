@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Brain } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Brain, Menu, Crown } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';

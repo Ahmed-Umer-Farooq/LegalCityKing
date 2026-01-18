@@ -111,3 +111,6 @@ exports.up = async function(knex) {
   }
 };
 
+exports.down = async function(knex) {
+  // Rollback is not needed for this migration as it only adds columns
+};
