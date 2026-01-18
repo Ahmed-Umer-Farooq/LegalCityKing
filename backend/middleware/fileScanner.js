@@ -8,8 +8,19 @@ const maliciousSignatures = [
   '504b0304', // ZIP file (potential malware container)
   '377abcaf271c', // 7-Zip
   'd0cf11e0a1b11ae1', // Microsoft Office (macro viruses)
-  'ffd8ffe0', // JPEG with potential steganography
-  '89504e47', // PNG with potential steganography
+];
+
+// Legitimate file signatures that should be allowed
+const legitimateSignatures = [
+  '89504e47', // PNG
+  'ffd8ffe0', // JPEG
+  'ffd8ffe1', // JPEG (EXIF)
+  'ffd8ffe2', // JPEG (Canon)
+  'ffd8ffe8', // JPEG (SPIFF)
+  '25504446', // PDF
+  '474946383761', // GIF87a
+  '474946383961', // GIF89a
+  '52494646', // WEBP (RIFF header)
 ];
 
 // Suspicious file content patterns
@@ -52,20 +63,34 @@ const scanFile = async (filePath) => {
     
     // Check file signature
     const signature = buffer.slice(0, 8).toString('hex').toLowerCase();
-    for (const maliciousSignature of maliciousSignatures) {
-      if (signature.startsWith(maliciousSignature)) {
-        return {
-          safe: false,
-          reason: 'Suspicious file signature detected',
-          code: 'MALICIOUS_SIGNATURE',
-          hash: fileHash
-        };
+    
+    // First check if it's a legitimate file type
+    let isLegitimate = false;
+    for (const legitSignature of legitimateSignatures) {
+      if (signature.startsWith(legitSignature.toLowerCase())) {
+        isLegitimate = true;
+        break;
+      }
+    }
+    
+    // Only check for malicious signatures if it's not a known legitimate type
+    if (!isLegitimate) {
+      for (const maliciousSignature of maliciousSignatures) {
+        if (signature.startsWith(maliciousSignature)) {
+          return {
+            safe: false,
+            reason: 'Suspicious file signature detected',
+            code: 'MALICIOUS_SIGNATURE',
+            hash: fileHash
+          };
+        }
       }
     }
     
     // Check file entropy (packed/encrypted files)
+    // Skip entropy check for legitimate image and document formats
     const entropy = calculateEntropy(buffer);
-    if (entropy > 7.5) {
+    if (!isLegitimate && entropy > 7.5) {
       return {
         safe: false,
         reason: 'High entropy detected (potential packing/encryption)',
@@ -87,8 +112,8 @@ const scanFile = async (filePath) => {
       }
     }
     
-    // Check for embedded executables
-    if (buffer.includes(Buffer.from('4d5a', 'hex'))) {
+    // Check for embedded executables (skip for legitimate image/document formats)
+    if (!isLegitimate && buffer.includes(Buffer.from('4d5a', 'hex'))) {
       return {
         safe: false,
         reason: 'Embedded executable detected',
@@ -155,8 +180,32 @@ const quarantineFile = async (filePath, reason) => {
   }
 };
 
+// Release file from quarantine
+const releaseFromQuarantine = async (quarantinePath, originalPath) => {
+  try {
+    if (fs.existsSync(quarantinePath)) {
+      fs.renameSync(quarantinePath, originalPath);
+      
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        quarantinePath: quarantinePath,
+        releasedPath: originalPath,
+        action: 'RELEASED'
+      };
+      
+      console.log('FILE_RELEASED:', JSON.stringify(logEntry));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Release from quarantine failed:', error);
+    return false;
+  }
+};
+
 module.exports = {
   scanFile,
   quarantineFile,
+  releaseFromQuarantine,
   calculateEntropy
 };
