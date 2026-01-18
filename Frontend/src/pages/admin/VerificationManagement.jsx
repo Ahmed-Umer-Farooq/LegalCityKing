@@ -15,7 +15,9 @@ export default function VerificationManagement() {
   const [restrictions, setRestrictions] = useState({
     cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
     payment_links: false, quick_actions: false, payment_records: false,
-    calendar: false, contacts: false, messages: false, payouts: false, tasks: false
+    calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+    reports: false, forms: false, profile: false, subscription: false, home: false,
+    ai_analyzer: false
   });
   const [userRestrictions, setUserRestrictions] = useState({
     dashboard: false, calendar: false, cases: false, tasks: false, forms: false,
@@ -79,7 +81,9 @@ export default function VerificationManagement() {
       setRestrictions({
         cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
         payment_links: false, quick_actions: false, payment_records: false,
-        calendar: false, contacts: false, messages: false, payouts: false, tasks: false
+        calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+        reports: false, forms: false, profile: false, subscription: false, home: false,
+        ai_analyzer: false
       });
     } catch (error) {
       console.error('Error approving verification:', error);
@@ -133,19 +137,29 @@ export default function VerificationManagement() {
         const parsed = typeof lawyer.feature_restrictions === 'string' 
           ? JSON.parse(lawyer.feature_restrictions) 
           : lawyer.feature_restrictions;
-        setRestrictions(parsed);
+        setRestrictions({
+          cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
+          payment_links: false, quick_actions: false, payment_records: false,
+          calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+          reports: false, forms: false, profile: false, subscription: false, home: false,
+          ai_analyzer: false
+        });
       } catch (e) {
         setRestrictions({
           cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
           payment_links: false, quick_actions: false, payment_records: false,
-          calendar: false, contacts: false, messages: false, payouts: false, tasks: false
+          calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+          reports: false, forms: false, profile: false, subscription: false, home: false,
+          ai_analyzer: false
         });
       }
     } else {
       setRestrictions({
         cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
         payment_links: false, quick_actions: false, payment_records: false,
-        calendar: false, contacts: false, messages: false, payouts: false, tasks: false
+        calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+        reports: false, forms: false, profile: false, subscription: false, home: false,
+        ai_analyzer: false
       });
     }
   };

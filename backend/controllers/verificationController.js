@@ -119,7 +119,7 @@ const getPendingVerifications = async (req, res) => {
       .where('verification_status', 'submitted')
       .orderBy('verification_submitted_at', 'asc');
 
-    // Parse documents for each lawyer
+    // Parse documents and ensure all features are included
     const parsedPending = pending.map(lawyer => {
       if (lawyer.verification_documents) {
         try {
@@ -128,6 +128,24 @@ const getPendingVerifications = async (req, res) => {
           lawyer.verification_documents = [];
         }
       }
+      
+      // Ensure all features are included in restrictions object
+      if (lawyer.feature_restrictions) {
+        try {
+          const parsed = JSON.parse(lawyer.feature_restrictions);
+          const allFeatures = {
+            cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
+            payment_links: false, quick_actions: false, payment_records: false,
+            calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+            reports: false, forms: false, profile: false, subscription: false, home: false,
+            ai_analyzer: false
+          };
+          lawyer.feature_restrictions = JSON.stringify({ ...allFeatures, ...parsed });
+        } catch (e) {
+          lawyer.feature_restrictions = null;
+        }
+      }
+      
       return lawyer;
     });
 
@@ -144,7 +162,7 @@ const getAllLawyers = async (req, res) => {
       .select('id', 'name', 'email', 'verification_status', 'is_verified', 'feature_restrictions', 'verification_notes', 'verification_documents')
       .orderBy('name', 'asc');
 
-    // Parse documents for each lawyer
+    // Parse documents and ensure all features are included in restrictions
     const parsedLawyers = lawyers.map(lawyer => {
       if (lawyer.verification_documents) {
         try {
@@ -153,6 +171,24 @@ const getAllLawyers = async (req, res) => {
           lawyer.verification_documents = [];
         }
       }
+      
+      // Ensure all features are included in restrictions object
+      if (lawyer.feature_restrictions) {
+        try {
+          const parsed = JSON.parse(lawyer.feature_restrictions);
+          const allFeatures = {
+            cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
+            payment_links: false, quick_actions: false, payment_records: false,
+            calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+            reports: false, forms: false, profile: false, subscription: false, home: false,
+            ai_analyzer: false
+          };
+          lawyer.feature_restrictions = JSON.stringify({ ...allFeatures, ...parsed });
+        } catch (e) {
+          lawyer.feature_restrictions = null;
+        }
+      }
+      
       return lawyer;
     });
 
@@ -183,7 +219,18 @@ const approveVerification = async (req, res) => {
     const { notes, restrictions } = req.body;
     const adminId = req.user.id;
 
-    // Update lawyer verification status and clear feature restrictions
+    // Ensure all features are included in the restrictions object
+    const allFeatures = {
+      cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
+      payment_links: false, quick_actions: false, payment_records: false,
+      calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+      reports: false, forms: false, profile: false, subscription: false, home: false,
+      ai_analyzer: false
+    };
+    
+    const finalRestrictions = restrictions ? { ...allFeatures, ...restrictions } : null;
+
+    // Update lawyer verification status and set feature restrictions
     await db('lawyers')
       .where('id', lawyerId)
       .update({
@@ -192,7 +239,7 @@ const approveVerification = async (req, res) => {
         verification_notes: notes,
         verification_approved_at: new Date(),
         verified_by: adminId,
-        feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
+        feature_restrictions: finalRestrictions ? JSON.stringify(finalRestrictions) : null
       });
 
     // Assign verified_lawyer role
@@ -245,10 +292,21 @@ const updateRestrictions = async (req, res) => {
     const { lawyerId } = req.params;
     const { restrictions } = req.body;
 
+    // Ensure all features are included in the restrictions object
+    const allFeatures = {
+      cases: false, clients: false, documents: false, blogs: false, qa_answers: false,
+      payment_links: false, quick_actions: false, payment_records: false,
+      calendar: false, contacts: false, messages: false, payouts: false, tasks: false,
+      reports: false, forms: false, profile: false, subscription: false, home: false,
+      ai_analyzer: false
+    };
+    
+    const finalRestrictions = restrictions ? { ...allFeatures, ...restrictions } : null;
+
     await db('lawyers')
       .where('id', lawyerId)
       .update({
-        feature_restrictions: restrictions ? JSON.stringify(restrictions) : null
+        feature_restrictions: finalRestrictions ? JSON.stringify(finalRestrictions) : null
       });
 
     res.json({ message: 'Restrictions updated successfully' });
