@@ -105,15 +105,16 @@ const Profile = () => {
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
-      formData.append('profileImage', file);
+      formData.append('file', file);
+      formData.append('type', 'profile');
       
       try {
         setLoading(true);
-        const response = await api.post('/auth/profile/upload-image', formData, {
+        const response = await api.post('/upload/image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         
-        setImagePreview(`http://localhost:5001${response.data.imageUrl}`);
+        setImagePreview(`http://localhost:5001${response.data.url}`);
         toast.success('Profile image updated successfully!');
         fetchProfile();
       } catch (error) {

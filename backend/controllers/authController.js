@@ -558,9 +558,9 @@ const updateProfile = async (req, res) => {
         bio,
         job_title,
         company,
-        social_links,
-        interests,
-        privacy_settings,
+        social_links: social_links ? JSON.stringify(social_links) : null,
+        interests: interests ? JSON.stringify(interests) : null,
+        privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : null,
         profile_completed: 1
       };
 
@@ -605,7 +605,7 @@ const updateProfile = async (req, res) => {
         });
       }
     } else {
-      updateData = { name, email, username, registration_id, law_firm, speciality, years_licensed, hourly_rate, mobile_number, address, city, state, zip_code, country, date_of_birth, bio, education, experience, certifications, languages, practice_areas, associations, publications, speaking, social_links, office_hours, payment_options, interests, privacy_settings, profile_completed: 1, updated_at: db.fn.now() };
+      updateData = { name, email, username, registration_id, law_firm, speciality, years_licensed, hourly_rate, mobile_number, address, city, state, zip_code, country, date_of_birth, bio, education, experience, certifications, languages, practice_areas, associations, publications, speaking, social_links: social_links ? JSON.stringify(social_links) : null, office_hours, payment_options, interests: interests ? JSON.stringify(interests) : null, privacy_settings: privacy_settings ? JSON.stringify(privacy_settings) : null, profile_completed: 1, updated_at: new Date() };
 
       // Remove undefined values
       Object.keys(updateData).forEach(key => {
