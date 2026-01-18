@@ -26,34 +26,11 @@ const checkFeatureAccess = (featureName) => {
       // Check verification status
       const isVerified = lawyer.verification_status === 'approved' || lawyer.is_verified === true;
       
-      // Check subscription tier
-      const currentTier = (lawyer.subscription_tier || 'free').toLowerCase();
-      const isProfessional = currentTier === 'professional';
-      const isPremium = currentTier === 'premium';
-      const hasAdvancedFeatures = isProfessional || isPremium;
-
-      // Check admin restrictions (highest priority)
-      const restrictions = lawyer.feature_restrictions ? 
-        (typeof lawyer.feature_restrictions === 'string' ? 
-          JSON.parse(lawyer.feature_restrictions) : 
-          lawyer.feature_restrictions) : 
-        {};
-
       // Normalize feature name
       const normalizedFeatureName = featureName.replace(/-/g, '_');
       const dashFeatureName = featureName.replace(/_/g, '-');
       
-      // 1. Admin restrictions (red lock)
-      if (restrictions[featureName] === true || 
-          restrictions[normalizedFeatureName] === true || 
-          restrictions[dashFeatureName] === true) {
-        return res.status(403).json({ 
-          error: 'This feature has been restricted by the administrator. Please contact support.',
-          code: 'ADMIN_RESTRICTED'
-        });
-      }
-
-      // 2. Plan restrictions
+      // 1. Plan restrictions (only restriction system)
       const planRestrictions = lawyer.plan_restrictions ? 
         (typeof lawyer.plan_restrictions === 'string' ? 
           JSON.parse(lawyer.plan_restrictions) : 
@@ -88,7 +65,7 @@ const checkFeatureAccess = (featureName) => {
         return next();
       }
 
-      // 3. Verification requirements - ALL features require verification
+      // 2. Verification requirements - ALL features require verification
       const verificationRequiredFeatures = [
         'messages', 'contacts', 'calendar', 'payment_records', 'payment-records',
         'tasks', 'documents', 'clients', 'cases', 'qa', 'qa_answers', 'payouts',
