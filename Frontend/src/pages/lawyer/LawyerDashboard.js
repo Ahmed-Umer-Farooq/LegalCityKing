@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Edit3, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Crown, Menu } from 'lucide-react';
+import { User, Calendar, FileText, Mail, CreditCard, Users, DollarSign, File, ChevronLeft, ChevronRight, Home, UserCheck, BarChart3, CheckSquare, FolderOpen, MessageCircle, Save, X, Camera, Briefcase, Building, Globe, Lock, Settings, MapPin, Phone, Link, Brain } from 'lucide-react';
 import api from '../../utils/api';
 import { showToast } from '../../utils/toastUtils';
 import PaymentAcknowledgment from '../../components/PaymentAcknowledgment';
@@ -281,22 +281,23 @@ export default function LawyerDashboard() {
             
             {/* Navigation Sections */}
             {currentUser && (
-            <nav className="hidden lg:flex items-center gap-4">
+            <nav className="hidden lg:flex items-center gap-1">
               {[
                 { id: 'home', label: 'Home', icon: Home, action: () => { setActiveNavItem('home'); setSearchParams({ tab: 'home' }); window.scrollTo(0, 0); } },
-                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, featureName: 'messages' },
-                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, featureName: 'contacts' },
-                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, featureName: 'calendar' },
-                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, featureName: 'payment_records' },
-                { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); }, featureName: 'payouts' },
-                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, featureName: 'payment_links' },
-                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, featureName: 'reports' },
-                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, featureName: 'tasks' },
-                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, featureName: 'documents' },
-                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, featureName: 'forms' },
-                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, featureName: 'blogs' },
-                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, featureName: 'qa_answers' },
-                { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
+                { id: 'messages', label: 'Messages', icon: MessageCircle, action: () => { setActiveNavItem('messages'); setSearchParams({ tab: 'messages' }); }, showNotification: true, verificationRequired: !isVerified },
+                { id: 'contacts', label: 'Contacts', icon: UserCheck, action: () => { setActiveNavItem('contacts'); setSearchParams({ tab: 'contacts' }); }, verificationRequired: !isVerified },
+                { id: 'calendar', label: 'Calendar', icon: Calendar, action: () => { setActiveNavItem('calendar'); setSearchParams({ tab: 'calendar' }); }, verificationRequired: !isVerified },
+                { id: 'payment-records', label: 'Payments', icon: DollarSign, action: () => { setActiveNavItem('payment-records'); setSearchParams({ tab: 'payment-records' }); }, verificationRequired: !isVerified },
+                { id: 'payouts', label: 'Payouts', icon: CreditCard, action: () => { setActiveNavItem('payouts'); setSearchParams({ tab: 'payouts' }); }, verificationRequired: !isVerified },
+                { id: 'payment-links', label: 'Pay Links', icon: Link, action: () => { setActiveNavItem('payment-links'); setSearchParams({ tab: 'payment-links' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+                { id: 'reports', label: 'Reports', icon: BarChart3, action: () => { setActiveNavItem('reports'); setSearchParams({ tab: 'reports' }); }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+                { id: 'tasks', label: 'Tasks', icon: CheckSquare, action: () => { setActiveNavItem('tasks'); setSearchParams({ tab: 'tasks' }); }, verificationRequired: !isVerified },
+                { id: 'documents', label: 'Documents', icon: FolderOpen, action: () => { setActiveNavItem('documents'); setSearchParams({ tab: 'documents' }); }, verificationRequired: !isVerified },
+                { id: 'ai-analyzer', label: 'AI Analyzer', icon: Brain, action: () => { window.location.href = '/lawyer-dashboard/ai-analyzer'; }, subscriptionRequired: !hasAdvancedFeatures, verificationRequired: !isVerified },
+                { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, subscriptionRequired: !isPremium },
+                { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, subscriptionRequired: !hasAdvancedFeatures },
+                { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, verificationRequired: !isVerified },
+                { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; } }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;
@@ -311,8 +312,8 @@ export default function LawyerDashboard() {
                 return (
                   <button
                     key={item.id}
-                    onClick={isRestricted ? (isAdminLocked ? () => showToast.error('This feature has been restricted by the administrator.') : needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
-                    className={`relative flex items-center gap-1 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    onClick={isRestricted ? (needsVerification ? () => setShowVerificationModal(true) : () => { window.location.href = '/lawyer-dashboard/subscription'; }) : (item.action || (() => { setActiveNavItem(item.id); setSearchParams({ tab: item.id }); }))}
+                    className={`relative flex items-center gap-1 px-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-[#EDF3FF] text-[#0086CB] shadow-sm' 
                         : 'text-[#181A2A] hover:text-[#0086CB] hover:bg-[#F8F9FA]'
@@ -320,27 +321,24 @@ export default function LawyerDashboard() {
                       isRestricted ? 'opacity-60' : ''
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden xl:block">{item.label}</span>
-                    {isAdminLocked && (
-                      <Lock className="w-3 h-3 text-red-500" />
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="hidden 2xl:block text-xs">{item.label}</span>
+                    {needsVerification && (
+                      <Lock className="w-2.5 h-2.5 text-orange-500" />
                     )}
-                    {needsVerification && !isAdminLocked && (
-                      <Lock className="w-3 h-3 text-orange-500" />
-                    )}
-                    {needsSubscription && !needsVerification && !isAdminLocked && (
-                      <span className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1 rounded font-bold leading-none">PRO</span>
+                    {needsSubscription && !needsVerification && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-[8px] px-1 rounded font-bold leading-none">PRO</span>
                     )}
                     {item.showNotification && (
                       item.id === 'messages' ? (
                         unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px]">
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </span>
                         )
                       ) : item.id === 'blogs' ? (
                         blogEngagementCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px]">
                             {blogEngagementCount > 9 ? '9+' : blogEngagementCount}
                           </span>
                         )
@@ -361,14 +359,13 @@ export default function LawyerDashboard() {
             </button>
             
             {/* Professional User Profile */}
-            <div className="relative group">
-              <div className="flex items-center gap-1 lg:gap-2 cursor-pointer bg-[#F9FAFB] hover:bg-[#F3F4F6] rounded-lg px-1.5 lg:px-2 py-1 lg:py-1.5 border border-[#E5E7EB] transition-all">
-                <div className="w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] rounded-full flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+            <div className="relative group flex-shrink-0">
+              <div className="flex items-center gap-2 cursor-pointer bg-[#F9FAFB] hover:bg-[#F3F4F6] rounded-lg px-2 py-1.5 border border-[#E5E7EB] transition-all">
+                <div className="w-6 h-6 bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] rounded-full flex items-center justify-center text-white font-semibold text-xs shadow-sm">
                   {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
-                <div className="hidden md:block text-left">
-                  <div className="text-[#1F2937] text-xs font-medium">{currentUser?.name || 'User'}</div>
-                  <div className="text-[#6B7280] text-xs">{currentUser?.law_firm || 'Legal Professional'}</div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-[#1F2937] text-xs font-medium truncate max-w-20">{currentUser?.name || 'User'}</div>
                 </div>
                 <svg className="w-3 h-3 text-[#6B7280] transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

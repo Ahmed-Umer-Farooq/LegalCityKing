@@ -19,8 +19,8 @@ const PayoutRequests = () => {
     try {
       const token = localStorage.getItem('token');
       const url = filter === 'all' 
-        ? `${process.env.REACT_APP_API_URL}/api/admin/payouts/payout-requests`
-        : `${process.env.REACT_APP_API_URL}/api/admin/payouts/payout-requests?status=${filter}`;
+        ? 'http://localhost:5001/api/admin/payouts/payout-requests'
+        : `http://localhost:5001/api/admin/payouts/payout-requests?status=${filter}`;
       
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -38,7 +38,7 @@ const PayoutRequests = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/admin/payouts/payout-requests/${payoutId}/approve`,
+        `http://localhost:5001/api/admin/payouts/payout-requests/${payoutId}/approve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -52,7 +52,7 @@ const PayoutRequests = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/admin/payouts/payout-requests/${selectedPayout.id}/reject`,
+        `http://localhost:5001/api/admin/payouts/payout-requests/${selectedPayout.id}/reject`,
         { reason: rejectReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );

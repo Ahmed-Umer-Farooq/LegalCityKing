@@ -19,13 +19,13 @@ const PayoutsTab = () => {
     try {
       const token = localStorage.getItem('token');
       const [balanceRes, statusRes, payoutsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/stripe-connect/balance`, {
+        axios.get('http://localhost:5001/api/stripe-connect/balance', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/stripe-connect/account-status`, {
+        axios.get('http://localhost:5001/api/stripe-connect/account-status', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/stripe-connect/payout-history`, {
+        axios.get('http://localhost:5001/api/stripe-connect/payout-history', {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -46,21 +46,21 @@ const PayoutsTab = () => {
       const token = localStorage.getItem('token');
       
       const createRes = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/stripe-connect/create-account`,
+        'http://localhost:5001/api/stripe-connect/create-account',
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (createRes.data.success) {
         const linkRes = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/stripe-connect/onboarding-link`,
+          'http://localhost:5001/api/stripe-connect/onboarding-link',
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (linkRes.data.url) {
           if (linkRes.data.url.includes('mock_onboarding')) {
             await axios.post(
-              `${process.env.REACT_APP_API_URL}/api/stripe-connect/complete-onboarding`,
+              'http://localhost:5001/api/stripe-connect/complete-onboarding',
               {},
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -95,7 +95,7 @@ const PayoutsTab = () => {
 
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/stripe-connect/request-payout`,
+        'http://localhost:5001/api/stripe-connect/request-payout',
         { amount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
