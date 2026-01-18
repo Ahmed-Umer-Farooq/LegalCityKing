@@ -19,15 +19,15 @@ const router = express.Router();
 router.use(authenticate);
 router.use(enforceUserType('lawyer'));
 
-// Dashboard routes - already protected by authenticate + enforceUserType
-router.get('/dashboard/stats', getDashboardStats);
-router.get('/cases', getCases);
-router.post('/cases', createCase);
-router.get('/clients', getClients);
-router.get('/appointments', getAppointments);
-router.get('/documents', getDocuments);
-router.get('/invoices', getInvoices);
-router.get('/profile', getProfile);
-router.get('/upcoming-events', getUpcomingEvents);
+// Dashboard routes with proper authorization
+router.get('/dashboard/stats', authorize('read', 'dashboard'), getDashboardStats);
+router.get('/cases', authorize('read', 'cases'), getCases);
+router.post('/cases', authorize('write', 'cases'), createCase);
+router.get('/clients', authorize('read', 'clients'), getClients);
+router.get('/appointments', authorize('read', 'appointments'), getAppointments);
+router.get('/documents', authorize('read', 'documents'), getDocuments);
+router.get('/invoices', authorize('read', 'invoices'), getInvoices);
+router.get('/profile', authorize('read', 'profile'), getProfile);
+router.get('/upcoming-events', authorize('read', 'events'), getUpcomingEvents);
 
 module.exports = router;

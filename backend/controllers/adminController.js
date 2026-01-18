@@ -1,5 +1,4 @@
 const db = require('../db');
-const lawyerRoleService = require('../services/lawyerRoleService');
 
 const getStats = async (req, res) => {
   try {
@@ -236,12 +235,8 @@ const verifyLawyer = async (req, res) => {
     await db('lawyers').where('id', id).update({
       is_verified: 1,
       lawyer_verified: 1,
-      verification_status: 'approved',
       updated_at: db.fn.now()
     });
-
-    // Auto-assign appropriate RBAC role
-    await lawyerRoleService.upgradeOnVerification(id);
 
     res.json({ message: 'Lawyer verified successfully' });
   } catch (error) {
