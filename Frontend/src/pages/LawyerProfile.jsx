@@ -21,15 +21,21 @@ export default function LawyerProfile() {
   const [showEndorsementModal, setShowEndorsementModal] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [endorsements, setEndorsements] = useState([]);
+  const [similarLawyers, setSimilarLawyers] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   
   // Check if user came from dashboard vs public pages
   const cameFromDashboard = localStorage.getItem('navigatedFromDashboard') === 'true' || location.pathname.startsWith('/dashboard/lawyer/');
   
   useEffect(() => {
     const loadData = async () => {
-      await fetchLawyer();
+      const lawyerData = await fetchLawyer();
       await fetchReviews();
       await fetchEndorsements();
+      if (lawyerData) {
+        await fetchSimilarLawyers(lawyerData);
+        await fetchRecentActivity(lawyerData.secure_id || lawyerData.id);
+      }
     };
     loadData();
   }, [id]);
@@ -47,6 +53,7 @@ export default function LawyerProfile() {
       const response = await api.get(`/lawyers/${id}`);
       console.log('Lawyer data received:', response.data);
       setLawyer(response.data);
+      return response.data;
     } catch (error) {
       console.error('Error fetching lawyer:', error);
       if (error.response?.status === 404) {
@@ -54,6 +61,7 @@ export default function LawyerProfile() {
       } else {
         toast.error('Failed to load lawyer profile');
       }
+      return null;
     } finally {
       setLoading(false);
     }
@@ -82,6 +90,76 @@ export default function LawyerProfile() {
       setEndorsements(response.data.endorsements || []);
     } catch (error) {
       console.error('Error fetching endorsements:', error);
+    }
+  };
+
+  const fetchSimilarLawyers = async (currentLawyer) => {
+    try {
+      const response = await api.get('/lawyers');
+      const allLawyers = response.data || [];
+      
+      // Filter out current lawyer and get similar ones (same speciality)
+      const similar = allLawyers
+        .filter(l => l.secure_id !== id && l.speciality === currentLawyer?.speciality)
+        .slice(0, 3)
+        .map(l => ({
+          id: l.secure_id || l.id,
+          name: l.name,
+          speciality: l.speciality,
+          rating: parseFloat(l.rating) || 0,
+          image: l.profile_image && l.profile_image !== 'null' && l.profile_image.trim() !== ''
+            ? (l.profile_image.startsWith('http') ? l.profile_image : `http://localhost:5001${l.profile_image}`)
+            : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(l.name)}&backgroundColor=b6e3f4&size=200`
+        }));
+      
+      setSimilarLawyers(similar);
+    } catch (error) {
+      console.error('Error fetching similar lawyers:', error);
+    }
+  };
+
+  const fetchRecentActivity = async (lawyerId) => {
+    try {
+      // Fetch recent reviews, endorsements, and cases for activity
+      const [reviewsRes, endorsementsRes] = await Promise.all([
+        api.get(`/reviews/${lawyerId}`).catch(() => ({ data: { reviews: [] } })),
+        api.get(`/endorsements/${lawyerId}`).catch(() => ({ data: { endorsements: [] } }))
+      ]);
+      
+      const activities = [];
+      
+      // Add recent reviews as activity
+      if (reviewsRes.data?.reviews) {
+        reviewsRes.data.reviews.slice(0, 2).forEach(review => {
+          activities.push({
+            type: 'review',
+            title: 'Received client review',
+            date: review.created_at,
+            color: 'green'
+          });
+        });
+      }
+      
+      // Add recent endorsements as activity
+      if (endorsementsRes.data?.endorsements) {
+        endorsementsRes.data.endorsements.slice(0, 2).forEach(endorsement => {
+          activities.push({
+            type: 'endorsement',
+            title: 'Received peer endorsement',
+            date: endorsement.created_at,
+            color: 'blue'
+          });
+        });
+      }
+      
+      // Sort by date and take most recent 3
+      const sortedActivities = activities
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3);
+      
+      setRecentActivity(sortedActivities);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
     }
   };
 
@@ -232,7 +310,7 @@ export default function LawyerProfile() {
     yearsLicensed: lawyer.years_licensed || 1,
     freeConsultation: safeJsonParse(lawyer.payment_options, {}).free_consultation !== false,
     virtualConsultation: true,
-    about: lawyer.bio || lawyer.description || 'No bio provided',
+    about: lawyer.bio || lawyer.description || 'Professional attorney with extensive legal experience.',
     practiceAreas: (() => {
       const areas = safeJsonParse(lawyer.practice_areas, []);
       if (areas.length === 0 && lawyer.speciality) {
@@ -820,10 +898,6 @@ export default function LawyerProfile() {
                     <span className="font-semibold">Login to Chat</span>
                   </button>
                 )}
-                <button className="w-full flex items-center gap-3 p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
-                  <Shield className="w-4 h-4" />
-                  <span className="font-medium">Request Quote</span>
-                </button>
               </div>
             </div>
 
@@ -902,27 +976,34 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Won custody case</p>
-                    <p className="text-xs text-gray-500">2 days ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Published article</p>
-                    <p className="text-xs text-gray-500">1 week ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Speaking engagement</p>
-                    <p className="text-xs text-gray-500">2 weeks ago</p>
-                  </div>
-                </div>
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity, index) => {
+                    const timeAgo = (() => {
+                      const now = new Date();
+                      const activityDate = new Date(activity.date);
+                      const diffTime = Math.abs(now - activityDate);
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      
+                      if (diffDays === 1) return '1 day ago';
+                      if (diffDays < 7) return `${diffDays} days ago`;
+                      if (diffDays < 14) return '1 week ago';
+                      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                      return `${Math.floor(diffDays / 30)} months ago`;
+                    })();
+                    
+                    return (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className={`w-2 h-2 bg-${activity.color}-500 rounded-full mt-2`}></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-xs text-gray-500">{timeAgo}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-gray-500">No recent activity</p>
+                )}
               </div>
             </div>
 
@@ -930,27 +1011,29 @@ export default function LawyerProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Similar Lawyers</h3>
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="" className="w-10 h-10 rounded-lg object-cover" />
-                  <div>
-                    <h4 className="font-medium text-gray-900 text-sm">Sarah Johnson</h4>
-                    <p className="text-xs text-gray-600">Family Law • 4.9★</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="" className="w-10 h-10 rounded-lg object-cover" />
-                  <div>
-                    <h4 className="font-medium text-gray-900 text-sm">Michael Chen</h4>
-                    <p className="text-xs text-gray-600">Family Law • 4.8★</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="" className="w-10 h-10 rounded-lg object-cover" />
-                  <div>
-                    <h4 className="font-medium text-gray-900 text-sm">Emily Rodriguez</h4>
-                    <p className="text-xs text-gray-600">Family Law • 4.9★</p>
-                  </div>
-                </div>
+                {similarLawyers.length > 0 ? (
+                  similarLawyers.map((similarLawyer) => (
+                    <div 
+                      key={similarLawyer.id} 
+                      className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      onClick={() => navigate(`/lawyer/${similarLawyer.id}`)}
+                    >
+                      <img 
+                        src={similarLawyer.image} 
+                        alt={similarLawyer.name} 
+                        className="w-10 h-10 rounded-lg object-cover" 
+                      />
+                      <div>
+                        <h4 className="font-medium text-gray-900 text-sm">{similarLawyer.name}</h4>
+                        <p className="text-xs text-gray-600">
+                          {similarLawyer.speciality} • {similarLawyer.rating > 0 ? `${similarLawyer.rating.toFixed(1)}★` : 'New'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No similar lawyers found</p>
+                )}
               </div>
             </div>
           </div>

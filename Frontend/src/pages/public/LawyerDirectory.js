@@ -122,10 +122,10 @@ function LawyerCard({
 
   return (
     <div className="w-full">
-      <div className={`${responsive.card} overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
-        {/* Category Badge */}
-        <div className="bg-gradient-to-r from-[#0071BC] to-[#00D2FF] px-4 sm:px-6 py-2 sm:py-3">
-          <span className={`text-white font-semibold ${responsive.text.xs} uppercase tracking-wide`}>{category}</span>
+      <div className={`${responsive.card} overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100`}>
+        {/* Category Badge - Modernized */}
+        <div className="bg-gray-50 px-4 sm:px-6 py-2 sm:py-3 border-b border-gray-100">
+          <span className={`text-gray-700 font-bold ${responsive.text.xs} uppercase tracking-wide`}>{category}</span>
         </div>
         
         <div className={responsive.spacing.card}>
