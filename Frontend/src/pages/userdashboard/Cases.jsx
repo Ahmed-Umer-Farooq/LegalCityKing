@@ -264,7 +264,7 @@ const Cases = () => {
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 text-lg">{caseItem.title}</h3>
-                          <p className="text-sm text-gray-500">Case #{caseItem.case_number}</p>
+                          <p className="text-sm text-gray-500">{caseItem.case_number}</p>
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           <span className={`px-3 py-1 text-xs rounded-full border ${getStatusColor(caseItem.status)}`}>
@@ -290,7 +290,7 @@ const Cases = () => {
                         {caseItem.case_number && (
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4" />
-                            <span>Case #{caseItem.case_number}</span>
+                            <span>{caseItem.case_number}</span>
                           </div>
                         )}
                         {caseItem.next_hearing && (

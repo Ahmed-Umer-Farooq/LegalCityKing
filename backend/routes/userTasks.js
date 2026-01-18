@@ -16,7 +16,7 @@ router.use(enforceUserType('user'));
 router.get('/', authorize('read', 'tasks'), getTasks);
 router.get('/stats', authorize('read', 'tasks'), getTaskStats);
 router.post('/', authorize('write', 'tasks'), createTask);
-router.put('/:secure_id', authorize('write', 'tasks'), updateTask);
-router.delete('/:secure_id', authorize('write', 'tasks'), deleteTask);
+router.put('/:id', authorize('write', 'tasks'), updateTask);
+router.delete('/:id', deleteTask);
 
 module.exports = router;
