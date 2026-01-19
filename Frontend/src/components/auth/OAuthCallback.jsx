@@ -25,27 +25,20 @@ const OAuthCallback = () => {
         // Store in localStorage like normal login
         login(token, userData);
         
-        // Redirect to appropriate dashboard
+        // Force immediate redirect using window.location.replace
         const dashboardPath = userData.role === 'lawyer' ? '/lawyer-dashboard' : '/user-dashboard';
-        console.log('OAuth callback - redirecting to:', dashboardPath);
-        navigate(dashboardPath + (welcome === 'true' ? '?welcome=true' : ''));
+        const finalUrl = dashboardPath + (welcome === 'true' ? '?welcome=true' : '');
+        console.log('OAuth callback - redirecting to:', finalUrl);
+        window.location.replace(finalUrl);
         
       } catch (error) {
         console.error('OAuth callback error:', error);
-        navigate('/login?error=oauth_failed');
+        window.location.replace('/login?error=oauth_failed');
       }
     } else {
       console.error('OAuth callback - missing data, redirecting to login');
-      navigate('/login?error=missing_oauth_data');
+      window.location.replace('/login?error=missing_oauth_data');
     }
-    
-    // Timeout fallback
-    const timeout = setTimeout(() => {
-      console.error('OAuth callback timeout - redirecting to login');
-      navigate('/login?error=oauth_timeout');
-    }, 5000);
-    
-    return () => clearTimeout(timeout);
   }, [searchParams, login, navigate]);
 
   return (

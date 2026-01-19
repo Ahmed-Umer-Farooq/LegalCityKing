@@ -41,8 +41,7 @@ class OAuthConfig {
       scope: config.scope.join(' '),
       response_type: 'code',
       state: `${state}:${role}`,
-      access_type: 'offline',
-      prompt: 'consent'
+      access_type: 'offline'
     });
 
     return {
