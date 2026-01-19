@@ -72,14 +72,6 @@ class OAuthController {
         role: user.role
       });
 
-      // Set secure HTTP-only cookie
-      res.cookie('auth_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
-
       // Clear OAuth session data
       delete req.session.oauthState;
       delete req.session.oauthRole;
@@ -92,35 +84,18 @@ class OAuthController {
         ip: req.ip
       });
 
-      // Create a temporary redirect page that will handle the authentication
-      const redirectHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Redirecting...</title>
-          <script>
-            // Set a flag for OAuth authentication
-            sessionStorage.setItem('oauth_redirect', 'true');
-            sessionStorage.setItem('oauth_user', JSON.stringify(${JSON.stringify({
-              id: user.id,
-              email: user.email,
-              role: user.role,
-              name: user.name,
-              avatar: user.avatar
-            })}));
-            
-            // Redirect to appropriate dashboard
-            const dashboardPath = '${user.role === 'lawyer' ? '/lawyer-dashboard' : '/user-dashboard'}';
-            window.location.href = '${process.env.FRONTEND_URL}' + dashboardPath + '?welcome=${isNewUser ? 'true' : 'false'}';
-          </script>
-        </head>
-        <body>
-          <p>Redirecting...</p>
-        </body>
-        </html>
-      `;
+      // Redirect directly with token and user data as URL parameters
+      const userData = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        avatar: user.avatar
+      };
       
-      res.send(redirectHtml);
+      const redirectUrl = `${process.env.FRONTEND_URL}/oauth-callback?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(userData))}&welcome=${isNewUser ? 'true' : 'false'}`;
+      
+      res.redirect(redirectUrl);
 
     } catch (error) {
       logger.error('OAuth callback error:', error);
@@ -179,6 +154,12 @@ class OAuthController {
       return { user: { ...user, role }, isNewUser: false };
     }
 
+    // Check if Google ID already exists (different email scenario)
+    const existingGoogleUser = await db(tableName).where({ google_id: profile.id }).first();
+    if (existingGoogleUser) {
+      return { user: { ...existingGoogleUser, role }, isNewUser: false };
+    }
+
     // Create new user
     const userData = {
       name: profile.name,
@@ -187,7 +168,7 @@ class OAuthController {
       email_verified: 1,
       is_verified: 1,
       password: '',
-      profile_completed: 1, // Mark as complete to skip forms
+      profile_completed: 1,
       secure_id: crypto.randomBytes(16).toString('hex'),
       avatar: profile.picture,
       created_at: new Date(),
@@ -196,7 +177,7 @@ class OAuthController {
 
     if (role === 'lawyer') {
       userData.verification_status = 'pending';
-      userData.subscription_tier = 'free'; // Default tier for new OAuth lawyers
+      userData.subscription_tier = 'free';
     } else {
       userData.role = 'user';
       userData.is_admin = 0;

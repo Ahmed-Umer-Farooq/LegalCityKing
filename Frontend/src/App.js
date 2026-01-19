@@ -51,6 +51,8 @@ import SubscriptionManagement from './pages/lawyer/SubscriptionManagement';
 import LegalChatbot from './components/LegalChatbot';
 import DocumentAnalyzer from './components/DocumentAnalyzer';
 
+import OAuthCallback from './components/auth/OAuthCallback';
+
 import QAAnswers from './pages/lawyer/QAAnswers';
 
 // Redirect component for legacy blog routes
@@ -97,6 +99,7 @@ function App() {
         <Route path="/forgot-password" element={<LegalCityAuth />} />
         <Route path="/reset-password" element={<LegalCityAuth />} />
         <Route path="/verify-email" element={<LegalCityAuth />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
         <Route path="/google-user-setup" element={<GoogleUserSetup />} />
         <Route path="/google-lawyer-setup" element={<GoogleLawyerSetup />} />
         <Route path="/logout" element={<Logout />} />
