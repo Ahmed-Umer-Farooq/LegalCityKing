@@ -766,52 +766,9 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-// Mark account as verified upon "Submit Later" action
-const submitLater = async (req, res) => {
-  try {
-    // Check lawyers table first
-    let user = await db('lawyers').where({ id: req.user.id }).first();
-    if (user) {
-      await db('lawyers').where({ id: req.user.id }).update({ 
-        profile_completed: 1
-      });
-      const updated = await db('lawyers').where({ id: req.user.id }).first();
-      return res.json({ 
-        message: 'Profile completed', 
-        user: { 
-          ...updated, 
-          role: 'lawyer',
-          is_admin: false,
-          registration_id: updated.registration_id
-        },
-        redirect: '/lawyer-dashboard'
-      });
-    }
-    
-    // Check users table
-    user = await db('users').where({ id: req.user.id }).first();
-    if (user) {
-      await db('users').where({ id: req.user.id }).update({ 
-        profile_completed: 1
-      });
-      const updated = await db('users').where({ id: req.user.id }).first();
-      return res.json({ 
-        message: 'Profile completed', 
-        user: { 
-          ...updated, 
-          role: 'user',
-          is_admin: updated.is_admin || false,
-          registration_id: updated.registration_id || null
-        },
-        redirect: '/user-dashboard'
-      });
-    }
-    return res.status(404).json({ message: 'User not found' });
-  } catch (error) {
-    console.error('Error updating status on submit later:', error);
-    res.status(500).json({ message: 'Failed to update status' });
-  }
-};
+// DEPRECATED: Submit Later functionality removed
+// OAuth users now go directly to dashboard with profile_completed: 1
+// Profile completion is optional and done from dashboard settings
 
 module.exports = {
   login,
@@ -824,6 +781,6 @@ module.exports = {
   deleteAccount,
   sendOtp,
   verifyOtp,
-  submitLater,
+  // submitLater removed - OAuth users go directly to dashboard
 };
 

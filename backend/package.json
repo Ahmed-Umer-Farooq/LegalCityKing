@@ -8,7 +8,8 @@
     "start": "node server.js",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
-    "migrate:status": "knex migrate:status"
+    "migrate:status": "knex migrate:status",
+    "test-oauth": "node test-oauth.js"
   },
   "keywords": [],
   "author": "",

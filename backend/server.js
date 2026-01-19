@@ -4,7 +4,6 @@ const http = require('http');
 const socketIo = require('socket.io');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
-const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
 const db = require('./db');
 const socketUserManager = require('./utils/socketUserManager');
@@ -13,6 +12,7 @@ const { startLogRotation } = require('./utils/logRotation');
 
 // Import modern authentication
 const { authenticate, authorize } = require('./middleware/modernAuth');
+const oauthSecurity = require('./middleware/oauthSecurity');
 const rbacService = require('./services/rbacService');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -76,10 +76,6 @@ app.use(session({
   name: 'sessionId', // Don't use default session name
 }));
 
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
 // CSRF token endpoint
 app.get('/api/csrf-token', (req, res) => {
   if (!req.session.csrfToken) {
@@ -104,6 +100,10 @@ console.log('📁 Serving uploads from:', path.join(__dirname, 'uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+// New OAuth routes
+const oauthRoutes = require('./routes/oauth');
+app.use('/api/oauth', oauthRoutes);
 
 // Working admin endpoints
 app.get('/api/admin/stats', async (req, res) => {
