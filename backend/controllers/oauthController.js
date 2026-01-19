@@ -4,6 +4,7 @@ const db = require('../db');
 const { generateToken, auditLog, logger } = require('../middleware/security');
 const rbacService = require('../services/rbacService');
 const oauthConfig = require('../config/oauth');
+const { updateLawyerPlanRestrictions } = require('../utils/planTemplates');
 
 class OAuthController {
   // Initiate Google OAuth
@@ -195,6 +196,7 @@ class OAuthController {
 
     if (role === 'lawyer') {
       userData.verification_status = 'pending';
+      userData.subscription_tier = 'free'; // Default tier for new OAuth lawyers
     } else {
       userData.role = 'user';
       userData.is_admin = 0;
@@ -202,6 +204,11 @@ class OAuthController {
 
     const [userId] = await db(tableName).insert(userData);
     user = await db(tableName).where({ id: userId }).first();
+
+    // Apply plan restrictions for new lawyers
+    if (role === 'lawyer') {
+      await updateLawyerPlanRestrictions(userId, 'free', db);
+    }
 
     // Assign RBAC role
     await rbacService.assignRole(userId, role, role);
