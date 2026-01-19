@@ -15,7 +15,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    // Don't send OAuth flag as Bearer token - OAuth uses cookies
+    if (token && token !== 'oauth_authenticated') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

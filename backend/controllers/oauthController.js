@@ -91,9 +91,35 @@ class OAuthController {
         ip: req.ip
       });
 
-      // Redirect to appropriate dashboard
-      const dashboardPath = user.role === 'lawyer' ? '/lawyer-dashboard' : '/user-dashboard';
-      res.redirect(`${process.env.FRONTEND_URL}${dashboardPath}?welcome=${isNewUser ? 'true' : 'false'}`);
+      // Create a temporary redirect page that will handle the authentication
+      const redirectHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Redirecting...</title>
+          <script>
+            // Set a flag for OAuth authentication
+            sessionStorage.setItem('oauth_redirect', 'true');
+            sessionStorage.setItem('oauth_user', JSON.stringify(${JSON.stringify({
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              name: user.name,
+              avatar: user.avatar
+            })}));
+            
+            // Redirect to appropriate dashboard
+            const dashboardPath = '${user.role === 'lawyer' ? '/lawyer-dashboard' : '/user-dashboard'}';
+            window.location.href = '${process.env.FRONTEND_URL}' + dashboardPath + '?welcome=${isNewUser ? 'true' : 'false'}';
+          </script>
+        </head>
+        <body>
+          <p>Redirecting...</p>
+        </body>
+        </html>
+      `;
+      
+      res.send(redirectHtml);
 
     } catch (error) {
       logger.error('OAuth callback error:', error);

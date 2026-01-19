@@ -475,16 +475,22 @@ io.on('connection', (socket) => {
     const userId = typeof data === 'object' ? data.userId : data;
     const userType = typeof data === 'object' ? data.userType : 'user';
     
+    // Validate userId before processing
+    if (!userId || userId === 'undefined' || userId === 'null' || userId === undefined) {
+      console.log('Invalid userId in socket connection:', userId);
+      return;
+    }
+    
     await activeUsers.add(userId, socket.id, userType);
     const userInfo = activeUsers.get(userId);
     
-    console.log(`User ${userId} (${userInfo.userType}) connected with socket ${socket.id}`);
+    console.log(`User ${userId} (${userInfo?.userType || userType}) connected with socket ${socket.id}`);
     io.emit('user_status', { userId, status: 'online' });
     
     // Send current unread count to user
     try {
       const unreadCount = await db('chat_messages')
-        .where({ receiver_id: userId, receiver_type: userInfo.userType, read_status: 0 })
+        .where({ receiver_id: userId, receiver_type: userInfo?.userType || userType, read_status: 0 })
         .count('id as count')
         .first();
       socket.emit('unread_count_update', { count: unreadCount.count });

@@ -297,7 +297,7 @@ export default function LawyerDashboard() {
                 { id: 'forms', label: 'Forms', icon: File, action: () => { setActiveNavItem('forms'); setSearchParams({ tab: 'forms' }); }, featureName: 'forms' },
                 { id: 'blogs', label: 'Blogs', icon: FileText, action: () => { setActiveNavItem('blogs'); setSearchParams({ tab: 'blogs' }); setBlogEngagementCount(0); }, showNotification: true, notificationCount: blogEngagementCount, featureName: 'blogs' },
                 { id: 'qa', label: 'Q&A', icon: Mail, action: () => { setActiveNavItem('qa'); setSearchParams({ tab: 'qa' }); }, featureName: 'qa_answers' },
-                { id: 'subscription', label: 'Subscription', icon: CreditCard, action: () => { window.location.href = '/lawyer-dashboard/subscription'; }, featureName: 'subscription' }
+                { id: 'subscription', label: 'Subscription', icon: Crown, action: () => { window.location.href = '/lawyer-dashboard/subscription'; }, featureName: 'subscription' }
               ].map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNavItem === item.id;

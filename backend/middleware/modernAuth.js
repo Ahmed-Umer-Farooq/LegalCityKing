@@ -5,20 +5,68 @@ const db = require('../db');
 // Modern JWT Authentication with RBAC
 const authenticate = async (req, res, next) => {
   try {
+    // First check for OAuth cookie authentication
+    const oauthToken = req.cookies.auth_token;
+    if (oauthToken) {
+      try {
+        const decoded = jwt.verify(oauthToken, process.env.JWT_SECRET);
+        
+        // Get user from appropriate table based on JWT role claim
+        let user;
+        let userType = decoded.role || 'user';
+        
+        if (userType === 'lawyer') {
+          user = await db('lawyers').where({ id: decoded.id }).first();
+        } else if (userType === 'admin') {
+          user = await db('users').where({ id: decoded.id, is_admin: 1 }).first();
+        } else {
+          user = await db('users').where({ id: decoded.id }).first();
+        }
+        
+        if (user) {
+          const abilities = await rbacService.getUserAbilities(decoded.id, userType === 'admin' ? 'user' : userType, {
+            ip: req.ip,
+            time: new Date(),
+            userAgent: req.get('User-Agent'),
+            forceRefresh: userType === 'lawyer'
+          });
+          
+          req.user = {
+            id: decoded.id,
+            email: user.email,
+            type: userType,
+            role: userType,
+            abilities,
+            ...user
+          };
+          
+          return next();
+        }
+      } catch (oauthError) {
+        // OAuth token invalid, continue to JWT check
+        console.log('OAuth token invalid, checking JWT:', oauthError.message);
+      }
+    }
+    
+    // Fallback to JWT token from Authorization header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
       return res.status(401).json({ error: 'Access token required' });
     }
+    
+    // Skip if token is the OAuth flag from frontend
+    if (token === 'oauth_authenticated') {
+      return res.status(401).json({ error: 'Invalid token format' });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Get user from appropriate table based on JWT role claim
     let user;
-    let userType = decoded.role || 'user'; // Use role from JWT
+    let userType = decoded.role || 'user';
     
-    // Validate user exists in correct table based on their role
     if (userType === 'lawyer') {
       user = await db('lawyers').where({ id: decoded.id }).first();
       if (!user) {
@@ -39,19 +87,18 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    // Get user abilities with forceRefresh for lawyers to always check latest permissions
     const abilities = await rbacService.getUserAbilities(decoded.id, userType === 'admin' ? 'user' : userType, {
       ip: req.ip,
       time: new Date(),
       userAgent: req.get('User-Agent'),
-      forceRefresh: userType === 'lawyer' // Always refresh for lawyers
+      forceRefresh: userType === 'lawyer'
     });
 
     req.user = {
       id: decoded.id,
       email: user.email,
       type: userType,
-      role: userType,  // Add role property for compatibility
+      role: userType,
       abilities,
       ...user
     };

@@ -143,7 +143,7 @@ class OAuthSecurity {
     
     return rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 10, // 10 attempts per window
+      max: process.env.NODE_ENV === 'production' ? 10 : 100, // More attempts in development
       message: { error: 'Too many OAuth attempts. Please try again later.' },
       standardHeaders: true,
       legacyHeaders: false,

@@ -7,6 +7,12 @@ class SocketUserManager {
   }
 
   async add(userId, socketId, userType) {
+    // Validate userId
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      console.log('Invalid userId provided to socket manager:', userId);
+      return;
+    }
+    
     let userName = 'Unknown';
     try {
       const table = userType === 'lawyer' ? 'lawyers' : 'users';

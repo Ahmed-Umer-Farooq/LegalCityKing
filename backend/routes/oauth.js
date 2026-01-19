@@ -34,4 +34,29 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Debug endpoint for OAuth troubleshooting
+router.get('/debug', (req, res) => {
+  const hasGoogleConfig = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasFrontendUrl = !!process.env.FRONTEND_URL;
+  const hasJwtSecret = !!process.env.JWT_SECRET;
+  const hasSessionSecret = !!(process.env.SESSION_SECRET || process.env.JWT_SECRET);
+  
+  res.json({
+    status: 'debug',
+    config: {
+      googleConfigured: hasGoogleConfig,
+      frontendUrlSet: hasFrontendUrl,
+      jwtSecretSet: hasJwtSecret,
+      sessionSecretSet: hasSessionSecret,
+      frontendUrl: process.env.FRONTEND_URL || 'NOT_SET',
+      redirectUri: `http://localhost:5001/api/oauth/google/callback`
+    },
+    session: {
+      hasSession: !!req.session,
+      sessionId: req.session?.id || 'none'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 module.exports = router;
