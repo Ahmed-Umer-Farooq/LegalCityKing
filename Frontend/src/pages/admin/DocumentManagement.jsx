@@ -274,7 +274,7 @@ const DocumentManagement = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-600">Used Storage</span>
             <span className="text-sm font-semibold text-gray-900">
-              {formatBytes(stats.totalSize)} / {formatBytes(stats.totalSize / (stats.storageUsage / 100))}
+              {formatBytes(stats.totalSize)} / {formatBytes(stats.storageQuota || 50 * 1024 * 1024 * 1024)}
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-4">

@@ -13,6 +13,17 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
     registrationId: '', firm: '', specialty: '', acceptTerms: false
   });
   const [errors, setErrors] = useState({});
+
+  // Clear form when switching user types
+  const handleUserTypeChange = (type) => {
+    setUserType(type);
+    setFormData({
+      name: '', username: '', address: '', city: '', state: '', zipCode: '',
+      country: '', countryCode: '+1', mobileNumber: '', email: '', password: '',
+      registrationId: '', firm: '', specialty: '', acceptTerms: false
+    });
+    setErrors({});
+  };
   const lawFirms = [
     'Solo Practice', 'Baker McKenzie', 'DLA Piper', 'Latham & Watkins', 'Clifford Chance',
     'Kirkland & Ellis', 'Skadden Arps', 'White & Case', 'Freshfields', 'Linklaters',
@@ -451,7 +462,11 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
     let processedValue = value;
     
     if (name === 'username') {
-      processedValue = value.toLowerCase().replace(/\s/g, '');
+      // Remove email-like patterns and clean username
+      processedValue = value.toLowerCase()
+        .replace(/[@.]/g, '') // Remove @ and . symbols
+        .replace(/\s/g, '') // Remove spaces
+        .replace(/[^a-z0-9_]/g, ''); // Only allow lowercase letters, numbers, underscores
     } else if (name === 'registrationId') {
       processedValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     } else if (name === 'mobileNumber') {
@@ -602,7 +617,7 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
               type="radio"
               name="userType"
               checked={userType === 'user'}
-              onChange={() => setUserType('user')}
+              onChange={() => handleUserTypeChange('user')}
               className="w-4 h-4 text-[#0EA5E9] focus:ring-[#0EA5E9]"
             />
             <span className="text-sm font-medium text-gray-700">User</span>
@@ -612,7 +627,7 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
               type="radio"
               name="userType"
               checked={userType === 'lawyer'}
-              onChange={() => setUserType('lawyer')}
+              onChange={() => handleUserTypeChange('lawyer')}
               className="w-4 h-4 text-[#0EA5E9] focus:ring-[#0EA5E9]"
             />
             <span className="text-sm font-medium text-gray-700">Lawyer</span>
@@ -634,6 +649,9 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
                 <label htmlFor="username" className="block text-sm font-medium text-gray-900 mb-2">Username</label>
                 <input id="username" type="text" name="username" value={formData.username} onChange={handleInputChange}
                   placeholder="e.g. john_doe123"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                   className="w-full px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
                 {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
               </div>
@@ -758,6 +776,9 @@ const AuthForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
                 <label htmlFor="lawyer-username" className="block text-sm font-medium text-gray-900 mb-2">Username</label>
                 <input id="lawyer-username" type="text" name="username" value={formData.username} onChange={handleInputChange}
                   placeholder="e.g. john_doe123"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                   className="w-full px-3 py-2.5 text-sm bg-gray-200 border-0 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"/>
                 {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
               </div>
